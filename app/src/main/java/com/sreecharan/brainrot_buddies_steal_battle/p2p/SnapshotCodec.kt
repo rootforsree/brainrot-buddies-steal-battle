@@ -10,23 +10,28 @@ package com.sreecharan.brainrot_buddies_steal_battle.p2p
 object SnapshotCodec {
 
     /**
-     * Builds a snapshot from live base data. [slots] holds one entry per
-     * occupied slot; empty slots are simply absent.
+     * Input for [export]: one snapshot worth of base data.
      */
-    fun export(
-        guestId: String,
-        baseName: String,
-        shieldUntil: Long,
-        coinsPerSec: Int,
-        slots: List<SnapshotSlot>,
-        exportedAt: Long,
-    ): BaseSnapshot = BaseSnapshot(
-        guestId = guestId,
-        baseName = baseName,
-        exportedAt = exportedAt,
-        shieldUntil = shieldUntil,
-        coinsPerSec = coinsPerSec,
-        slots = slots.sortedBy { it.slot },
+    data class SnapshotExport(
+        val guestId: String,
+        val baseName: String,
+        val shieldUntil: Long,
+        val coinsPerSec: Int,
+        val slots: List<SnapshotSlot>,
+        val exportedAt: Long,
+    )
+
+    /**
+     * Builds a snapshot from live base data. [SnapshotExport.slots] holds one
+     * entry per occupied slot; empty slots are simply absent.
+     */
+    fun export(input: SnapshotExport): BaseSnapshot = BaseSnapshot(
+        guestId = input.guestId,
+        baseName = input.baseName,
+        exportedAt = input.exportedAt,
+        shieldUntil = input.shieldUntil,
+        coinsPerSec = input.coinsPerSec,
+        slots = input.slots.sortedBy { it.slot },
     )
 
     /** Serializes a snapshot for storage in FriendEntity.snapshotJson. */
@@ -37,9 +42,12 @@ object SnapshotCodec {
     fun decode(json: String): BaseSnapshot? {
         val snapshot = runCatching {
             NearbyProtocol.json.decodeFromString(BaseSnapshot.serializer(), json)
-        }.getOrNull() ?: return null
-        if (snapshot.v != NearbyProtocol.PROTOCOL_VERSION) return null
-        return snapshot
+        }.getOrNull()
+        return if (snapshot != null && snapshot.v == NearbyProtocol.PROTOCOL_VERSION) {
+            snapshot
+        } else {
+            null
+        }
     }
 
     /** Encoded size check: snapshots must stay under 2 KB. */

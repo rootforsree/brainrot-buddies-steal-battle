@@ -7,8 +7,8 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.datastore.SettingsRepos
 import com.sreecharan.brainrot_buddies_steal_battle.data.repository.GameRepository
 import com.sreecharan.brainrot_buddies_steal_battle.data.repository.GameRepositoryImpl
 import dagger.Binds
-import dagger.InstallIn
 import dagger.Module
+import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 

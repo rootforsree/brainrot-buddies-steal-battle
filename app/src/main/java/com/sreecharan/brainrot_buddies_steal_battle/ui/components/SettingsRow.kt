@@ -30,6 +30,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.rememberHapticTick
  * Children merge into one TalkBack node so the row announces as a single
  * control, and every tap plays a light haptic tick unless haptics are off.
  */
+// Public API: SettingsScreen and AboutScreen call with all 9 arguments, so
+// the parameter list cannot be regrouped without breaking those call sites.
+@Suppress("LongParameterList")
 @Composable
 fun SettingsRow(
     title: String,
@@ -44,46 +47,13 @@ fun SettingsRow(
 ) {
     val colors = LocalAppColors.current
     val tick = rememberHapticTick()
-    val description = contentDescription ?: buildString {
-        append(title)
-        if (subtitle != null) {
-            append(", ")
-            append(subtitle)
-        }
-    }
-    val interaction = when {
-        toggleableValue != null -> Modifier.toggleable(
-            value = toggleableValue,
-            role = Role.Switch,
-            onValueChange = {
-                tick()
-                onClick?.invoke()
-            },
-        )
-        selectableSelected != null -> Modifier.selectable(
-            selected = selectableSelected,
-            role = Role.RadioButton,
-            onClick = {
-                tick()
-                onClick?.invoke()
-            },
-        )
-        onClick != null -> Modifier.clickable(
-            role = Role.Button,
-            onClick = {
-                tick()
-                onClick()
-            },
-        )
-        else -> Modifier
-    }
     Row(
         modifier = modifier
             .fillMaxWidth()
             .defaultMinSize(minHeight = AppDimens.rowMinHeight)
-            .then(interaction)
+            .then(rowInteractionModifier(tick, onClick, toggleableValue, selectableSelected))
             .semantics(mergeDescendants = true) {
-                this.contentDescription = description
+                this.contentDescription = rowDescription(title, subtitle, contentDescription)
             }
             .padding(
                 horizontal = AppDimens.rowHorizontalPadding,
@@ -115,4 +85,46 @@ fun SettingsRow(
             trailing()
         }
     }
+}
+
+private fun rowDescription(title: String, subtitle: String?, contentDescription: String?): String =
+    contentDescription ?: buildString {
+        append(title)
+        if (subtitle != null) {
+            append(", ")
+            append(subtitle)
+        }
+    }
+
+/** Exactly one interaction mode wins: toggleable, selectable, or clickable. */
+private fun rowInteractionModifier(
+    tick: () -> Unit,
+    onClick: (() -> Unit)?,
+    toggleableValue: Boolean?,
+    selectableSelected: Boolean?,
+): Modifier = when {
+    toggleableValue != null -> Modifier.toggleable(
+        value = toggleableValue,
+        role = Role.Switch,
+        onValueChange = {
+            tick()
+            onClick?.invoke()
+        },
+    )
+    selectableSelected != null -> Modifier.selectable(
+        selected = selectableSelected,
+        role = Role.RadioButton,
+        onClick = {
+            tick()
+            onClick?.invoke()
+        },
+    )
+    onClick != null -> Modifier.clickable(
+        role = Role.Button,
+        onClick = {
+            tick()
+            onClick()
+        },
+    )
+    else -> Modifier
 }

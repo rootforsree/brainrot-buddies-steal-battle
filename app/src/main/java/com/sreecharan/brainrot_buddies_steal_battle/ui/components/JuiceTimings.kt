@@ -141,14 +141,19 @@ class FlashGuard(
     private val recentFlashes = ArrayDeque<Long>()
 
     fun allowFlash(areaFraction: Float, isRed: Boolean): Boolean {
-        if (isRed) return false
-        if (areaFraction >= JuiceTimings.FLASH_MAX_AREA_FRACTION) return false
+        if (isRed || areaFraction >= JuiceTimings.FLASH_MAX_AREA_FRACTION) return false
         val now = clock()
-        while (recentFlashes.isNotEmpty() && now - recentFlashes.first() > 1000L) {
+        while (recentFlashes.isNotEmpty() && now - recentFlashes.first() > FLASH_WINDOW_MS) {
             recentFlashes.removeFirst()
         }
-        if (recentFlashes.size >= JuiceTimings.FLASH_MAX_PER_SEC) return false
-        recentFlashes.addLast(now)
-        return true
+        val allowed = recentFlashes.size < JuiceTimings.FLASH_MAX_PER_SEC
+        if (allowed) {
+            recentFlashes.addLast(now)
+        }
+        return allowed
+    }
+
+    companion object {
+        private const val FLASH_WINDOW_MS = 1000L
     }
 }

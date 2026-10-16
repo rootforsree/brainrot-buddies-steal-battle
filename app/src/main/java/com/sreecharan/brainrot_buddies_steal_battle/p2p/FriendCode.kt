@@ -32,11 +32,14 @@ object FriendCode {
         val digest = MessageDigest.getInstance("SHA-256")
             .digest(guestId.toByteArray(Charsets.UTF_8))
         val chars = CharArray(LENGTH) { i ->
-            CHARSET[(digest[i].toInt() and 0xFF) % CHARSET.length]
+            CHARSET[(digest[i].toInt() and BYTE_MASK) % CHARSET.length]
         }
         return chars.concatToString()
     }
 
     fun isValid(code: String): Boolean =
         code.length == LENGTH && code.all { it in CHARSET }
+
+    /** Masks a signed byte to its unsigned value when indexing the charset. */
+    private const val BYTE_MASK = 0xFF
 }

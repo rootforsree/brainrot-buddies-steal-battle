@@ -33,8 +33,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
  * Builder B: show after an Epic pull (claim flow).
  * Builder D: show after a steal and after a revenge.
  */
-enum class NudgeKind { EPIC_PULL, STEAL, REVENGE }
-
 @Composable
 fun GrownUpNudgeDialog(
     kind: NudgeKind,
@@ -43,11 +41,6 @@ fun GrownUpNudgeDialog(
     buddyName: String? = null,
 ) {
     val colors = LocalAppColors.current
-    val headline = when (kind) {
-        NudgeKind.EPIC_PULL -> stringResource(R.string.nudge_epic)
-        NudgeKind.STEAL -> stringResource(R.string.nudge_steal)
-        NudgeKind.REVENGE -> stringResource(R.string.nudge_revenge)
-    }
     Dialog(onDismissRequest = onDone) {
         Card(
             modifier = modifier.fillMaxWidth(),
@@ -71,7 +64,7 @@ fun GrownUpNudgeDialog(
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = headline,
+                    text = nudgeHeadline(kind),
                     style = AppTypography.headline,
                     color = colors.label,
                     textAlign = TextAlign.Center,
@@ -103,4 +96,11 @@ fun GrownUpNudgeDialog(
             }
         }
     }
+}
+
+@Composable
+private fun nudgeHeadline(kind: NudgeKind): String = when (kind) {
+    NudgeKind.EPIC_PULL -> stringResource(R.string.nudge_epic)
+    NudgeKind.STEAL -> stringResource(R.string.nudge_steal)
+    NudgeKind.REVENGE -> stringResource(R.string.nudge_revenge)
 }

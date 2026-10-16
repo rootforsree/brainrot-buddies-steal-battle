@@ -64,11 +64,13 @@ suspend fun GameRepository.exportSnapshot(
     }
     val shieldUntil = observeShield().firstData()?.baseShieldUntil ?: 0L
     return SnapshotCodec.export(
-        guestId = guestId,
-        baseName = baseName,
-        shieldUntil = shieldUntil,
-        coinsPerSec = coinsPerSec.toInt(),
-        slots = snapSlots,
-        exportedAt = nowMs,
+        SnapshotCodec.SnapshotExport(
+            guestId = guestId,
+            baseName = baseName,
+            shieldUntil = shieldUntil,
+            coinsPerSec = coinsPerSec.toInt(),
+            slots = snapSlots,
+            exportedAt = nowMs,
+        ),
     )
 }

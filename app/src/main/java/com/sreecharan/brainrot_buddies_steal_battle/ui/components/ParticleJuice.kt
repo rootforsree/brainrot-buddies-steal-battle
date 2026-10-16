@@ -92,7 +92,7 @@ class ParticleSystem(val capacity: Int = JuiceTimings.PARTICLE_MAX) {
                 ParticleShape.SQUARE.ordinal -> scope.drawRect(
                     c,
                     Offset(px - size[i] / 2f, py - size[i] / 2f),
-                    androidx.compose.ui.geometry.Size(size[i], size[i] * 0.7f),
+                    androidx.compose.ui.geometry.Size(size[i], size[i] * SQUARE_HEIGHT_FRAC),
                 )
                 else -> {
                     val half = size[i]
@@ -118,6 +118,7 @@ class ParticleSystem(val capacity: Int = JuiceTimings.PARTICLE_MAX) {
         private const val FULL_CIRCLE = (Math.PI * 2).toFloat()
         private const val SPREAD_HALF = 0.5f
         private const val MILLIS_PER_SECOND_F = 1000f
+        private const val SQUARE_HEIGHT_FRAC = 0.7f
     }
 }
 

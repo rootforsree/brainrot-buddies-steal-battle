@@ -38,7 +38,7 @@ fun SkeletonList(
     rows: Int = 6,
 ) {
     val shimmerAlpha = if (!animationsEnabled(LocalContext.current)) {
-        0.6f
+        SHIMMER_STATIC_ALPHA
     } else {
         val transition = rememberInfiniteTransition(label = "skeleton")
         val pulse by transition.animateFloat(
@@ -104,3 +104,6 @@ private fun SkeletonBar(
             ),
     )
 }
+
+/** Static alpha used when the OS has animations disabled. */
+private const val SHIMMER_STATIC_ALPHA = 0.6f

@@ -503,6 +503,30 @@ Rewarded ads start muted with visible unmute.
 
 ## 10. Motion spec (from animation_bible — builders implement to the ms)
 
+**MINIMUM BAR: Subway Surfers (client's standing rule, 2026-10-16).**
+Subway Surfers is the floor for character quality and animation feel, not
+the ceiling. Every buddy, every moment below must feel at least as juicy,
+lively, and polished as Subway Surfers. Anything below that feel FAILS
+conformance review, no matter how correct the code is. Concretely:
+- **Squash & stretch** on every state change (claim, land, steal, upgrade,
+  shield hit, gift open). 10–20% scale deformation, never a rigid pop.
+- **Lively run/waddle cycles** on the conveyor: every buddy wobble-walks
+  (±8° rotation, vertical bob, follow-through sway ~400 ms after movement);
+  no buddy ever slides rigidly like a static sticker.
+- **Particle effects** on claim, collect, and steal: bursts of 5–20 pooled
+  sprites (star pops, dust poofs, ray bursts), sim <2 ms, ≤1000 total.
+- **Coin trails:** coins fly from vault/collect with motion trails, not
+  instant counter increments.
+- **Screen shake + hit-stop on steals:** 60–100 ms hit-stop on a successful
+  grab, trauma-based shake (Eiserloh: offset = trauma² × noise, decays
+  ~1/s) — punchy but NEVER sustained.
+- **Bouncy UI springs:** easeOutBack on all UI pops (shop buys, badge pops,
+  captions, dialogs); one overshoot, stiffness ~300, damping 15–20.
+- **Idle life always on:** breathing, blinks, gaze saccades, silly acts —
+  the base must feel alive when the player just watches.
+A side-by-side feel check against Subway Surfers gameplay is part of the
+conformance review. If it feels flatter, it goes back.
+
 - **Every tap answers in <100 ms** (sound + visual in the same frame batch).
   Full animation may follow; the ack never waits.
 - **Claim sequence:** 0–60 ms squash ack (0.85y/1.15x + star pop + pop
@@ -648,6 +672,9 @@ app/src/main/java/com/sreecharan/brainrot_buddies_steal_battle/
    no audio before first tap.
 6. §10 motion spec implemented on claim/steal/upgrade/shield/gift/bell;
    idle-life on all buddies; photosensitivity limits verified by review.
+   **Subway Surfers minimum bar enforced:** squash & stretch, waddle cycles,
+   particles, coin trails, shake + hit-stop on steals, bouncy springs —
+   anything flatter than Subway Surfers feel is rejected.
 7. §11 UX checklist passes on every screen (tap targets measured,
    no dead taps, Benny ≤8 words).
 8. Parent gate on IAP + ads toggle + friend codes + pairing. For Parents

@@ -16,12 +16,18 @@ enum class AudioChannel {
  * forces an eviction.
  */
 enum class SoundKind(val priority: Int) {
-    MUSIC(0),
-    AMBIENT(1),
-    REWARD(2),
-    STING(3),
-    VOICE(4),
+    MUSIC(PRIORITY_MUSIC),
+    AMBIENT(PRIORITY_AMBIENT),
+    REWARD(PRIORITY_REWARD),
+    STING(PRIORITY_STING),
+    VOICE(PRIORITY_VOICE),
 }
+
+private const val PRIORITY_MUSIC = 0
+private const val PRIORITY_AMBIENT = 1
+private const val PRIORITY_REWARD = 2
+private const val PRIORITY_STING = 3
+private const val PRIORITY_VOICE = 4
 
 /**
  * One playable sound: its frozen `res/raw` name (without extension), its

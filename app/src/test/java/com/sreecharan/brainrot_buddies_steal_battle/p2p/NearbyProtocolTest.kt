@@ -115,12 +115,14 @@ class NearbyProtocolTest {
     @Test
     fun `oversized snapshot bodies are rejected`() {
         val huge = SnapshotCodec.export(
-            guestId = "guest-2",
-            baseName = "x".repeat(3000),
-            shieldUntil = 0L,
-            coinsPerSec = 0,
-            slots = emptyList(),
-            exportedAt = 0L,
+            SnapshotCodec.SnapshotExport(
+                guestId = "guest-2",
+                baseName = "x".repeat(3000),
+                shieldUntil = 0L,
+                coinsPerSec = 0,
+                slots = emptyList(),
+                exportedAt = 0L,
+            ),
         )
         assertTrue(SnapshotCodec.encodedSizeBytes(huge) > NearbyProtocol.MAX_SNAPSHOT_BYTES)
         assertNull(NearbyProtocol.decode(NearbyProtocol.encode(huge)))

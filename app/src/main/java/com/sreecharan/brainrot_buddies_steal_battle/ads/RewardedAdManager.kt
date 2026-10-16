@@ -22,6 +22,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.ads.di.MainDispatcher
 import com.sreecharan.brainrot_buddies_steal_battle.data.repository.GameRepository
 import com.sreecharan.brainrot_buddies_steal_battle.di.IoDispatcher
 import com.sreecharan.brainrot_buddies_steal_battle.p2p.firstData
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob

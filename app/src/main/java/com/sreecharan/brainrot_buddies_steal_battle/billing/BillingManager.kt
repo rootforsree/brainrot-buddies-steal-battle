@@ -2,6 +2,7 @@ package com.sreecharan.brainrot_buddies_steal_battle.billing
 
 import android.app.Activity
 import android.content.Context
+import android.os.RemoteException
 import android.util.Log
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -36,6 +37,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -92,10 +94,12 @@ class BillingManager @Inject constructor(
         scope.launch {
             _busy.value = true
             try {
-                val client = ensureConnected() ?: run {
-                    _events.emit(BillingEvent.StoreUnavailable)
-                    return@launch
-                }
+                guardBillingCall("refreshProducts failed", BillingEvent.StoreUnavailable) {
+                    val client = ensureConnected()
+                    if (client == null) {
+                        _events.emit(BillingEvent.StoreUnavailable)
+                        return@guardBillingCall
+                    }
                 val params = QueryProductDetailsParams.newBuilder()
                     .setProductList(
                         BillingProducts.ALL.map { id ->
@@ -126,9 +130,6 @@ class BillingManager @Inject constructor(
                     Log.w(TAG, "queryProductDetails failed: ${result.billingResult.responseCode}")
                     _events.emit(BillingEvent.StoreUnavailable)
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "refreshProducts failed", e)
-                _events.emit(BillingEvent.StoreUnavailable)
             } finally {
                 _busy.value = false
             }
@@ -145,19 +146,21 @@ class BillingManager @Inject constructor(
         scope.launch {
             _busy.value = true
             try {
-                val client = ensureConnected() ?: run {
-                    _events.emit(BillingEvent.StoreUnavailable)
-                    return@launch
-                }
-                var details = productDetails[productId]
-                if (details == null) {
-                    refreshProductsSync(client)
-                    details = productDetails[productId]
-                }
-                if (details == null) {
-                    _events.emit(BillingEvent.StoreUnavailable)
-                    return@launch
-                }
+                guardBillingCall("startPurchase failed", BillingEvent.PurchaseFailed(productId)) {
+                    val client = ensureConnected()
+                    if (client == null) {
+                        _events.emit(BillingEvent.StoreUnavailable)
+                        return@guardBillingCall
+                    }
+                    var details = productDetails[productId]
+                    if (details == null) {
+                        refreshProductsSync(client)
+                        details = productDetails[productId]
+                    }
+                    if (details == null) {
+                        _events.emit(BillingEvent.StoreUnavailable)
+                        return@guardBillingCall
+                    }
                 val flowParams = BillingFlowParams.newBuilder()
                     .setProductDetailsParamsList(
                         listOf(

@@ -1,6 +1,5 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.components
 
-import android.os.SystemClock
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,6 +12,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -25,9 +25,11 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -37,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Rarity
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.ReplayKind
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.StagedReplayUi
+import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppColors
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import kotlin.math.PI
 import kotlin.math.sin
@@ -49,6 +52,9 @@ import kotlin.math.sin
  * Builder D triggers these via raid records ([BaseGameData]); this file
  * only renders. Skippable freely: tap anywhere or the X button.
  */
+// Public API: HomeScreen calls with all 6 arguments, so the parameter list
+// cannot be regrouped without breaking that call site.
+@Suppress("LongParameterList")
 @Composable
 fun ReplayCanvas(
     replay: StagedReplayUi,
@@ -80,115 +86,22 @@ fun ReplayCanvas(
             drawRect(Color.Black.copy(alpha = scrimAlpha))
 
             val center = Offset(size.width / 2f, size.height * REPLAY_BUDDY_Y_FRAC)
-            val buddySize = REPLAY_BUDDY_DP.toPx()
-
-            when {
-                t < REPLAY_GRAB_MS -> {
-                    // 0-800 ms: slow-mo grab. Buddy stretches, camera punches in.
-                    val p = (t / REPLAY_GRAB_MS.toFloat()).coerceIn(0f, 1f)
-                    val stretch = if (reduceMotion) 1f else 1f + GRAB_STRETCH * sin(p * PI.toFloat())
-                    val zoom = 1f + GRAB_ZOOM * p
-                    drawBuddySprite(
-                        image = buddyImage,
-                        center = center,
-                        sizePx = buddySize * zoom,
-                        seed = replay.buddySeed,
-                        rarity = Rarity.COMMON,
-                    )
-                    // Stretch ring to sell the grab.
-                    if (!reduceMotion) {
-                        drawCircle(
-                            color = Color.White.copy(alpha = 0.5f * (1f - p)),
-                            radius = buddySize * 0.7f * stretch,
-                            center = center,
-                            style = Stroke(width = 5.dp.toPx()),
-                        )
-                    }
-                    drawReplayCaption(
-                        text = if (replay.kind == ReplayKind.STEAL) "Yoink!" else "Payback!",
-                        center = center + Offset(0f, -buddySize * 0.9f),
-                        scale = 0.8f + 0.4f * p,
-                        color = Color(0xFFFFD54F),
-                        textMeasurer = textMeasurer,
-                    )
-                }
-                t < REPLAY_CAPTION_MS -> {
-                    // 800-2500 ms: comedy caption, word by word.
-                    drawBuddySprite(
-                        image = buddyImage,
-                        center = center,
-                        sizePx = buddySize,
-                        seed = replay.buddySeed,
-                        rarity = Rarity.COMMON,
-                    )
-                    val words = replay.caption.split(" ")
-                    val wordT = (t - REPLAY_GRAB_MS) / CAPTION_WORD_MS
-                    val visible = words.take((wordT + 1).toInt().coerceIn(1, words.size))
-                    drawCaptionCard(
-                        text = visible.joinToString(" "),
-                        fullText = replay.caption,
-                        center = Offset(size.width / 2f, size.height * 0.62f),
-                        colors = colors,
-                        textMeasurer = textMeasurer,
-                    )
-                }
-                t < REPLAY_REACTION_MS -> {
-                    // 2500-3500 ms: victim reaction card wobble.
-                    val p = (t - REPLAY_CAPTION_MS) / (REPLAY_REACTION_MS - REPLAY_CAPTION_MS).toFloat()
-                    val wobble = if (reduceMotion) 0f else sin(p * PI.toFloat() * REACTION_OSCILLATIONS) * REACTION_WOBBLE_PX * (1f - p)
-                    drawBuddySprite(
-                        image = buddyImage,
-                        center = center + Offset(wobble * 4f, 0f),
-                        sizePx = buddySize,
-                        seed = replay.buddySeed,
-                        rarity = Rarity.COMMON,
-                        rotationDeg = wobble,
-                    )
-                    drawCaptionCard(
-                        text = if (replay.kind == ReplayKind.STEAL) {
-                            "${replay.otherBaseName} had NO idea!"
-                        } else {
-                            "${replay.otherBaseName} never saw it coming!"
-                        },
-                        fullText = replay.caption,
-                        center = Offset(size.width / 2f, size.height * 0.62f),
-                        colors = colors,
-                        textMeasurer = textMeasurer,
-                    )
-                }
-                else -> {
-                    // 3500-5000 ms: catchphrase sting + confetti.
-                    if (!confettiFired) {
-                        confettiFired = true
-                        juice.confetti(center.x, center.y)
-                    }
-                    val p = ((t - REPLAY_REACTION_MS) / (JuiceTimings.REPLAY_MS - REPLAY_REACTION_MS).toFloat())
-                        .coerceIn(0f, 1f)
-                    val spin = if (reduceMotion) 0f else SPIN_DEGREES * p
-                    drawBuddySprite(
-                        image = buddyImage,
-                        center = center,
-                        sizePx = buddySize,
-                        seed = replay.buddySeed,
-                        rarity = Rarity.COMMON,
-                        rotationDeg = spin,
-                    )
-                    drawReplayCaption(
-                        text = replay.buddyName,
-                        center = center + Offset(0f, buddySize * 0.85f),
-                        scale = 1f,
-                        color = Color.White,
-                        textMeasurer = textMeasurer,
-                    )
-                }
-            }
-            juice.particles.update(
-                run {
-                    val last = lastFrame.longValue
-                    lastFrame.longValue = frameTime.value
-                    if (last == 0L) FRAME_DT_FALLBACK else ((frameTime.value - last) / MILLIS_TO_SECONDS_F).coerceIn(0f, DT_MAX_SECONDS)
-                },
+            val frame = ReplayFrame(
+                replay = replay,
+                t = t,
+                center = center,
+                buddySize = REPLAY_BUDDY_DP.toPx(),
+                buddyImage = buddyImage,
+                textMeasurer = textMeasurer,
+                colors = colors,
+                reduceMotion = reduceMotion,
             )
+            if (replayPhase(t) == ReplayPhase.STING && !confettiFired) {
+                confettiFired = true
+                juice.confetti(center.x, center.y)
+            }
+            drawReplayPhase(frame)
+            juice.particles.update(frameDtSeconds(lastFrame, frameTime))
             juice.particles.draw(this)
         }
 
@@ -208,12 +121,167 @@ fun ReplayCanvas(
     }
 }
 
+private enum class ReplayPhase { GRAB, CAPTION, REACTION, STING }
+
+private fun replayPhase(t: Long): ReplayPhase = when {
+    t < REPLAY_GRAB_MS -> ReplayPhase.GRAB
+    t < REPLAY_CAPTION_MS -> ReplayPhase.CAPTION
+    t < REPLAY_REACTION_MS -> ReplayPhase.REACTION
+    else -> ReplayPhase.STING
+}
+
+/** One drawn frame of the staged replay. */
+private data class ReplayFrame(
+    val replay: StagedReplayUi,
+    val t: Long,
+    val center: Offset,
+    val buddySize: Float,
+    val buddyImage: ImageBitmap?,
+    val textMeasurer: TextMeasurer,
+    val colors: AppColors,
+    val reduceMotion: Boolean,
+)
+
+private fun DrawScope.drawReplayPhase(frame: ReplayFrame) {
+    when (replayPhase(frame.t)) {
+        ReplayPhase.GRAB -> drawGrabPhase(frame)
+        ReplayPhase.CAPTION -> drawCaptionPhase(frame)
+        ReplayPhase.REACTION -> drawReactionPhase(frame)
+        ReplayPhase.STING -> drawStingPhase(frame)
+    }
+}
+
+/** 0-800 ms: slow-mo grab. Buddy stretches, camera punches in. */
+private fun DrawScope.drawGrabPhase(frame: ReplayFrame) {
+    val replay = frame.replay
+    val p = (frame.t / REPLAY_GRAB_MS.toFloat()).coerceIn(0f, 1f)
+    val stretch = if (frame.reduceMotion) 1f else 1f + GRAB_STRETCH * sin(p * PI.toFloat())
+    val zoom = 1f + GRAB_ZOOM * p
+    drawBuddySprite(
+        BuddySpriteSpec(
+            image = frame.buddyImage,
+            center = frame.center,
+            sizePx = frame.buddySize * zoom,
+            seed = replay.buddySeed,
+            rarity = Rarity.COMMON,
+        ),
+    )
+    // Stretch ring to sell the grab.
+    if (!frame.reduceMotion) {
+        drawCircle(
+            color = Color.White.copy(alpha = RING_MAX_ALPHA * (1f - p)),
+            radius = frame.buddySize * RING_RADIUS_FRAC * stretch,
+            center = frame.center,
+            style = Stroke(width = 5.dp.toPx()),
+        )
+    }
+    drawReplayCaption(
+        text = if (replay.kind == ReplayKind.STEAL) "Yoink!" else "Payback!",
+        center = frame.center + Offset(0f, -frame.buddySize * CAPTION_DY_FRAC),
+        scale = CAPTION_SCALE_BASE + CAPTION_SCALE_GROW * p,
+        color = GOLD,
+        textMeasurer = frame.textMeasurer,
+    )
+}
+
+/** 800-2500 ms: comedy caption, word by word. */
+private fun DrawScope.drawCaptionPhase(frame: ReplayFrame) {
+    val replay = frame.replay
+    drawBuddySprite(
+        BuddySpriteSpec(
+            image = frame.buddyImage,
+            center = frame.center,
+            sizePx = frame.buddySize,
+            seed = replay.buddySeed,
+            rarity = Rarity.COMMON,
+        ),
+    )
+    val words = replay.caption.split(" ")
+    val wordT = (frame.t - REPLAY_GRAB_MS) / CAPTION_WORD_MS
+    val visible = words.take((wordT + 1).toInt().coerceIn(1, words.size))
+    drawCaptionCard(
+        text = visible.joinToString(" "),
+        fullText = replay.caption,
+        center = Offset(size.width / 2f, size.height * CAPTION_CARD_Y_FRAC),
+        colors = frame.colors,
+        textMeasurer = frame.textMeasurer,
+    )
+}
+
+/** 2500-3500 ms: victim reaction card wobble. */
+private fun DrawScope.drawReactionPhase(frame: ReplayFrame) {
+    val replay = frame.replay
+    val p = (frame.t - REPLAY_CAPTION_MS) / (REPLAY_REACTION_MS - REPLAY_CAPTION_MS).toFloat()
+    val wobble = if (frame.reduceMotion) {
+        0f
+    } else {
+        sin(p * PI.toFloat() * REACTION_OSCILLATIONS) * REACTION_WOBBLE_PX * (1f - p)
+    }
+    drawBuddySprite(
+        BuddySpriteSpec(
+            image = frame.buddyImage,
+            center = frame.center + Offset(wobble * WOBBLE_DX_MUL, 0f),
+            sizePx = frame.buddySize,
+            seed = replay.buddySeed,
+            rarity = Rarity.COMMON,
+            rotationDeg = wobble,
+        ),
+    )
+    drawCaptionCard(
+        text = if (replay.kind == ReplayKind.STEAL) {
+            "${replay.otherBaseName} had NO idea!"
+        } else {
+            "${replay.otherBaseName} never saw it coming!"
+        },
+        fullText = replay.caption,
+        center = Offset(size.width / 2f, size.height * CAPTION_CARD_Y_FRAC),
+        colors = frame.colors,
+        textMeasurer = frame.textMeasurer,
+    )
+}
+
+/** 3500-5000 ms: catchphrase sting + confetti. */
+private fun DrawScope.drawStingPhase(frame: ReplayFrame) {
+    val replay = frame.replay
+    val p = ((frame.t - REPLAY_REACTION_MS) / (JuiceTimings.REPLAY_MS - REPLAY_REACTION_MS).toFloat())
+        .coerceIn(0f, 1f)
+    val spin = if (frame.reduceMotion) 0f else SPIN_DEGREES * p
+    drawBuddySprite(
+        BuddySpriteSpec(
+            image = frame.buddyImage,
+            center = frame.center,
+            sizePx = frame.buddySize,
+            seed = replay.buddySeed,
+            rarity = Rarity.COMMON,
+            rotationDeg = spin,
+        ),
+    )
+    drawReplayCaption(
+        text = replay.buddyName,
+        center = frame.center + Offset(0f, frame.buddySize * STING_CAPTION_DY_FRAC),
+        scale = 1f,
+        color = Color.White,
+        textMeasurer = frame.textMeasurer,
+    )
+}
+
+/** Per-frame delta in seconds for particle updates; 1/60 s on the first frame. */
+private fun frameDtSeconds(lastFrame: MutableLongState, frameTime: State<Long>): Float {
+    val last = lastFrame.longValue
+    lastFrame.longValue = frameTime.value
+    return if (last == 0L) {
+        FRAME_DT_FALLBACK
+    } else {
+        ((frameTime.value - last) / MILLIS_TO_SECONDS_F).coerceIn(0f, DT_MAX_SECONDS)
+    }
+}
+
 private fun DrawScope.drawReplayCaption(
     text: String,
     center: Offset,
     scale: Float,
     color: Color,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    textMeasurer: TextMeasurer,
 ) {
     val label = textMeasurer.measure(
         AnnotatedString(text),
@@ -237,8 +305,8 @@ private fun DrawScope.drawCaptionCard(
     text: String,
     fullText: String,
     center: Offset,
-    colors: com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppColors,
-    textMeasurer: androidx.compose.ui.text.TextMeasurer,
+    colors: AppColors,
+    textMeasurer: TextMeasurer,
 ) {
     // Measure the full caption once so the card does not jump as words appear.
     val full = textMeasurer.measure(
@@ -275,13 +343,22 @@ private const val SCRIM_MAX_ALPHA = 0.72f
 private const val REPLAY_BUDDY_Y_FRAC = 0.38f
 private const val GRAB_STRETCH = 0.2f
 private const val GRAB_ZOOM = 0.08f
+private const val RING_MAX_ALPHA = 0.5f
+private const val RING_RADIUS_FRAC = 0.7f
+private const val CAPTION_DY_FRAC = 0.9f
+private const val CAPTION_SCALE_BASE = 0.8f
+private const val CAPTION_SCALE_GROW = 0.4f
+private const val CAPTION_CARD_Y_FRAC = 0.62f
 private const val REACTION_OSCILLATIONS = 3f
 private const val REACTION_WOBBLE_PX = 6f
+private const val WOBBLE_DX_MUL = 4f
+private const val STING_CAPTION_DY_FRAC = 0.85f
 private const val SPIN_DEGREES = 360f
 private const val FRAME_DT_FALLBACK = 0.016f
 private const val MILLIS_TO_SECONDS_F = 1000f
 private const val DT_MAX_SECONDS = 0.1f
 private const val CAPTION_FONT_SP = 34f
 
+private val GOLD = Color(0xFFFFD54F)
 private val REPLAY_BUDDY_DP = 150.dp
 private val CAPTION_PAD_DP = 16.dp

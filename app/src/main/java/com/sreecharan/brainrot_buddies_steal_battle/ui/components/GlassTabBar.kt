@@ -13,11 +13,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -28,13 +26,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.rememberHapticTick
 import kotlinx.collections.immutable.ImmutableList
-
-@Immutable
-data class TabItem(
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector,
-)
 
 /**
  * Floating frosted-glass tab bar. One glass layer per screen, floating over

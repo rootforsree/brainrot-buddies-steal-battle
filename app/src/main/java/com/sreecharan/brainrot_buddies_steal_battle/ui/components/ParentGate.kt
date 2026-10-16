@@ -40,13 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.sreecharan.brainrot_buddies_steal_battle.R
+import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppColors
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppShapes
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
-import kotlin.random.Random
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CancellationException
 
 /**
@@ -57,40 +55,6 @@ import kotlinx.coroutines.CancellationException
  * Coin purchases use [HoldToConfirmButton] directly (mis-tap protection,
  * no math). The math step is reserved for the parental gate.
  */
-
-/** Pure math-question generator: unit-testable, no Android dependency. */
-data class MathQuestion(
-    val text: String,
-    val options: ImmutableList<Int>,
-    val answer: Int,
-)
-
-fun generateMathQuestion(random: Random = Random.Default): MathQuestion {
-    val a = random.nextInt(3, 13)
-    val b = random.nextInt(3, 13)
-    val answer = a + b
-    val options = LinkedHashSet<Int>()
-    options += answer
-    var guard = 0
-    while (options.size < 4 && guard < 100) {
-        guard++
-        val delta = random.nextInt(-6, 7)
-        if (delta == 0) continue
-        val candidate = answer + delta
-        if (candidate > 0) options += candidate
-    }
-    // Fallback: should never trigger, keeps the 4-option promise.
-    var filler = answer + 1
-    while (options.size < 4) {
-        options += filler
-        filler++
-    }
-    return MathQuestion(
-        text = "$a + $b = ?",
-        options = options.shuffled(random).toImmutableList(),
-        answer = answer,
-    )
-}
 
 /**
  * Press-and-hold button. The fill sweeps while held; releasing early resets
@@ -183,28 +147,16 @@ fun ParentGateDialog(
                     textAlign = TextAlign.Center,
                 )
                 when (step) {
-                    GateStep.HOLD -> {
-                        Text(
-                            text = stringResource(R.string.gate_hold),
-                            style = AppTypography.body,
-                            color = LocalAppColors.current.secondaryLabel,
-                            textAlign = TextAlign.Center,
-                        )
-                        HoldToConfirmButton(
-                            text = stringResource(R.string.gate_hold),
-                            onConfirm = {
-                                if (requireMath) {
-                                    step = GateStep.MATH
-                                } else {
-                                    onPassed()
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                    GateStep.MATH -> {
-                        MathQuestionStep(onPassed = onPassed)
-                    }
+                    GateStep.HOLD -> HoldStepContent(
+                        onHoldConfirmed = {
+                            if (requireMath) {
+                                step = GateStep.MATH
+                            } else {
+                                onPassed()
+                            }
+                        },
+                    )
+                    GateStep.MATH -> MathQuestionStep(onPassed = onPassed)
                 }
                 TextButton(onClick = onDismiss) {
                     Text(
@@ -216,6 +168,21 @@ fun ParentGateDialog(
             }
         }
     }
+}
+
+@Composable
+private fun HoldStepContent(onHoldConfirmed: () -> Unit) {
+    Text(
+        text = stringResource(R.string.gate_hold),
+        style = AppTypography.body,
+        color = LocalAppColors.current.secondaryLabel,
+        textAlign = TextAlign.Center,
+    )
+    HoldToConfirmButton(
+        text = stringResource(R.string.gate_hold),
+        onConfirm = onHoldConfirmed,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -247,37 +214,50 @@ private fun MathQuestionStep(onPassed: () -> Unit) {
         }
         Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8)) {
             question.options.chunked(2).forEach { row ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    row.forEach { option ->
-                        Button(
-                            onClick = {
-                                if (option == question.answer) {
-                                    onPassed()
-                                } else {
-                                    wrong = true
-                                    question = generateMathQuestion()
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 56.dp),
-                            shape = AppShapes.card,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.accent.copy(alpha = 0.15f),
-                                contentColor = colors.label,
-                            ),
-                        ) {
-                            Text(text = option.toString(), style = AppTypography.title2)
+                MathOptionRow(
+                    row = row,
+                    colors = colors,
+                    onOption = { option ->
+                        if (option == question.answer) {
+                            onPassed()
+                        } else {
+                            wrong = true
+                            question = generateMathQuestion()
                         }
-                    }
-                    if (row.size == 1) {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
+                    },
+                )
             }
+        }
+    }
+}
+
+@Composable
+private fun MathOptionRow(
+    row: List<Int>,
+    colors: AppColors,
+    onOption: (Int) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        row.forEach { option ->
+            Button(
+                onClick = { onOption(option) },
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 56.dp),
+                shape = AppShapes.card,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accent.copy(alpha = 0.15f),
+                    contentColor = colors.label,
+                ),
+            ) {
+                Text(text = option.toString(), style = AppTypography.title2)
+            }
+        }
+        if (row.size == 1) {
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }

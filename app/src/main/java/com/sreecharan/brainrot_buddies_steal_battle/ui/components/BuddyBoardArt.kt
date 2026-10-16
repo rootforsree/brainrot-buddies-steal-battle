@@ -2,6 +2,7 @@ package com.sreecharan.brainrot_buddies_steal_battle.ui.components
 
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -35,111 +36,123 @@ fun rememberBuddyImage(imageRes: Int): ImageBitmap? {
     }
 }
 
+/** Everything needed to draw one buddy sprite, in one value. */
+@Immutable
+data class BuddySpriteSpec(
+    val image: ImageBitmap?,
+    val center: Offset,
+    val sizePx: Float,
+    val seed: Long,
+    val rarity: Rarity,
+    val gaze: Offset = Offset.Zero,
+    val blink: Float = 0f,
+    val alpha: Float = 1f,
+    val rotationDeg: Float = 0f,
+    val scaleX: Float = 1f,
+    val scaleY: Float = 1f,
+)
+
 /**
- * Draws the buddy sprite centered at [center] with [sizePx] diameter.
- * Falls back to a procedural buddy (seed-deterministic, rarity-tinted) when
- * [image] is null. [gaze] offsets the pupils for the idle-life saccades;
- * [blink] 0..1 closes the lids (procedural fallback only).
+ * Draws the buddy sprite centered at [BuddySpriteSpec.center] with
+ * [BuddySpriteSpec.sizePx] diameter. Falls back to a procedural buddy
+ * (seed-deterministic, rarity-tinted) when [BuddySpriteSpec.image] is null.
+ * [BuddySpriteSpec.gaze] offsets the pupils for the idle-life saccades;
+ * [BuddySpriteSpec.blink] 0..1 closes the lids (procedural fallback only).
  */
-fun DrawScope.drawBuddySprite(
-    image: ImageBitmap?,
-    center: Offset,
-    sizePx: Float,
-    seed: Long,
-    rarity: Rarity,
-    gaze: Offset = Offset.Zero,
-    blink: Float = 0f,
-    alpha: Float = 1f,
-    rotationDeg: Float = 0f,
-    scaleX: Float = 1f,
-    scaleY: Float = 1f,
-) {
-    if (rotationDeg == 0f && scaleX == 1f && scaleY == 1f) {
-        drawBuddySpriteInner(image, center, sizePx, seed, rarity, gaze, blink, alpha)
+fun DrawScope.drawBuddySprite(spec: BuddySpriteSpec) {
+    if (spec.rotationDeg == 0f && spec.scaleX == 1f && spec.scaleY == 1f) {
+        drawBuddySpriteInner(spec)
         return
     }
     drawContext.canvas.save()
-    drawContext.canvas.translate(center.x, center.y)
-    drawContext.canvas.rotate(rotationDeg)
-    drawContext.canvas.scale(scaleX, scaleY)
-    drawContext.canvas.translate(-center.x, -center.y)
-    drawBuddySpriteInner(image, center, sizePx, seed, rarity, gaze, blink, alpha)
+    drawContext.canvas.translate(spec.center.x, spec.center.y)
+    drawContext.canvas.rotate(spec.rotationDeg)
+    drawContext.canvas.scale(spec.scaleX, spec.scaleY)
+    drawContext.canvas.translate(-spec.center.x, -spec.center.y)
+    drawBuddySpriteInner(spec)
     drawContext.canvas.restore()
 }
 
-private fun DrawScope.drawBuddySpriteInner(
-    image: ImageBitmap?,
-    center: Offset,
-    sizePx: Float,
-    seed: Long,
-    rarity: Rarity,
-    gaze: Offset = Offset.Zero,
-    blink: Float = 0f,
-    alpha: Float = 1f,
+/**
+ * Draws [spec], resolving the bitmap from [images] by [imageRes] first.
+ * Applies the canvas transform only when the pose actually transforms.
+ */
+internal fun DrawScope.drawBuddyWithPose(
+    images: Map<Int, ImageBitmap?>,
+    imageRes: Int,
+    spec: BuddySpriteSpec,
 ) {
+    val resolved = spec.copy(image = images[imageRes])
+    if (resolved.rotationDeg == 0f && resolved.scaleX == 1f && resolved.scaleY == 1f) {
+        drawBuddySprite(resolved)
+        return
+    }
+    drawContext.canvas.save()
+    drawContext.canvas.translate(resolved.center.x, resolved.center.y)
+    drawContext.canvas.rotate(resolved.rotationDeg)
+    drawContext.canvas.scale(resolved.scaleX, resolved.scaleY)
+    drawContext.canvas.translate(-resolved.center.x, -resolved.center.y)
+    drawBuddySprite(resolved)
+    drawContext.canvas.restore()
+}
+
+private fun DrawScope.drawBuddySpriteInner(spec: BuddySpriteSpec) {    val image = spec.image
     if (image != null) {
-        val dstSize = IntSize(sizePx.toInt(), sizePx.toInt())
+        val dstSize = IntSize(spec.sizePx.toInt(), spec.sizePx.toInt())
         drawImage(
             image = image,
             dstOffset = IntOffset(
-                (center.x - sizePx / HALF).toInt(),
-                (center.y - sizePx / HALF).toInt(),
+                (spec.center.x - spec.sizePx / HALF).toInt(),
+                (spec.center.y - spec.sizePx / HALF).toInt(),
             ),
             dstSize = dstSize,
-            alpha = alpha,
+            alpha = spec.alpha,
         )
     } else {
-        drawProceduralBuddy(center, sizePx, seed, rarity, gaze, blink, alpha)
+        drawProceduralBuddy(spec)
     }
 }
 
 /**
  * The pre-art-drop buddy: a round body tinted by rarity, two eyes with
- * saccade-driven pupils, a smile. Deterministic from [seed] so screenshots
- * are stable. Cute enough to ship against, honest about being temporary.
+ * saccade-driven pupils, a smile. Deterministic from [BuddySpriteSpec.seed]
+ * so screenshots are stable. Cute enough to ship against, honest about
+ * being temporary.
  */
-fun DrawScope.drawProceduralBuddy(
-    center: Offset,
-    sizePx: Float,
-    seed: Long,
-    rarity: Rarity,
-    gaze: Offset = Offset.Zero,
-    blink: Float = 0f,
-    alpha: Float = 1f,
-) {
-    val radius = sizePx / HALF
-    val bodyColor = when (rarity) {
+fun DrawScope.drawProceduralBuddy(spec: BuddySpriteSpec) {
+    val radius = spec.sizePx / HALF
+    val bodyColor = when (spec.rarity) {
         Rarity.COMMON -> Color(COMMON_BODY)
         Rarity.RARE -> Color(RARE_BODY)
         Rarity.EPIC -> Color(EPIC_BODY)
-    }.copy(alpha = alpha)
+    }.copy(alpha = spec.alpha)
     // Body hue shifts slightly per buddy so 34 commons do not look identical.
-    val hueShift = (abs(seed % HUE_SEED_RANGE) - HUE_SEED_HALF) / HUE_DIVISOR
+    val hueShift = (abs(spec.seed % HUE_SEED_RANGE) - HUE_SEED_HALF) / HUE_DIVISOR
     val body = Color(
         red = (bodyColor.red + hueShift).coerceIn(0f, 1f),
         green = bodyColor.green,
         blue = (bodyColor.blue - hueShift).coerceIn(0f, 1f),
-        alpha = alpha,
+        alpha = spec.alpha,
     )
-    drawCircle(body, radius, center)
+    drawCircle(body, radius, spec.center)
 
-    val eyeY = center.y - radius * EYE_Y_FRAC
+    val eyeY = spec.center.y - radius * EYE_Y_FRAC
     val eyeDX = radius * EYE_DX_FRAC
     val eyeR = radius * EYE_R_FRAC
-    val lid = blink.coerceIn(0f, 1f)
+    val lid = spec.blink.coerceIn(0f, 1f)
     for (side in listOf(-1f, 1f)) {
-        val eyeCenter = Offset(center.x + eyeDX * side, eyeY)
+        val eyeCenter = Offset(spec.center.x + eyeDX * side, eyeY)
         if (lid < LID_CLOSED_THRESHOLD) {
-            drawCircle(Color.White.copy(alpha = alpha), eyeR, eyeCenter)
+            drawCircle(Color.White.copy(alpha = spec.alpha), eyeR, eyeCenter)
             val pupilR = eyeR * PUPIL_FRAC * (1f - lid * LID_SHRINK)
             drawCircle(
-                Color(INK).copy(alpha = alpha),
+                Color(INK).copy(alpha = spec.alpha),
                 pupilR,
-                eyeCenter + gaze * eyeR * GAZE_FRAC,
+                eyeCenter + spec.gaze * eyeR * GAZE_FRAC,
             )
         } else {
             drawLine(
-                Color(INK).copy(alpha = alpha),
+                Color(INK).copy(alpha = spec.alpha),
                 eyeCenter + Offset(-eyeR, 0f),
                 eyeCenter + Offset(eyeR, 0f),
                 strokeWidth = radius * LID_STROKE_FRAC,
@@ -148,11 +161,11 @@ fun DrawScope.drawProceduralBuddy(
     }
     // Smile.
     drawArc(
-        color = Color(INK).copy(alpha = alpha * SMILE_ALPHA),
+        color = Color(INK).copy(alpha = spec.alpha * SMILE_ALPHA),
         startAngle = SMILE_START_DEG,
         sweepAngle = SMILE_SWEEP_DEG,
         useCenter = false,
-        topLeft = Offset(center.x - radius * SMILE_W_FRAC, center.y - radius * SMILE_Y_FRAC),
+        topLeft = Offset(spec.center.x - radius * SMILE_W_FRAC, spec.center.y - radius * SMILE_Y_FRAC),
         size = androidx.compose.ui.geometry.Size(radius * SMILE_W, radius * SMILE_H),
         style = Stroke(width = radius * SMILE_STROKE_FRAC),
     )
