@@ -6,3 +6,6 @@ max_line_length = 120
 ktlint_code_style = official
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
+# The applicationId/package uses underscores (com.sreecharan.brainrot_buddies_steal_battle);
+# renaming would break the Play listing, so the package-name rule stays off.
+ktlint_standard_package-name = disabled
