@@ -63,17 +63,19 @@ class SettingsViewModel @Inject constructor(
         combine(
             settingsRepository.settings,
             repository.observeMusicVolume(),
-            repository.observeSfxVolume(),
-        ) { settings, music, sfx -> Triple(settings, music, sfx) },
+        ) { settings, music -> settings to music },
         combine(
+            repository.observeSfxVolume(),
             repository.observeVoiceVolume(),
+        ) { sfx, voice -> sfx to voice },
+        combine(
             repository.observeBennyHintsEnabled(),
             billingManager.entitlements,
-        ) { voice, benny, entitlements -> Triple(voice, benny, entitlements) },
-        deletingState,
-    ) { first, second, deleting ->
-        val (settings, music, sfx) = first
-        val (voice, benny, entitlements) = second
+        ) { benny, entitlements -> benny to entitlements },
+    ) { first, second, third ->
+        val (settings, music) = first
+        val (sfx, voice) = second
+        val (benny, entitlements) = third
         SettingsUiState(
             themeMode = settings.themeMode,
             hapticsEnabled = settings.hapticsEnabled,
@@ -82,8 +84,10 @@ class SettingsViewModel @Inject constructor(
             voiceVolume = voice.dataOrNull()?.coerceIn(MIN_VOLUME, MAX_VOLUME) ?: DEFAULT_VOLUME,
             bennyHints = benny.dataOrNull() ?: true,
             adsRemoved = entitlements.adsRemoved,
-            isDeleting = deleting,
+            isDeleting = false,
         )
+    }.combine(deletingState) { state, deleting ->
+        state.copy(isDeleting = deleting)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

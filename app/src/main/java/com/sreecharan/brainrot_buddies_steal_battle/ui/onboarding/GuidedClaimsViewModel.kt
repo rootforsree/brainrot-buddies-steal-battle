@@ -53,19 +53,19 @@ class GuidedClaimsViewModel @Inject constructor(
 
     val step: StateFlow<GuidedStep?> field = combine(
         combine(
-            repository.observeOwnedBuddies(),
-            repository.observeSlots(),
+            combine(
+                repository.observeOwnedBuddies(),
+                repository.observeSlots(),
+            ) { buddiesResult, slotsResult -> buddiesResult to slotsResult },
             repository.observeVault(),
-        ) { buddiesResult, slotsResult, vaultResult ->
-            Triple(buddiesResult, slotsResult, vaultResult)
-        },
+        ) { first, vaultResult -> Triple(first.first, first.second, vaultResult) },
         combine(
-            repository.observeCalendar(),
-            repository.observeTutorialDone(),
+            combine(
+                repository.observeCalendar(),
+                repository.observeTutorialDone(),
+            ) { calendarResult, tutorialResult -> calendarResult to tutorialResult },
             dismissed,
-        ) { calendarResult, tutorialResult, dismissedSteps ->
-            Triple(calendarResult, tutorialResult, dismissedSteps)
-        },
+        ) { first, dismissedSteps -> Triple(first.first, first.second, dismissedSteps) },
     ) { first, second ->
         val (buddiesResult, slotsResult, vaultResult) = first
         val (calendarResult, tutorialResult, dismissedSteps) = second

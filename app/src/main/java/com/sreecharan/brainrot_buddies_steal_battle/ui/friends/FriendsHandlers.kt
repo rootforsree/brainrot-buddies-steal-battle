@@ -41,7 +41,7 @@ import kotlinx.coroutines.launch
  * session (endpoint, hellos, identity gate). The handlers below are thin
  * intent groups over this core.
  */
-internal class FriendsVmCore(
+class FriendsVmCore(
     val nearbyManager: NearbyManager,
     val gameRepository: GameRepository,
     val gameEngine: GameEngine,

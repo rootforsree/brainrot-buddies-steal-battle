@@ -162,7 +162,7 @@ internal fun LazyListScope.generalSection(
             GeneralToggleRow(
                 titleRes = R.string.settings_haptics_title,
                 subtitleRes = R.string.settings_haptics_sub,
-                icon = Icons.Filled.Vibration,
+                icon = Icons.Filled.TouchApp,
                 checked = state.hapticsEnabled,
                 onToggle = { actions.onHapticsToggled(!state.hapticsEnabled) },
             )
@@ -170,7 +170,7 @@ internal fun LazyListScope.generalSection(
             GeneralToggleRow(
                 titleRes = R.string.settings_benny_title,
                 subtitleRes = R.string.settings_benny_sub,
-                icon = Icons.Filled.Face,
+                icon = Icons.Filled.SentimentSatisfied,
                 checked = state.bennyHints,
                 onToggle = { actions.onBennyHintsToggled(!state.bennyHints) },
             )

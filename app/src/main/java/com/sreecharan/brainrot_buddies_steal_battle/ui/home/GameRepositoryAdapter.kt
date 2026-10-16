@@ -64,24 +64,47 @@ class GameRepositoryAdapter @Inject constructor(
     )
 
     private val snapshotPartA: Flow<SnapshotPartA> = combine(
-        repository.observeOwnedBuddies(),
-        repository.observeSlots(),
-        repository.observeVault(),
-        repository.observeTickets(),
-        repository.observeShield(),
-        repository.observeBaseName(),
-    ) { buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR ->
-        SnapshotPartA(buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR)
+        combine(
+            repository.observeOwnedBuddies(),
+            repository.observeSlots(),
+        ) { buddiesR, slotsR -> buddiesR to slotsR },
+        combine(
+            repository.observeVault(),
+            repository.observeTickets(),
+        ) { vaultR, ticketsR -> vaultR to ticketsR },
+        combine(
+            repository.observeShield(),
+            repository.observeBaseName(),
+        ) { shieldR, nameR -> shieldR to nameR },
+    ) { first, second, third ->
+        SnapshotPartA(
+            buddies = first.first,
+            slots = first.second,
+            vault = second.first,
+            tickets = second.second,
+            shield = third.first,
+            baseName = third.second,
+        )
     }
 
     private val snapshotPartB: Flow<SnapshotPartB> = combine(
-        repository.observeOnboardingDay(),
-        repository.observeTutorialDone(),
-        repository.observeRaidRecords(),
-        repository.observeLastRaidWindow(),
+        combine(
+            repository.observeOnboardingDay(),
+            repository.observeTutorialDone(),
+        ) { dayR, tutorialR -> dayR to tutorialR },
+        combine(
+            repository.observeRaidRecords(),
+            repository.observeLastRaidWindow(),
+        ) { raidsR, lastWindowR -> raidsR to lastWindowR },
         repository.observeRaidsUsed(),
-    ) { dayR, tutorialR, raidsR, lastWindowR, raidsUsedR ->
-        SnapshotPartB(dayR, tutorialR, raidsR, lastWindowR, raidsUsedR)
+    ) { first, second, raidsUsedR ->
+        SnapshotPartB(
+            onboardingDay = first.first,
+            tutorialDone = first.second,
+            raids = second.first,
+            lastRaidWindow = second.second,
+            raidsUsed = raidsUsedR,
+        )
     }
 
     override val snapshot: Flow<BaseSnapshot> = combine(snapshotPartA, snapshotPartB) { a, b ->

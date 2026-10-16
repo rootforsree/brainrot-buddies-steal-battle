@@ -182,7 +182,6 @@ private fun DrawScope.drawDrumroll(frame: CeremonyFrame) {
         ),
     )
     drawText(
-        frame.textMeasurer,
         q,
         topLeft = frame.center - Offset(q.size.width / 2f, q.size.height / 2f),
     )
@@ -223,7 +222,6 @@ private fun DrawScope.drawReveal(frame: CeremonyFrame) {
         ),
     )
     drawText(
-        frame.textMeasurer,
         label,
         topLeft = Offset(
             frame.center.x - label.size.width / 2f,
@@ -239,7 +237,6 @@ private fun DrawScope.drawReveal(frame: CeremonyFrame) {
         ),
     )
     drawText(
-        frame.textMeasurer,
         name,
         topLeft = Offset(
             frame.center.x - name.size.width / 2f,

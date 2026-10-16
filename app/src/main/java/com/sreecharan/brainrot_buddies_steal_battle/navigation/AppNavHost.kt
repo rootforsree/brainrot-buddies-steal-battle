@@ -33,7 +33,6 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
-import NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -48,7 +47,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.home.BaseScreen
 import com.sreecharan.brainrot_buddies_steal_battle.ui.onboarding.OnboardingFlow
 import com.sreecharan.brainrot_buddies_steal_battle.ui.raids.RaidVisitRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.ForParentsRoute
-import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.PosterRoute
+import com.sreecharan.brainrot_buddies_steal_battle.ui.poster.PosterRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.shop.ShopRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens

@@ -149,7 +149,6 @@ private fun DrawScope.drawStretch(frame: StealFrame) {
         ),
     )
     drawText(
-        frame.textMeasurer,
         label,
         topLeft = frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
             Offset(0f, -frame.buddySize * YOINK_LABEL_DY_FRAC),
@@ -224,7 +223,6 @@ private fun DrawScope.drawFailPhase(frame: StealFrame) {
         ),
     )
     drawText(
-        frame.textMeasurer,
         label,
         topLeft = frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
             Offset(0f, -frame.buddySize * SHIELDED_LABEL_DY_FRAC),

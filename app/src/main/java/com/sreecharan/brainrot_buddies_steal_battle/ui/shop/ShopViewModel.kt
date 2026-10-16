@@ -151,20 +151,26 @@ class ShopViewModel @Inject constructor(
     )
 
     private val sources: Flow<ShopSources> = combine(
-        repository.observeVault(),
-        repository.observeTickets(),
-        repository.observeSlots(),
-        repository.observeShield(),
-        repository.observeOwnedBuddies(),
-        gamePrefs.buddyBites,
-    ) { vault, tickets, slots, shield, buddies, bites ->
+        combine(
+            repository.observeVault(),
+            repository.observeTickets(),
+        ) { vault, tickets -> vault to tickets },
+        combine(
+            repository.observeSlots(),
+            repository.observeShield(),
+        ) { slots, shield -> slots to shield },
+        combine(
+            repository.observeOwnedBuddies(),
+            gamePrefs.buddyBites,
+        ) { buddies, bites -> buddies to bites },
+    ) { first, second, third ->
         ShopSources(
-            vault = vault.dataOrNull(),
-            tickets = tickets.dataOrNull().orEmpty(),
-            slots = slots.dataOrNull().orEmpty(),
-            shield = shield.dataOrNull(),
-            buddies = buddies.dataOrNull().orEmpty(),
-            bites = bites,
+            vault = first.first.dataOrNull(),
+            tickets = first.second.dataOrNull().orEmpty(),
+            slots = second.first.dataOrNull().orEmpty(),
+            shield = second.second.dataOrNull(),
+            buddies = third.first.dataOrNull().orEmpty(),
+            bites = third.second,
             day = null,
         )
     }.combine(repository.observeOnboardingDay()) { partial, day ->
