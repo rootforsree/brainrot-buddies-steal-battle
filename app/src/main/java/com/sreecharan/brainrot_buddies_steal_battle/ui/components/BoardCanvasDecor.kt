@@ -16,7 +16,6 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.sreecharan.brainrot_buddies_steal_battle.ui.home.BoardCanvasState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.CoachMarkUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.CoachTarget
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.FloatUpAnchor
@@ -104,7 +103,6 @@ internal fun DrawScope.drawShieldDome(
         style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.secondaryLabel),
     )
     drawText(
-        textMeasurer,
         label,
         topLeft = Offset(
             layout.gridLeft + GRID_COLS * (layout.cell + layout.spacing) / 2f - label.size.width / 2f,
@@ -158,7 +156,6 @@ internal fun DrawScope.drawFloatUps(
             ),
         )
         drawText(
-            textMeasurer,
             label,
             topLeft = anchor + Offset(-label.size.width / 2f, -label.size.height / 2f - rise),
         )
@@ -205,7 +202,7 @@ internal fun DrawScope.drawCoachMark(
         size = Size(label.size.width + pad * 2f, label.size.height + pad * 2f),
         cornerRadius = CornerRadius(12.dp.toPx()),
     )
-    drawText(textMeasurer, label, topLeft = bgTopLeft + Offset(pad, pad))
+    drawText(label, topLeft = bgTopLeft + Offset(pad, pad))
 }
 
 internal fun DrawScope.drawPadlock(center: Offset, size: Float, color: Color) {

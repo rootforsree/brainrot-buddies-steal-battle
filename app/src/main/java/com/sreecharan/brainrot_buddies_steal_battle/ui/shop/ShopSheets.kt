@@ -177,7 +177,7 @@ fun HatEquipSheet(
                 GroupCard {
                     SettingsRow(
                         title = buddy.name,
-                        subtitle = stringResource(R.string.shop_upgrade_level, buddy.level),
+                        subtitle = stringResource(R.string.shop_upgrade_to, buddy.level),
                         leadingIcon = {
                             BuddyImage(
                                 imageName = "buddy_${buddy.buddyId}",

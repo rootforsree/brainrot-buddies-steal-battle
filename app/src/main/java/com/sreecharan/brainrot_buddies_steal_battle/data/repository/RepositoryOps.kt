@@ -11,6 +11,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.local.VaultEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Result
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 /**
@@ -240,7 +241,7 @@ internal class GameLifecycleOps(
  * Builds the nine operation groups from the injected DAO holders. Kept as
  * one holder so [GameRepositoryImpl]'s delegating constructor stays readable.
  */
-internal class RepositoryOps @Inject constructor(
+class RepositoryOps @Inject constructor(
     private val core: CoreDaos,
     private val meta: MetaDaos,
     private val helpers: RepositoryHelpers,

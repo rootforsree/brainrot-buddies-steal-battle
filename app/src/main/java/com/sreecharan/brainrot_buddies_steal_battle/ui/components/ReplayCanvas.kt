@@ -295,7 +295,6 @@ private fun DrawScope.drawReplayCaption(
         cornerRadius = CornerRadius(16.dp.toPx()),
     )
     drawText(
-        textMeasurer,
         label,
         topLeft = center - Offset(label.size.width / 2f, label.size.height / 2f),
     )

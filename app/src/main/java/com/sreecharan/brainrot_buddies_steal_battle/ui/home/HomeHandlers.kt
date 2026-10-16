@@ -100,13 +100,13 @@ internal class HomeVmCore(
             (floatUpId % (JuiceTimings.FLOAT_UP_MAX_MS - JuiceTimings.FLOAT_UP_MIN_MS))
         uiState.update { state ->
             state.copy(
-                floatUps = state.floatUps + FloatUpUi(
+                floatUps = (state.floatUps + FloatUpUi(
                     id = ++floatUpId,
                     text = text,
                     anchor = anchor,
                     startUptimeMs = SystemClock.uptimeMillis(),
                     durationMs = duration,
-                ),
+                )).toImmutableList(),
             )
         }
     }
@@ -140,7 +140,7 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
         core.uiState.update { current ->
             current.copy(
                 conveyor = current.conveyor.filter { it.id != instanceId }.toImmutableList(),
-                claimAnims = current.claimAnims + (
+                claimAnims = (current.claimAnims + (
                     instanceId to ClaimAnimUi(
                         instanceId = instanceId,
                         startUptimeMs = startUptime,
@@ -151,7 +151,7 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
                         fromProgress = rideProgress(item, System.currentTimeMillis()),
                         targetSlotIndex = targetSlot,
                     )
-                    ),
+                    )).toImmutableMap(),
             )
         }
         core.coachMarkDismissed = true
@@ -250,7 +250,7 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
             ticketPull = ticket != null,
         )
         core.uiState.update { state ->
-            state.copy(conveyor = state.conveyor + buddy)
+            state.copy(conveyor = (state.conveyor + buddy).toImmutableList())
         }
         return buddy
     }
@@ -262,7 +262,7 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
                 claimAnims = state.claimAnims.mapValues { (id, anim) ->
                     if (id == item.id) anim.copy(targetSlotIndex = outcome.slotIndex) else anim
                 }.toImmutableMap(),
-                waddleAnims = state.waddleAnims + (outcome.buddy.uid to now),
+                waddleAnims = (state.waddleAnims + (outcome.buddy.uid to now)).toImmutableMap(),
             )
         }
         core.addFloatUp(
@@ -361,7 +361,7 @@ internal class BoardHandler(private val core: HomeVmCore) {
         // Tapping your own buddy is free play: bounce + catchphrase.
         if (buddy.voiceResName.isNotEmpty()) core.soundManager.playVoice(buddy.voiceResName)
         core.uiState.update {
-            it.copy(boingAnims = it.boingAnims + (buddy.uid to SystemClock.uptimeMillis()))
+            it.copy(boingAnims = (it.boingAnims + (buddy.uid to SystemClock.uptimeMillis())).toImmutableMap())
         }
     }
 }

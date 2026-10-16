@@ -11,9 +11,10 @@ import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.ProductDetailsResult
 import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.queryProductDetails
@@ -80,7 +81,7 @@ class BillingManager @Inject constructor(
     val events: SharedFlow<BillingEvent> = _events.asSharedFlow()
 
     private val purchasesListener =
-        BillingClient.PurchasesUpdatedListener { result, purchases ->
+        PurchasesUpdatedListener { result, purchases ->
             scope.launch {
                 if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
                     purchases.forEach { applyPurchase(it) }
@@ -130,7 +131,7 @@ class BillingManager @Inject constructor(
         }
     }
 
-    private fun applyProductDetails(result: QueryProductDetailsResult) {
+    private fun applyProductDetails(result: ProductDetailsResult) {
         productDetails.clear()
         result.productDetailsList.orEmpty().forEach { details ->
             productDetails[details.productId] = details

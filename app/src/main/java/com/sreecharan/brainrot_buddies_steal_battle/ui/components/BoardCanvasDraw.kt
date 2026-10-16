@@ -16,7 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Rarity
-import com.sreecharan.brainrot_buddies_steal_battle.ui.home.BoardCanvasState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.ClaimAnimUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.ConveyorBuddyUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.SlotUi
@@ -362,7 +361,6 @@ private fun DrawScope.drawSlotBadges(
             style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White),
         )
         drawText(
-            p.textMeasurer,
             label,
             topLeft = badgeC - Offset(label.size.width / 2f, label.size.height / 2f),
         )
@@ -468,7 +466,7 @@ private fun DrawScope.drawClaimPhase(
     }
 }
 
-private const val BELT_MARGIN_DP = 32.dp
+private val BELT_MARGIN_DP = 32.dp
 private const val CHEVRON_COUNT = 5
 private const val CHEVRON_PERIOD_MS = 2400L
 private const val CHEVRON_ALPHA = 0.35f
@@ -478,7 +476,7 @@ private const val CROUCH_SQUASH_Y = 0.12f
 private const val CROUCH_STRETCH_X = 0.08f
 private const val EXPIRY_RING_FRAC = 0.65f
 private const val EXPIRY_RING_ALPHA = 0.8f
-private const val SLOT_CORNER_DP = 14.dp
+private val SLOT_CORNER_DP = 14.dp
 private const val PADLOCK_FRAC = 0.28f
 private const val PADLOCK_ALPHA = 0.6f
 private const val LOCKED_BG_ALPHA = 0.12f
@@ -506,6 +504,7 @@ private const val EPIC_LAND_TRAUMA = 0.35f
 private const val DIMMED_ALPHA = 0.55f
 private const val BADGE_OFFSET_FRAC = 0.32f
 private const val TICKET_GLOW_ALPHA = 0.55f
+private const val EPIC_GLOW_ALPHA = 0.55f
 private const val BELT_EDGE_ALPHA = 0.25f
 private const val SLOT_SHIELD_ALPHA = 0.5f
 private const val SLOT_SHIELD_X_FRAC = 0.45f

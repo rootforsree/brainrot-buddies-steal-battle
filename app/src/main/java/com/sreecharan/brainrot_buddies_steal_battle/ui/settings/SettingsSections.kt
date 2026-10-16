@@ -1,5 +1,24 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.settings
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material.icons.Icons
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+import com.sreecharan.brainrot_buddies_steal_battle.ui.components.RowDivider
+import com.sreecharan.brainrot_buddies_steal_battle.ui.components.SectionHeader
+import kotlinx.collections.immutable.persistentListOf
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,7 +40,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.gifts.RedeemUiState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
-import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.ThemeMode
+import com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode
 
 /**
  * Settings list sections, extracted from SettingsScreen.kt to keep the

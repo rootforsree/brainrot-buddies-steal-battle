@@ -52,22 +52,24 @@ class RaidRulesTest {
 
     // ---- live steal validation ----
 
-    private fun liveVerdict(
-        slotOccupied: Boolean = true,
-        alreadyRaided: Boolean = false,
-        baseShieldUntil: Long = 0L,
-        slotShieldUntil: Long = 0L,
-        cooldownUntil: Long = 0L,
-        rookieShielded: Boolean = false,
-    ): StealVerdict {
+    private data class LiveStealFixture(
+        val slotOccupied: Boolean = true,
+        val alreadyRaided: Boolean = false,
+        val baseShieldUntil: Long = 0L,
+        val slotShieldUntil: Long = 0L,
+        val cooldownUntil: Long = 0L,
+        val rookieShielded: Boolean = false,
+    )
+
+    private fun liveVerdict(fixture: LiveStealFixture = LiveStealFixture()): StealVerdict {
         val now = 1_700_000_000_000L
         return RaidRules.validateLiveSteal(
-            slotOccupied = slotOccupied,
-            alreadyRaidedThisWindow = alreadyRaided,
-            baseShieldUntilMs = baseShieldUntil,
-            slotShieldUntilMs = slotShieldUntil,
-            buddyCooldownUntilMs = cooldownUntil,
-            victimRookieShielded = rookieShielded,
+            slotOccupied = fixture.slotOccupied,
+            alreadyRaidedThisWindow = fixture.alreadyRaided,
+            baseShieldUntilMs = fixture.baseShieldUntil,
+            slotShieldUntilMs = fixture.slotShieldUntil,
+            buddyCooldownUntilMs = fixture.cooldownUntil,
+            victimRookieShielded = fixture.rookieShielded,
             nowMs = now,
         )
     }
@@ -79,13 +81,13 @@ class RaidRulesTest {
 
     @Test
     fun `live steal rejects empty slot`() {
-        val verdict = liveVerdict(slotOccupied = false)
+        val verdict = liveVerdict(LiveStealFixture(slotOccupied = false))
         assertEquals(StealRejectReason.EMPTY, (verdict as StealVerdict.Rejected).reason)
     }
 
     @Test
     fun `live steal rejects second raid on same friend in window`() {
-        val verdict = liveVerdict(alreadyRaided = true)
+        val verdict = liveVerdict(LiveStealFixture(alreadyRaided = true))
         assertEquals(StealRejectReason.ALREADY_RAIDED, (verdict as StealVerdict.Rejected).reason)
     }
 
@@ -94,11 +96,11 @@ class RaidRulesTest {
         val now = 1_700_000_000_000L
         assertEquals(
             StealRejectReason.SHIELDED,
-            (liveVerdict(baseShieldUntil = now + 1000) as StealVerdict.Rejected).reason,
+            (liveVerdict(LiveStealFixture(baseShieldUntil = now + 1000)) as StealVerdict.Rejected).reason,
         )
         assertEquals(
             StealRejectReason.SHIELDED,
-            (liveVerdict(slotShieldUntil = now + 1000) as StealVerdict.Rejected).reason,
+            (liveVerdict(LiveStealFixture(slotShieldUntil = now + 1000)) as StealVerdict.Rejected).reason,
         )
     }
 
@@ -107,14 +109,14 @@ class RaidRulesTest {
         val now = 1_700_000_000_000L
         assertEquals(
             StealRejectReason.COOLDOWN,
-            (liveVerdict(cooldownUntil = now + 1000) as StealVerdict.Rejected).reason,
+            (liveVerdict(LiveStealFixture(cooldownUntil = now + 1000)) as StealVerdict.Rejected).reason,
         )
-        assertTrue(liveVerdict(cooldownUntil = now - 1000) is StealVerdict.Accepted)
+        assertTrue(liveVerdict(LiveStealFixture(cooldownUntil = now - 1000)) is StealVerdict.Accepted)
     }
 
     @Test
     fun `live steal rejects rookie-shielded victim as shielded`() {
-        val verdict = liveVerdict(rookieShielded = true) as StealVerdict.Rejected
+        val verdict = liveVerdict(LiveStealFixture(rookieShielded = true)) as StealVerdict.Rejected
         assertEquals(StealRejectReason.SHIELDED, verdict.reason)
         // The frozen wire reason for rookie shield is "shielded".
         assertEquals("shielded", verdict.reason.wire)

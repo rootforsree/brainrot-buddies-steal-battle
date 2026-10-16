@@ -95,7 +95,7 @@ internal class FriendsVmCore(
 }
 
 /** Pairing ceremony intents (§8). */
-internal class PairingIntents(private val core: FriendsVmCore) {
+class PairingIntents(private val core: FriendsVmCore) {
 
     /** Called by the Route after the in-context Bluetooth permission grant. */
     fun onBluetoothGranted() {
@@ -190,7 +190,7 @@ internal class PairingIntents(private val core: FriendsVmCore) {
 }
 
 /** Friend-list and raid-inbox intents. */
-internal class RosterIntents(private val core: FriendsVmCore) {
+class RosterIntents(private val core: FriendsVmCore) {
 
     fun onUnpair(friend: FriendItem) {
         core.scope.launch(core.ioDispatcher) {

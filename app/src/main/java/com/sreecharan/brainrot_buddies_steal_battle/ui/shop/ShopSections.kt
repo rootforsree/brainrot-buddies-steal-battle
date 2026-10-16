@@ -281,7 +281,7 @@ private fun UpgradeRowHeader(row: UpgradeRow) {
                 color = colors.label,
             )
             Text(
-                text = stringResource(R.string.shop_upgrade_level, row.level),
+                text = stringResource(R.string.shop_upgrade_to, row.level),
                 style = AppTypography.footnote,
                 color = colors.secondaryLabel,
             )

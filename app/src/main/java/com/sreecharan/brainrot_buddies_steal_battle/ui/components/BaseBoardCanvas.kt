@@ -26,7 +26,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import com.sreecharan.brainrot_buddies_steal_battle.ui.home.BoardCanvasState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.ClaimAnimUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.CoachMarkUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.ConveyorBuddyUi

@@ -52,7 +52,7 @@ import kotlin.random.Random
  * One instance per [SoundManager]; the channel implementations below are
  * thin facades over it.
  */
-internal class SoundPlaybackCore @Inject constructor(
+class SoundPlaybackCore @Inject constructor(
     val engine: AudioEngine,
     gamePrefs: GamePrefs,
     @IoDispatcher ioDispatcher: CoroutineDispatcher,

@@ -46,32 +46,58 @@ class GameRepositoryAdapter @Inject constructor(
     private val seenReplayIds = mutableSetOf<String>()
     private val sessionStartMs = System.currentTimeMillis()
 
-    override val snapshot: Flow<BaseSnapshot> = combine(
+    private data class SnapshotPartA(
+        val buddies: Result<List<OwnedBuddyEntity>>,
+        val slots: Result<List<BaseSlotEntity>>,
+        val vault: Result<VaultEntity>,
+        val tickets: Result<List<TicketEntity>>,
+        val shield: Result<ShieldEntity>,
+        val baseName: Result<String>,
+    )
+
+    private data class SnapshotPartB(
+        val onboardingDay: Result<Int>,
+        val tutorialDone: Result<Boolean>,
+        val raids: Result<List<RaidRecordEntity>>,
+        val lastRaidWindow: Result<String>,
+        val raidsUsed: Result<Int>,
+    )
+
+    private val snapshotPartA: Flow<SnapshotPartA> = combine(
         repository.observeOwnedBuddies(),
         repository.observeSlots(),
         repository.observeVault(),
         repository.observeTickets(),
         repository.observeShield(),
         repository.observeBaseName(),
+    ) { buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR ->
+        SnapshotPartA(buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR)
+    }
+
+    private val snapshotPartB: Flow<SnapshotPartB> = combine(
         repository.observeOnboardingDay(),
         repository.observeTutorialDone(),
         repository.observeRaidRecords(),
         repository.observeLastRaidWindow(),
         repository.observeRaidsUsed(),
-    ) { buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR, dayR, tutorialR, raidsR, lastWindowR, raidsUsedR ->
+    ) { dayR, tutorialR, raidsR, lastWindowR, raidsUsedR ->
+        SnapshotPartB(dayR, tutorialR, raidsR, lastWindowR, raidsUsedR)
+    }
+
+    override val snapshot: Flow<BaseSnapshot> = combine(snapshotPartA, snapshotPartB) { a, b ->
         buildSnapshot(
             SnapshotInputs(
-                buddies = buddiesR.getOrNull().orEmpty(),
-                slots = slotsR.getOrNull().orEmpty(),
-                vault = vaultR.getOrNull() ?: VaultEntity(),
-                tickets = ticketsR.getOrNull().orEmpty(),
-                shield = shieldR.getOrNull(),
-                baseName = nameR.getOrNull().orEmpty(),
-                onboardingDay = dayR.getOrNull() ?: 1,
-                tutorialDone = tutorialR.getOrNull() == true,
-                raids = raidsR.getOrNull().orEmpty(),
-                lastRaidWindow = lastWindowR.getOrNull().orEmpty(),
-                raidsUsed = raidsUsedR.getOrNull() ?: 0,
+                buddies = a.buddies.getOrNull().orEmpty(),
+                slots = a.slots.getOrNull().orEmpty(),
+                vault = a.vault.getOrNull() ?: VaultEntity(),
+                tickets = a.tickets.getOrNull().orEmpty(),
+                shield = a.shield.getOrNull(),
+                baseName = a.baseName.getOrNull().orEmpty(),
+                onboardingDay = b.onboardingDay.getOrNull() ?: 1,
+                tutorialDone = b.tutorialDone.getOrNull() == true,
+                raids = b.raids.getOrNull().orEmpty(),
+                lastRaidWindow = b.lastRaidWindow.getOrNull().orEmpty(),
+                raidsUsed = b.raidsUsed.getOrNull() ?: 0,
             ),
         )
     }.flowOn(ioDispatcher)

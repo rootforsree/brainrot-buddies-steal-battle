@@ -32,6 +32,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable

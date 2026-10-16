@@ -60,14 +60,20 @@ class SettingsViewModel @Inject constructor(
     private val deletingState = MutableStateFlow(false)
 
     val uiState: StateFlow<SettingsUiState> = combine(
-        settingsRepository.settings,
-        repository.observeMusicVolume(),
-        repository.observeSfxVolume(),
-        repository.observeVoiceVolume(),
-        repository.observeBennyHintsEnabled(),
-        billingManager.entitlements,
+        combine(
+            settingsRepository.settings,
+            repository.observeMusicVolume(),
+            repository.observeSfxVolume(),
+        ) { settings, music, sfx -> Triple(settings, music, sfx) },
+        combine(
+            repository.observeVoiceVolume(),
+            repository.observeBennyHintsEnabled(),
+            billingManager.entitlements,
+        ) { voice, benny, entitlements -> Triple(voice, benny, entitlements) },
         deletingState,
-    ) { settings, music, sfx, voice, benny, entitlements, deleting ->
+    ) { first, second, deleting ->
+        val (settings, music, sfx) = first
+        val (voice, benny, entitlements) = second
         SettingsUiState(
             themeMode = settings.themeMode,
             hapticsEnabled = settings.hapticsEnabled,

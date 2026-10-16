@@ -397,7 +397,7 @@ class RaidStealFlow(
     }
 
     suspend fun finishFailed(reason: StealRejectReason?) {
-        val resId = failedMessageRes(reason)
+        val resId = helpers.failedMessageRes(reason)
         core.updateState { it.copy(stealState = StealOutcome.FAILED, stealMessageRes = resId) }
         core.sendEvent(RaidVisitEvent.PlayStealFail)
     }

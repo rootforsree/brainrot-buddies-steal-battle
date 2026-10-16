@@ -105,8 +105,8 @@ class HomeScreenshotTest {
         isLoading = false,
         baseName = "Wobble Tower",
         conveyor = persistentListOf(
-            conveyorBuddy("ride-1", "frogboot", "Frogboot", Rarity.COMMON, lane = 0, seed = 11L),
-            conveyorBuddy("ride-2", "lava_lulu", "Lava Lulu", Rarity.RARE, lane = 2, seed = 22L),
+            conveyorBuddy(BuddyFixture("ride-1", "frogboot", "Frogboot", Rarity.COMMON, 11L), lane = 0),
+            conveyorBuddy(BuddyFixture("ride-2", "lava_lulu", "Lava Lulu", Rarity.RARE, 22L), lane = 2),
         ),
         slots = populatedSlots(),
         vault = VaultUi(coins = 7_200L, capCoins = 14_400L),
@@ -131,9 +131,9 @@ class HomeScreenshotTest {
 
     private fun populatedSlots() = (0 until 24).map { index ->
         val buddy = when (index) {
-            0 -> slottedBuddy("uid-1", "frogboot", "Frogboot", Rarity.COMMON, 1, 101L)
-            1 -> slottedBuddy("uid-2", "lava_lulu", "Lava Lulu", Rarity.RARE, 2, 202L)
-            2 -> slottedBuddy("uid-3", "extra_butter", "Extra Butter", Rarity.EPIC, 3, 303L)
+            0 -> slottedBuddy(BuddyFixture("uid-1", "frogboot", "Frogboot", Rarity.COMMON, 101L), level = 1)
+            1 -> slottedBuddy(BuddyFixture("uid-2", "lava_lulu", "Lava Lulu", Rarity.RARE, 202L), level = 2)
+            2 -> slottedBuddy(BuddyFixture("uid-3", "extra_butter", "Extra Butter", Rarity.EPIC, 303L), level = 3)
             else -> null
         }
         SlotUi(
@@ -145,25 +145,29 @@ class HomeScreenshotTest {
         )
     }.toImmutableList()
 
+    private data class BuddyFixture(
+        val id: String,
+        val buddyId: String,
+        val name: String,
+        val rarity: Rarity,
+        val seed: Long,
+    )
+
     private fun conveyorBuddy(
-        id: String,
-        buddyId: String,
-        name: String,
-        rarity: Rarity,
+        fixture: BuddyFixture,
         lane: Int,
-        seed: Long,
     ): ConveyorBuddyUi {
         val spawnedAt = 1_699_999_995_000L // 5 s into the 15 s ride
         return ConveyorBuddyUi(
-            id = id,
-            buddyId = buddyId,
-            name = name,
-            rarity = rarity,
-            imageRes = BuddyCatalog.find(BuddyId(buddyId))?.imageRes ?: 0,
+            id = fixture.id,
+            buddyId = fixture.buddyId,
+            name = fixture.name,
+            rarity = fixture.rarity,
+            imageRes = BuddyCatalog.find(BuddyId(fixture.buddyId))?.imageRes ?: 0,
             catchphrase = "Test catchphrase!",
-            voiceResName = "voice_$buddyId",
+            voiceResName = "voice_${fixture.buddyId}",
             coinsPerSec = 1,
-            seed = seed,
+            seed = fixture.seed,
             lane = lane,
             spawnedAtMs = spawnedAt,
             expiresAtMs = spawnedAt + 15_000L,
@@ -171,22 +175,18 @@ class HomeScreenshotTest {
     }
 
     private fun slottedBuddy(
-        uid: String,
-        buddyId: String,
-        name: String,
-        rarity: Rarity,
+        fixture: BuddyFixture,
         level: Int,
-        seed: Long,
     ): SlottedBuddyUi = SlottedBuddyUi(
-        uid = uid,
-        buddyId = buddyId,
-        name = name,
-        rarity = rarity,
-        imageRes = BuddyCatalog.find(BuddyId(buddyId))?.imageRes ?: 0,
-        voiceResName = "voice_$buddyId",
+        uid = fixture.id,
+        buddyId = fixture.buddyId,
+        name = fixture.name,
+        rarity = fixture.rarity,
+        imageRes = BuddyCatalog.find(BuddyId(fixture.buddyId))?.imageRes ?: 0,
+        voiceResName = "voice_${fixture.buddyId}",
         catchphrase = "Test catchphrase!",
         level = level,
-        seed = seed,
+        seed = fixture.seed,
         hatId = null,
         coinsPerSec = 1,
         stealCooldownEndsAtMs = 0L,

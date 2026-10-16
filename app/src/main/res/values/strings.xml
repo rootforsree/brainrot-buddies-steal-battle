@@ -191,6 +191,8 @@
     <string name="shop_max_level">MAX</string>
     <string name="shop_per_sec">%1$s coins/sec</string>
     <string name="shop_hat_equip">Equip</string>
+    <string name="shop_hat_owned">Owned</string>
+    <string name="shop_hat_buy">Buy</string>
     <string name="shop_hat_equipped">On %1$s</string>
     <string name="shop_hat_pick_buddy">Pick a buddy to wear it</string>
     <string name="shop_hat_remove">Take it off</string>

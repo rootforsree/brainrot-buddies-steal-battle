@@ -18,6 +18,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.local.TicketDao
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.TicketEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.VaultDao
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.VaultEntity
+import java.io.IOException
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.DataError
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Result
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
@@ -202,7 +203,7 @@ class GameRepositoryTest {
 
     @Test
     fun `observe slots maps a dao failure to error`() = runTest(testDispatcher) {
-        every { slotDao.observeAll() } returns flow { throw RuntimeException("boom") }
+        every { slotDao.observeAll() } returns flow { throw IOException("boom") }
 
         repository.observeSlots().test {
             assertEquals(Result.Loading, awaitItem())

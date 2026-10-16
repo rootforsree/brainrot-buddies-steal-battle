@@ -52,13 +52,23 @@ class GuidedClaimsViewModel @Inject constructor(
     private val dismissed = MutableStateFlow<Set<GuidedStep>>(emptySet())
 
     val step: StateFlow<GuidedStep?> field = combine(
-        repository.observeOwnedBuddies(),
-        repository.observeSlots(),
-        repository.observeVault(),
-        repository.observeCalendar(),
-        repository.observeTutorialDone(),
-        dismissed,
-    ) { buddiesResult, slotsResult, vaultResult, calendarResult, tutorialResult, dismissedSteps ->
+        combine(
+            repository.observeOwnedBuddies(),
+            repository.observeSlots(),
+            repository.observeVault(),
+        ) { buddiesResult, slotsResult, vaultResult ->
+            Triple(buddiesResult, slotsResult, vaultResult)
+        },
+        combine(
+            repository.observeCalendar(),
+            repository.observeTutorialDone(),
+            dismissed,
+        ) { calendarResult, tutorialResult, dismissedSteps ->
+            Triple(calendarResult, tutorialResult, dismissedSteps)
+        },
+    ) { first, second ->
+        val (buddiesResult, slotsResult, vaultResult) = first
+        val (calendarResult, tutorialResult, dismissedSteps) = second
         val tutorialDone = tutorialResult.dataOrNull() == true
         if (tutorialDone) {
             null

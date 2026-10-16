@@ -35,6 +35,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -96,7 +97,7 @@ sealed interface FriendsEvent {
  */
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
-    nearbyManager: NearbyManager,
+    private val nearbyManager: NearbyManager,
     gameRepository: GameRepository,
     gameEngine: GameEngine,
     p2pPrefs: P2pPrefs,

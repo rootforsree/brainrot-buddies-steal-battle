@@ -378,10 +378,14 @@ class SoundManagerTest {
             stemVolumes[stemIndex] = volume
         }
 
-        override fun stopStems() {}
+        override fun stopStems() {
+            // no-op: test double has no stems to stop
+        }
         override fun isMuted(): Boolean = muted
         override fun setOnVoiceEnd(listener: (Int) -> Unit) { voiceEnd = listener }
-        override fun release() {}
+        override fun release() {
+            // no-op: test double holds no native resources
+        }
 
         fun finishVoice(streamId: Int) = voiceEnd(streamId)
     }

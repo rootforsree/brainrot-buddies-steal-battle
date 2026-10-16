@@ -157,8 +157,7 @@ class ShopViewModel @Inject constructor(
         repository.observeShield(),
         repository.observeOwnedBuddies(),
         gamePrefs.buddyBites,
-        repository.observeOnboardingDay(),
-    ) { vault, tickets, slots, shield, buddies, bites, day ->
+    ) { vault, tickets, slots, shield, buddies, bites ->
         ShopSources(
             vault = vault.dataOrNull(),
             tickets = tickets.dataOrNull().orEmpty(),
@@ -166,8 +165,10 @@ class ShopViewModel @Inject constructor(
             shield = shield.dataOrNull(),
             buddies = buddies.dataOrNull().orEmpty(),
             bites = bites,
-            day = day.dataOrNull(),
+            day = null,
         )
+    }.combine(repository.observeOnboardingDay()) { partial, day ->
+        partial.copy(day = day.dataOrNull())
     }
 
     val uiState: StateFlow<ShopUiState> = combine(

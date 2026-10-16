@@ -96,9 +96,6 @@ data class GiftCalendarActions(
 /** How long a toast stays visible before dismissing. */
 private const val TOAST_DISMISS_MS = 2_500L
 
-/** Length of the gift calendar. */
-private const val CALENDAR_DAYS = 30
-
 /** Day cells per grid row. */
 private const val DAYS_PER_ROW = 5
 

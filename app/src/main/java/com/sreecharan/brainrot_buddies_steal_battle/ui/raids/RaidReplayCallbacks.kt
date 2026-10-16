@@ -6,7 +6,7 @@ package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
  * works before Builder B lands.
  */
 data class RaidReplayCallbacks(
-    val onPlayStealReplay: (buddyName: String, attackerName: String) -> Unit = {},
-    val onPlayRevengeReplay: (buddyName: String, attackerName: String) -> Unit = {},
+    val onPlayStealReplay: (buddyName: String, attackerName: String) -> Unit = { _, _ -> },
+    val onPlayRevengeReplay: (buddyName: String, attackerName: String) -> Unit = { _, _ -> },
     val onPlayStealFail: () -> Unit = {},
 )

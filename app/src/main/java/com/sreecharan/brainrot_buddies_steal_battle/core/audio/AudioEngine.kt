@@ -100,7 +100,7 @@ internal const val MAX_PITCH = 2.0f
  * Singleton-scoped so every engine delegate talks to the one SoundPool.
  */
 @Singleton
-internal class AudioEngineCore @Inject constructor(
+class AudioEngineCore @Inject constructor(
     @ApplicationContext val context: Context,
 ) {
 

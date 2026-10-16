@@ -177,8 +177,6 @@ private fun ConnectionBadge(connection: VisitConnection, friendBaseName: String)
 }
 
 @Composable
-
-@Composable
 private fun RevengeCard(onRevengeClicked: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
