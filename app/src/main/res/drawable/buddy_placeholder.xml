@@ -1,0 +1,28 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="96"
+    android:viewportHeight="96">
+    <!-- Placeholder buddy art. The coordinator replaces this with real
+         buddy/hero art (buddy_*, hero_* in drawable-nodpi). Builder C's
+         BuddyImage falls back to this when a named drawable is missing. -->
+    <path
+        android:fillColor="#3A3A3C"
+        android:pathData="M48,8C26,8 8,26 8,48C8,70 26,88 48,88C70,88 88,70 88,48C88,26 70,8 48,8Z" />
+    <path
+        android:fillColor="#636366"
+        android:pathData="M48,26C38,26 30,34 30,44C30,54 38,62 48,62C58,62 66,54 66,44C66,34 58,26 48,26Z" />
+    <circle
+        android:fillColor="#EBEBF0"
+        android:cx="41"
+        android:cy="42"
+        android:r="4" />
+    <circle
+        android:fillColor="#EBEBF0"
+        android:cx="55"
+        android:cy="42"
+        android:r="4" />
+    <path
+        android:fillColor="#EBEBF0"
+        android:pathData="M40,54Q48,60 56,54Q48,57 40,54Z" />
+</vector>

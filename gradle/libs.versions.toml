@@ -1,0 +1,136 @@
+[versions]
+# Toolchain (verified 2026-10-14)
+kotlin = "2.4.20"
+agp = "9.4.1"
+# KSP 2.3.12 pairs with Kotlin 2.4.20: KSP versioning decoupled from the
+# Kotlin compiler version starting at KSP 2.3.0 (2.3.x is the whole line now).
+ksp = "2.3.12"
+composeBom = "2026.06.01"
+
+# AndroidX
+activity = "1.13.0"
+lifecycle = "2.10.0"
+core = "1.18.0"
+navigation = "2.9.8"
+room = "2.8.5"
+datastore = "1.2.1"
+androidxHilt = "1.3.0"
+profileinstaller = "1.4.1"
+benchmark = "1.5.0"
+uiautomator = "2.4.0"
+
+# DI / data
+hilt = "2.60.1"
+coroutines = "1.11.0"
+serialization = "1.11.0"
+collectionsImmutable = "0.5.2"
+protobuf = "4.36.2"
+protobufPlugin = "0.10.0"
+desugar = "2.1.5"
+
+# Steal Battle additions (verified 2026-10-16)
+nearby = "19.3.0"          # play-services-nearby: P2P_STAR friend raids, no internet
+playAds = "23.6.0"         # play-services-ads: Families self-certified rewarded ads
+billing = "8.0.0"          # billing-ktx: remove-ads + cosmetic hats, parent-gated
+
+# Testing
+junit = "5.14.4"
+mockk = "1.14.11"
+turbine = "1.2.1"
+roborazzi = "1.70.0"
+robolectric = "4.17"
+androidJunit5 = "2.0.1"
+baselineprofile = "1.5.0"
+
+# Quality gates
+spotless = "8.10.4"
+ktlint = "1.8.0"
+detekt = "1.23.8"
+
+[libraries]
+# Compose (versions managed by the BOM; only the BOM is pinned)
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+
+# AndroidX
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
+# hiltViewModel() lives in hilt-lifecycle-viewmodel-compose (1.3.0+; the separate hilt-navigation-compose artifact is superseded)
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-lifecycle-viewmodel-compose", version.ref = "androidxHilt" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core" }
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+
+# Hilt
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+
+# DataStore (Proto for typed settings, Preferences for flat flags)
+datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Kotlinx
+coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
+coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "collectionsImmutable" }
+serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+
+# Protobuf (Proto DataStore codegen)
+protobuf-javalite = { group = "com.google.protobuf", name = "protobuf-javalite", version.ref = "protobuf" }
+protobuf-protoc = { group = "com.google.protobuf", name = "protoc", version.ref = "protobuf" }
+
+# Core library desugaring (java.time etc. below API 26)
+desugar = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar" }
+
+# Testing
+junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit" }
+junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit" }
+junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit" }
+# Vintage engine: required so JUnit4-based tests (Robolectric screenshot tests) execute on the JUnit Platform.
+junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+roborazzi = { group = "io.github.takahirom.roborazzi", name = "roborazzi", version.ref = "roborazzi" }
+roborazzi-compose = { group = "io.github.takahirom.roborazzi", name = "roborazzi-compose", version.ref = "roborazzi" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+
+# Baseline profiles / macrobenchmark (producer module only)
+benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+
+# Steal Battle: nearby P2P, Families ads, Play Billing
+play-services-nearby = { group = "com.google.android.gms", name = "play-services-nearby", version.ref = "nearby" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playAds" }
+billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billing" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+protobuf = { id = "com.google.protobuf", version.ref = "protobufPlugin" }
+# Builder D (Steal Battle p2p): kotlinx.serialization compiler plugin for the
+# Nearby P2P payload codecs. The serialization-json runtime was already present.
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "baselineprofile" }
+# New plugin id since 2.0.0 (de.mannodermaus.android-junit5 is the retired id).
+# Required: AGP runs unit tests on JUnit4 by default; this puts them on the JUnit Platform.
+android-junit5 = { id = "de.mannodermaus.android-junit", version.ref = "androidJunit5" }

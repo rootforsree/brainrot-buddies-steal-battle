@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launch theme: solid window background so there is no white flash in dark mode.
+         Compose takes over with AppTheme as soon as the first frame draws. -->
+    <style name="Theme.AppTemplate.Startup" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/startup_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

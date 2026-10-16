@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Steal Battle</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_about">About</string>
+
+    <string name="home_title">Home</string>
+    <string name="home_empty_message">No notes yet</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_retry">Retry</string>
+
+    <string name="settings_title">Settings</string>
+    <string name="section_appearance">Appearance</string>
+    <string name="section_general">General</string>
+    <string name="theme_system">System</string>
+    <string name="theme_system_sub">Follow system appearance</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_light_sub">Always use light appearance</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_dark_sub">Always use dark appearance</string>
+    <string name="settings_haptics_title">Haptics</string>
+    <string name="settings_haptics_sub">Vibration feedback for taps and selections</string>
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_notifications_sub">Open system notification settings</string>
+
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_github_title">GitHub repository</string>
+    <string name="about_github_sub">View the source code</string>
+    <string name="about_share_title">Share this app</string>
+    <string name="about_share_sub">Tell a friend about App Template</string>
+    <string name="about_rate_title">Rate this app</string>
+    <string name="about_rate_sub">Leave a review on Google Play</string>
+    <string name="share_chooser_title">Share App Template</string>
+    <string name="share_text">Check out App Template</string>
+
+    <string name="about_github_url" translatable="false">https://github.com/rootforsree/brainrot-buddies-steal-battle</string>
+    <string name="about_rate_url" translatable="false">https://play.google.com/store/apps/details?id=com.sreecharan.brainrot_buddies_steal_battle</string>
+
+    <!-- Base screen (Builder B) -->
+    <string name="base_collect">Collect</string>
+    <string name="base_vault_coins">Vault: %1$d coins</string>
+    <string name="base_vault_full">Vault full!</string>
+    <string name="base_raid_now">Raid!</string>
+    <string name="base_raid_in">%1$s</string>
+    <string name="base_raids_left">%1$d raids</string>
+    <string name="base_raid_bell">Raid bell</string>
+    <string name="base_lucky_ticket">Lucky x%1$d</string>
+    <string name="base_mega_ticket">Mega x%1$d</string>
+    <string name="base_ticket_lucky_desc">Use a Lucky Ticket</string>
+    <string name="base_ticket_mega_desc">Use a Mega Ticket</string>
+    <string name="base_tour">Base tour</string>
+    <string name="base_tour_end">End tour</string>
+    <string name="base_float_bites">+%1$d bites</string>
+    <string name="base_float_coins">+%1$d</string>
+    <string name="base_float_cps">+%1$d/sec</string>
+    <string name="base_float_locked_cost">%1$d coins</string>
+    <string name="base_float_next_raid">Next raid %1$s</string>
+    <string name="base_float_no_tickets">No tickets yet</string>
+    <string name="base_float_claim_first">Claim a buddy first</string>
+
+    <!-- Builder D: Friends (P2P pairing) -->
+    <string name="friend_title">Friends</string>
+    <string name="friend_needs_android12">Nearby raids need Android 12 or newer. Ask a grown-up about updating this device!</string>
+    <string name="friend_bluetooth_title">Find nearby friends</string>
+    <string name="friend_bluetooth_body">Steal Battle uses Bluetooth to find friends sitting near you. No internet, no strangers, just friends in the same room.</string>
+    <string name="friend_bluetooth_allow">Turn on nearby friends</string>
+    <string name="friend_my_code">My friend code</string>
+    <string name="friend_my_code_sub">A grown-up checks this first. Read it to your friend in person.</string>
+    <string name="friend_show_code">Show my code</string>
+    <string name="friend_find_button">Find nearby friend</string>
+    <string name="friend_searching">Looking for friends nearby…</string>
+    <string name="friend_stop">Stop looking</string>
+    <string name="friend_no_peers">No friends found yet. Make sure your friend also tapped “Find nearby friend”.</string>
+    <string name="friend_tap_peer">Tap your friend’s base name</string>
+    <string name="friend_token_title">Secret match words</string>
+    <string name="friend_token_body">Both of you see the same secret words. Tap “Match!” only if they match on both phones.</string>
+    <string name="friend_match_button">Match!</string>
+    <string name="friend_verify_title">Is this your friend?</string>
+    <string name="friend_verify_body">Ask your friend to read their code out loud. Tap “Yes, that’s them!” only if it matches.</string>
+    <string name="friend_verify_yes">Yes, that’s them!</string>
+    <string name="friend_verify_no">Nope, not them</string>
+    <string name="friend_paired">You’re friends now! Time to plan your first heist.</string>
+    <string name="friend_list_title">My friends</string>
+    <string name="friend_empty">No friends yet. Pair up with someone sitting next to you!</string>
+    <string name="friend_snapshot_fresh">Base map saved</string>
+    <string name="friend_snapshot_raided">Already heisted</string>
+    <string name="friend_snapshot_none">No base map yet</string>
+    <string name="friend_visit">Visit</string>
+    <string name="friend_raid">Raid!</string>
+    <string name="friend_unpair">Unfriend</string>
+    <string name="friend_unpair_confirm">Remove %1$s from your friends?</string>
+    <string name="friend_inbox_title">Sneak attacks on you</string>
+    <string name="friend_revenge">Get them back!</string>
+    <string name="friend_revenge_left">Revenge time left: %1$s</string>
+    <string name="friend_dismiss">Got it</string>
+    <string name="friend_practice">Practice visit</string>
+    <string name="friend_practice_sub">Look around, no stealing</string>
+
+    <!-- Builder D: Raids -->
+    <string name="raid_title">Raid</string>
+    <string name="raid_window_raids_left">Raids left this round: %1$d</string>
+    <string name="raid_no_raids_left">No raids left this round. Next round starts soon!</string>
+    <string name="raid_connecting">Sneaking over to %1$s…</string>
+    <string name="raid_live">Live visit!</string>
+    <string name="raid_snapshot">Saved base map</string>
+    <string name="raid_pick_buddy">Pick a buddy to swipe</string>
+    <string name="raid_steal">Swipe it!</string>
+    <string name="raid_stealing">Swiping…</string>
+    <string name="raid_success_title">Yoink! Got one!</string>
+    <string name="raid_success_body">%1$s joined your base with a sparkle.</string>
+    <string name="raid_failed_shielded">Shielded! That buddy is hiding under a dome.</string>
+    <string name="raid_failed_cooldown">Too soon! That buddy just got swiped and needs a nap.</string>
+    <string name="raid_failed_empty">Nothing on that spot. Pick another one!</string>
+    <string name="raid_failed_already">You already raided this friend this round.</string>
+    <string name="raid_timeout">Hmm, that took too long. Check you are still near your friend and try again!</string>
+    <string name="raid_base_full">Your base is full! Free a slot, then try the heist again.</string>
+    <string name="raid_slot_level">Lv %1$d</string>
+    <string name="raid_refunded">Visit refunded. Nice try!</string>
+    <string name="raid_villain_title">%1$s swiped %2$s!</string>
+    <string name="raid_consolation">Sorry gift: %1$d coins</string>
+    <string name="raid_revenge_banner">They swiped your buddy! Get them back, free revenge raid.</string>
+    <string name="raid_chat_hint">Say something nice</string>
+    <string name="raid_leave">Leave</string>
+    <string name="raid_ceremony_title">First heist complete!</string>
+    <string name="raid_ceremony_body">You and %1$s pulled off your first heist together. Here’s a gift!</string>
+
+    <!-- Builder D: Billing -->
+    <string name="billing_remove_ads">Remove ads</string>
+    <string name="billing_remove_ads_sub">No more ad breaks, forever</string>
+    <string name="billing_hat_party_cone">Party Cone</string>
+    <string name="billing_hat_tiny_crown">Tiny Crown</string>
+    <string name="billing_hat_propeller_cap">Propeller Cap</string>
+    <string name="billing_buy">Buy</string>
+    <string name="billing_owned">Owned</string>
+    <string name="billing_working">Talking to the store…</string>
+    <string name="billing_success">All yours!</string>
+    <string name="billing_failed">The store hiccuped. Nothing was charged. Try again?</string>
+    <string name="billing_restore">Restore purchases</string>
+
+    <!-- Builder D: Rewarded ads -->
+    <string name="ads_watch_button">Watch ad for free coins</string>
+    <string name="ads_reward_coins">+%1$d coins!</string>
+    <string name="ads_unmute">Tap to unmute</string>
+    <string name="ads_cooldown">Come back later for another free gift</string>
+
+    <!-- Builder C: Tabs -->
+    <string name="tab_base">Base</string>
+    <string name="tab_shop">Shop</string>
+    <string name="tab_album">Album</string>
+    <string name="tab_friends">Friends</string>
+    <string name="tab_more">More</string>
+
+    <!-- Builder C: Shared -->
+    <string name="action_close">Close</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_done">Done</string>
+    <string name="coins_count">%,d coins</string>
+    <string name="bites_count">%,d bites</string>
+
+    <!-- Builder C: Shop -->
+    <string name="shop_title">Shop</string>
+    <string name="shop_milo_greeting">Munch munch… yours now!</string>
+    <string name="shop_section_slots">Base Slots</string>
+    <string name="shop_section_tickets">Tickets</string>
+    <string name="shop_section_upgrades">Upgrades</string>
+    <string name="shop_section_shields">Shields</string>
+    <string name="shop_section_hats">Hats</string>
+    <string name="shop_section_free">Free Coins</string>
+    <string name="shop_slot_next">Next slot</string>
+    <string name="shop_slot_count">%1$d of %2$d open</string>
+    <string name="shop_slot_maxed">Every slot is open!</string>
+    <string name="shop_hold_to_buy">Hold to buy</string>
+    <string name="shop_hold_to_unlock">Hold to unlock</string>
+    <string name="shop_lucky_title">Lucky Ticket</string>
+    <string name="shop_lucky_sub">%1$d owned. Your next pull is at least Rare!</string>
+    <string name="shop_lucky_earn">You earn 1 every day from your gift box. Never for sale.</string>
+    <string name="shop_mega_title">Mega Ticket</string>
+    <string name="shop_mega_sub">Your next pull is at least Epic!</string>
+    <string name="shop_mega_owned">%1$d owned</string>
+    <string name="shop_shield_base_title">Base Shield (8h)</string>
+    <string name="shop_shield_base_sub">Nobody can steal from you for 8 hours.</string>
+    <string name="shop_shield_slot_title">Slot Shield</string>
+    <string name="shop_shield_slot_sub">Protect one buddy for 8 hours.</string>
+    <string name="shop_shield_pick_slot">Pick a slot to shield</string>
+    <string name="shop_shield_active">Shielded!</string>
+    <string name="shop_upgrade_to">Upgrade to %1$d</string>
+    <string name="shop_upgrade_cost">%,d coins + %d bites</string>
+    <string name="shop_max_level">MAX</string>
+    <string name="shop_per_sec">%1$s coins/sec</string>
+    <string name="shop_hat_equip">Equip</string>
+    <string name="shop_hat_equipped">On %1$s</string>
+    <string name="shop_hat_pick_buddy">Pick a buddy to wear it</string>
+    <string name="shop_hat_remove">Take it off</string>
+    <string name="shop_free_title">Free Coins</string>
+    <string name="shop_free_sub">Watch one short ad. G-rated and always skippable.</string>
+    <string name="shop_free_coins">100 coins</string>
+    <string name="shop_free_bites">5 bites</string>
+    <string name="shop_free_pick">Pick your treat, then hold the button.</string>
+    <string name="shop_free_wait">Next free coins in %1$s</string>
+    <string name="shop_bought">Yours now!</string>
+    <string name="shop_not_enough_coins">Not enough coins yet. Keep playing!</string>
+    <string name="shop_not_enough_bites">Not enough bites yet. Duplicates turn into bites!</string>
+    <string name="shop_maxed_out">Already at the max!</string>
+    <string name="shop_error">Hmm, that did not work. Try again!</string>
+    <string name="shop_upgraded">%1$s is now level %2$d!</string>
+    <string name="shop_hat_on">%1$s is wearing it now!</string>
+    <string name="shop_hat_off">Hat taken off.</string>
+    <string name="shop_ad_done">Treat delivered!</string>
+    <string name="shop_ad_dismissed">No worries! Come back later.</string>
+    <string name="shop_ad_not_ready">The ad is not ready yet. Try again soon!</string>
+
+    <!-- Builder C: Album -->
+    <string name="album_title">Album</string>
+    <string name="album_section_commons">Commons</string>
+    <string name="album_section_rares">Rares</string>
+    <string name="album_section_epics">Epics</string>
+    <string name="album_section_soon">Coming Soon</string>
+    <string name="album_progress">%1$d of %2$d</string>
+    <string name="album_tap_hint">Tap a buddy to hear it talk!</string>
+    <string name="album_unknown">???</string>
+    <string name="album_coming_soon">Coming soon!</string>
+    <string name="album_kind_legendary">Legendary</string>
+    <string name="album_kind_mythic">Mythic</string>
+    <string name="album_claim">Claim %,d coins</string>
+    <string name="album_claimed">Claimed!</string>
+    <string name="album_bonus_done">Set complete!</string>
+
+    <!-- Builder C: Gifts -->
+    <string name="gifts_title">Gift Box</string>
+    <string name="gifts_today">Today\'s gift</string>
+    <string name="gifts_open">Open gift!</string>
+    <string name="gifts_opened_day">Day %1$d opened! Come back tomorrow.</string>
+    <string name="gifts_reward_day1">200 coins</string>
+    <string name="gifts_reward_day7">Mega Ticket</string>
+    <string name="gifts_reward_day14">Rare buddy</string>
+    <string name="gifts_reward_day21">5,000 coins</string>
+    <string name="gifts_reward_day30">Epic buddy</string>
+    <string name="gifts_reward_surprise">Surprise!</string>
+    <string name="gifts_streak">%1$d day streak!</string>
+    <string name="gifts_catchup_title">Missed a day?</string>
+    <string name="gifts_catchup_sub">Grab the missed gift for 500 coins. It never goes away.</string>
+    <string name="gifts_catchup_buy">Hold to catch up</string>
+    <string name="gifts_weekly_title">Flippy\'s Weekly Gift</string>
+    <string name="gifts_weekly_sub">Flippy face-planted and found a gift for you!</string>
+    <string name="gifts_weekly_open">Open!</string>
+    <string name="gifts_weekly_got">Flippy found %1$s for you!</string>
+    <string name="gifts_redeem_title">Redeem Code</string>
+    <string name="gifts_redeem_hint">TYPE CODE HERE</string>
+    <string name="gifts_redeem_button">Redeem</string>
+    <string name="gifts_redeem_invalid">Hmm, that code did not work. Try again!</string>
+    <string name="gifts_redeem_used">You already used that code.</string>
+
+    <!-- Builder C: Onboarding -->
+    <string name="onboarding_play">Play</string>
+    <string name="onboarding_play_sub">Your buddies are waiting!</string>
+    <string name="onboarding_name_title">Name your base!</string>
+    <string name="onboarding_name_sub">Pick a name. It is yours forever.</string>
+    <string name="onboarding_start">Start!</string>
+    <string name="guided_tip_frogboot">Tap him! Quick!</string>
+    <string name="guided_tip_pip">Tap Pip McSnacks now!</string>
+    <string name="guided_tip_slot">Buy a slot! Tap!</string>
+    <string name="guided_tip_splorch">Splorch time! Tap!</string>
+    <string name="guided_tip_vault">Collect coins! Tap vault!</string>
+    <string name="guided_tip_gift">Gift time! Open it!</string>
+    <string name="guided_later">Later</string>
+    <string name="moment_open">Open!</string>
+    <string name="moment_ticket_title">A Lucky Ticket!</string>
+    <string name="moment_ticket_tip">Ticket! Use it! Pull!</string>
+    <string name="moment_upgrades_title">Buddy Upgrades!</string>
+    <string name="moment_upgrades_tip">Feed him Bites! More coins!</string>
+    <string name="moment_shield_title">Practice Raid!</string>
+    <string name="moment_shield_tip">Try a raid! Zero stakes!</string>
+    <string name="moment_album_title">Your Album!</string>
+    <string name="moment_album_tip">Look what you caught!</string>
+    <string name="moment_raid_title">Raid Time!</string>
+    <string name="moment_raid_tip">Raid friends! Steal buddies!</string>
+
+    <string-array name="onboarding_base_names">
+        <item>Wobble Tower</item>
+        <item>Snack Shack</item>
+        <item>Giggle Grove</item>
+        <item>Bouncy Bay</item>
+        <item>Plip Plop Place</item>
+        <item>Jelly Junction</item>
+        <item>Noodle Nest</item>
+        <item>Pudding Palace</item>
+        <item>Bubble Barn</item>
+        <item>Squeak Street</item>
+        <item>Tumble Town</item>
+        <item>Fizz Field</item>
+    </string-array>
+
+    <!-- Builder C: Settings additions -->
+    <string name="settings_section_audio">Sound</string>
+    <string name="settings_music">Music</string>
+    <string name="settings_music_sub">The bouncy background tune</string>
+    <string name="settings_sounds">Sounds</string>
+    <string name="settings_sounds_sub">Pops, chimes, and coin noises</string>
+    <string name="settings_voices">Voices</string>
+    <string name="settings_voices_sub">Buddy catchphrases and Benny</string>
+    <string name="settings_benny_title">Benny Hints</string>
+    <string name="settings_benny_sub">Benny pops up with tips while you play</string>
+    <string name="settings_notifications_soon">Coming in a later update</string>
+    <string name="settings_section_grownups">Grown-Ups</string>
+    <string name="settings_parents_title">For Parents</string>
+    <string name="settings_parents_sub">What we collect, ads, and contact</string>
+    <string name="settings_poster_title">My Poster</string>
+    <string name="settings_poster_sub">Hang your own photo in your base</string>
+    <string name="settings_remove_ads">Remove Ads</string>
+    <string name="settings_remove_ads_sub">$2.99 once. Ads gone forever.</string>
+    <string name="settings_remove_ads_done">Ads removed. Enjoy!</string>
+    <string name="settings_delete_title">Delete All Data</string>
+    <string name="settings_delete_sub">Wipes buddies, coins, and settings</string>
+    <string name="settings_delete_confirm">Hold to delete everything</string>
+    <string name="settings_delete_done">All data deleted.</string>
+    <string name="settings_delete_failed">Hmm, that did not work. Try again!</string>
+
+    <!-- Builder C: For Parents -->
+    <string name="forparents_title">For Parents</string>
+    <string name="forparents_data_title">What we collect</string>
+    <string name="forparents_data_body">Almost nothing. Your child picks a base name, catches cartoon buddies, and earns coins. Everything lives on this device only. There is no account, no login, and no analytics in this version. We never collect location, contacts, photos, or device identifiers. The advertising ID is stripped from the app.</string>
+    <string name="forparents_ads_title">Ads</string>
+    <string name="forparents_ads_body">There is exactly one ad in the whole game: a Free Coins button in the Shop that shows a short rewarded video. Ads are G-rated, non-personalized, skippable within 5 seconds, start muted, and never appear on launch. You can remove ads forever with a one-time $2.99 purchase, behind the grown-up check.</string>
+    <string name="forparents_purchases_title">Purchases</string>
+    <string name="forparents_purchases_body">Remove Ads ($2.99, one-time) and three cosmetic hats ($0.99 each, visual only). Every purchase needs the grown-up check: hold for 3 seconds, then answer a math question. Nothing random is ever sold. No loot boxes.</string>
+    <string name="forparents_friends_title">Friends and chat</string>
+    <string name="forparents_friends_body">Friends pair in person with a 6-letter code, behind the grown-up check. Kids can only send 12 preset phrases and 10 emotes. No free text, no voice, no stranger contact. Raids happen over nearby Bluetooth and WiFi only. No internet matchmaking.</string>
+    <string name="forparents_data_delete_title">Delete data</string>
+    <string name="forparents_data_delete_body">The Delete All Data button in Settings wipes buddies, coins, tickets, settings, and the imported poster from this device. No account means nothing to cancel.</string>
+    <string name="forparents_contact_title">Contact</string>
+    <string name="forparents_contact_body">Questions about the game or this policy? Reach us on GitHub.</string>
+    <string name="forparents_contact_button">Open GitHub</string>
+
+    <!-- Builder C: Poster -->
+    <string name="poster_title">My Poster</string>
+    <string name="poster_empty">Hang your own photo here!</string>
+    <string name="poster_empty_sub">It hangs in your base for you to see.</string>
+    <string name="poster_add">Add a photo</string>
+    <string name="poster_terms">Import only images you own.</string>
+    <string name="poster_private">Stays on this device. Never uploaded or shared.</string>
+    <string name="poster_use">Use this photo</string>
+    <string name="poster_repick">Pick a different photo</string>
+    <string name="poster_remove">Remove poster</string>
+    <string name="poster_saving">Hanging it up…</string>
+
+    <!-- Builder C: Parent gate -->
+    <string name="gate_title">Grown-up check!</string>
+    <string name="gate_hold">Hold the button for 3 seconds</string>
+    <string name="gate_math">Quick math for a grown-up:</string>
+    <string name="gate_wrong">Oops! Try again!</string>
+    <string name="gate_cancel">Never mind</string>
+
+    <!-- Builder C: Grown-up nudge -->
+    <string name="nudge_title">Show a grown-up!</string>
+    <string name="nudge_epic">You pulled an EPIC buddy!</string>
+    <string name="nudge_steal">You stole a buddy!</string>
+    <string name="nudge_revenge">Revenge complete!</string>
+    <string name="nudge_sub">Go show a grown-up what you just did!</string>
+    <string name="nudge_ok">Cool!</string>
+</resources>

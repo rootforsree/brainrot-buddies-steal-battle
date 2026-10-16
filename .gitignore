@@ -1,0 +1,18 @@
+# Keystores and signing
+*.jks
+keystore.properties
+
+# Google services
+google-services.json
+
+# Build outputs
+build/
+.gradle/
+local.properties
+
+# IDE
+.idea/*
+!.idea/codeStyles/
+
+# macOS
+.DS_Store

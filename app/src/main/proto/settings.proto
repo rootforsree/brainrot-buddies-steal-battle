@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package apptemplate;
+
+option java_package = "com.sreecharan.apptemplate.data.datastore";
+option java_multiple_files = true;
+
+// ThemeModeProto mirrors com.sreecharan.apptemplate.data.model.ThemeMode.
+// Proto enums require a zero value; THEME_MODE_PROTO_UNSPECIFIED maps to SYSTEM.
+enum ThemeModeProto {
+  THEME_MODE_PROTO_UNSPECIFIED = 0;
+  SYSTEM = 1;
+  LIGHT = 2;
+  DARK = 3;
+}
+
+message SettingsProto {
+  ThemeModeProto theme_mode = 1;
+  bool haptics_enabled = 2;
+}

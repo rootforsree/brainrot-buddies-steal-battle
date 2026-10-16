@@ -1,0 +1,33 @@
+# .github/dependabot.yml — copy to .github/dependabot.yml
+# Weekly dependency updates: Gradle (reads gradle/libs.versions.toml + wrapper)
+# and GitHub Actions (keeps SHA pins fresh). Minor+patch grouped into one PR;
+# majors arrive solo for manual review.
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    groups:
+      minor-and-patch:
+        # Everything except the toolchain majors, which are migrations not bumps
+        patterns: ["*"]
+        exclude-patterns:
+          - "com.android.tools.build:gradle"   # AGP: always review solo
+          - "org.jetbrains.kotlin*"            # Kotlin/KSP: always review solo
+        update-types: ["minor", "patch"]
+    # Dependabot also updates gradle/wrapper/gradle-wrapper.properties itself.
+    # Keep gradle/libs.versions.toml at the standard gradle/ path or it won't be found.
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+    groups:
+      actions-minor-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
