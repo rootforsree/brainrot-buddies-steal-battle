@@ -9,6 +9,19 @@ build:
   maxIssues: 0
   excludeCorrectable: false
 
+naming:
+  active: true
+  # Series convention: applicationId-derived package segments use underscores
+  # (com.sreecharan.brainrot_buddies_steal_battle).
+  PackageNaming:
+    active: true
+    packagePattern: '[a-z_]+(\.[a-z_][A-Za-z0-9_]*)*'
+  # Compose convention: @Composable functions are PascalCase. detekt 1.23.8
+  # has no ignoreAnnotated for FunctionNaming, so the pattern allows both.
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-zA-Z][a-zA-Z0-9]*'
+
 comments:
   active: true
 

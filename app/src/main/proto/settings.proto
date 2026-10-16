@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-package apptemplate;
+package stealbattle;
 
-option java_package = "com.sreecharan.apptemplate.data.datastore";
+option java_package = "com.sreecharan.brainrot_buddies_steal_battle.data.datastore";
 option java_multiple_files = true;
 
-// ThemeModeProto mirrors com.sreecharan.apptemplate.data.model.ThemeMode.
+// ThemeModeProto mirrors com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode.
 // Proto enums require a zero value; THEME_MODE_PROTO_UNSPECIFIED maps to SYSTEM.
 enum ThemeModeProto {
   THEME_MODE_PROTO_UNSPECIFIED = 0;

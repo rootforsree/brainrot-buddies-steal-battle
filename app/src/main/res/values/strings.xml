@@ -187,7 +187,7 @@
     <string name="shop_shield_pick_slot">Pick a slot to shield</string>
     <string name="shop_shield_active">Shielded!</string>
     <string name="shop_upgrade_to">Upgrade to %1$d</string>
-    <string name="shop_upgrade_cost">%,d coins + %d bites</string>
+    <string name="shop_upgrade_cost">%1$,d coins + %2$d bites</string>
     <string name="shop_max_level">MAX</string>
     <string name="shop_per_sec">%1$s coins/sec</string>
     <string name="shop_hat_equip">Equip</string>
@@ -220,7 +220,7 @@
     <string name="album_section_soon">Coming Soon</string>
     <string name="album_progress">%1$d of %2$d</string>
     <string name="album_tap_hint">Tap a buddy to hear it talk!</string>
-    <string name="album_unknown">???</string>
+    <string name="album_unknown">？？？</string>
     <string name="album_coming_soon">Coming soon!</string>
     <string name="album_kind_legendary">Legendary</string>
     <string name="album_kind_mythic">Mythic</string>

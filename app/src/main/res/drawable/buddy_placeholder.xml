@@ -12,16 +12,12 @@
     <path
         android:fillColor="#636366"
         android:pathData="M48,26C38,26 30,34 30,44C30,54 38,62 48,62C58,62 66,54 66,44C66,34 58,26 48,26Z" />
-    <circle
+    <path
         android:fillColor="#EBEBF0"
-        android:cx="41"
-        android:cy="42"
-        android:r="4" />
-    <circle
+        android:pathData="M37,42a4,4 0 1,0 8,0a4,4 0 1,0 -8,0Z" />
+    <path
         android:fillColor="#EBEBF0"
-        android:cx="55"
-        android:cy="42"
-        android:r="4" />
+        android:pathData="M51,42a4,4 0 1,0 8,0a4,4 0 1,0 -8,0Z" />
     <path
         android:fillColor="#EBEBF0"
         android:pathData="M40,54Q48,60 56,54Q48,57 40,54Z" />
