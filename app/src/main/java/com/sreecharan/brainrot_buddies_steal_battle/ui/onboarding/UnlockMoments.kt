@@ -60,16 +60,23 @@ import kotlinx.coroutines.launch
  * Shown-state is session-scoped: an unopened moment re-appears next launch,
  * which is the desired behavior for kids.
  */
+/** Days the unlock moments trigger on (§1 ladder). */
+private const val TICKET_MOMENT_DAY = 2
+private const val UPGRADES_MOMENT_DAY = 3
+private const val SHIELD_MOMENT_DAY = 4
+private const val ALBUM_MOMENT_DAY = 5
+private const val RAID_MOMENT_DAY = 7
+
 enum class UnlockMoment(
     val day: Int,
     @StringRes val titleRes: Int,
     @StringRes val tipRes: Int,
 ) {
-    TICKET(2, R.string.moment_ticket_title, R.string.moment_ticket_tip),
-    UPGRADES(3, R.string.moment_upgrades_title, R.string.moment_upgrades_tip),
-    SHIELD(4, R.string.moment_shield_title, R.string.moment_shield_tip),
-    ALBUM(5, R.string.moment_album_title, R.string.moment_album_tip),
-    RAID(7, R.string.moment_raid_title, R.string.moment_raid_tip),
+    TICKET(TICKET_MOMENT_DAY, R.string.moment_ticket_title, R.string.moment_ticket_tip),
+    UPGRADES(UPGRADES_MOMENT_DAY, R.string.moment_upgrades_title, R.string.moment_upgrades_tip),
+    SHIELD(SHIELD_MOMENT_DAY, R.string.moment_shield_title, R.string.moment_shield_tip),
+    ALBUM(ALBUM_MOMENT_DAY, R.string.moment_album_title, R.string.moment_album_tip),
+    RAID(RAID_MOMENT_DAY, R.string.moment_raid_title, R.string.moment_raid_tip),
 }
 
 @HiltViewModel
@@ -79,7 +86,7 @@ class UnlockMomentsViewModel @Inject constructor(
 
     private val shownThisSession = MutableStateFlow<Set<UnlockMoment>>(emptySet())
 
-    val pendingMoment: StateFlow<UnlockMoment?> field = combine(
+    val pendingMoment: StateFlow<UnlockMoment?> = combine(
         repository.observeOnboardingDay(),
         shownThisSession,
     ) { dayResult, shown ->

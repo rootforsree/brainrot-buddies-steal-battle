@@ -71,9 +71,9 @@ class SettingsViewModel @Inject constructor(
         SettingsUiState(
             themeMode = settings.themeMode,
             hapticsEnabled = settings.hapticsEnabled,
-            musicVolume = music.dataOrNull()?.coerceIn(0, 100) ?: 80,
-            sfxVolume = sfx.dataOrNull()?.coerceIn(0, 100) ?: 80,
-            voiceVolume = voice.dataOrNull()?.coerceIn(0, 100) ?: 80,
+            musicVolume = music.dataOrNull()?.coerceIn(MIN_VOLUME, MAX_VOLUME) ?: DEFAULT_VOLUME,
+            sfxVolume = sfx.dataOrNull()?.coerceIn(MIN_VOLUME, MAX_VOLUME) ?: DEFAULT_VOLUME,
+            voiceVolume = voice.dataOrNull()?.coerceIn(MIN_VOLUME, MAX_VOLUME) ?: DEFAULT_VOLUME,
             bennyHints = benny.dataOrNull() ?: true,
             adsRemoved = entitlements.adsRemoved,
             isDeleting = deleting,
@@ -118,19 +118,19 @@ class SettingsViewModel @Inject constructor(
 
     fun onMusicVolumeChanged(value: Int) {
         viewModelScope.launch {
-            repository.setMusicVolume(value.coerceIn(0, 100))
+            repository.setMusicVolume(value.coerceIn(MIN_VOLUME, MAX_VOLUME))
         }
     }
 
     fun onSfxVolumeChanged(value: Int) {
         viewModelScope.launch {
-            repository.setSfxVolume(value.coerceIn(0, 100))
+            repository.setSfxVolume(value.coerceIn(MIN_VOLUME, MAX_VOLUME))
         }
     }
 
     fun onVoiceVolumeChanged(value: Int) {
         viewModelScope.launch {
-            repository.setVoiceVolume(value.coerceIn(0, 100))
+            repository.setVoiceVolume(value.coerceIn(MIN_VOLUME, MAX_VOLUME))
         }
     }
 
@@ -170,6 +170,13 @@ class SettingsViewModel @Inject constructor(
                 deletingState.update { false }
             }
         }
+    }
+
+    companion object {
+        /** Volume sliders are 0-100 (contract §5 keys `music_vol`/`sfx_vol`/`voice_vol`). */
+        const val MIN_VOLUME = 0
+        const val MAX_VOLUME = 100
+        const val DEFAULT_VOLUME = 80
     }
 }
 

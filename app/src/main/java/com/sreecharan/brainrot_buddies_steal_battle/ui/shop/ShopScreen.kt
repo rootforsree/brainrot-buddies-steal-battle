@@ -1,6 +1,7 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.shop
 
 import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -59,83 +60,167 @@ fun ShopRoute(viewModel: ShopViewModel = hiltViewModel()) {
     var shieldSheetOpen by remember { mutableStateOf(false) }
     var hatEquipHatId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            message = when (event) {
-                ShopEvent.SlotUnlocked -> context.getString(R.string.shop_bought)
-                ShopEvent.MegaTicketBought -> context.getString(R.string.shop_bought)
-                ShopEvent.BaseShieldBought -> context.getString(R.string.shop_bought)
-                is ShopEvent.SlotShieldBought -> context.getString(R.string.shop_bought)
-                is ShopEvent.BuddyUpgraded ->
-                    context.getString(R.string.shop_upgraded, event.name, event.level)
-                ShopEvent.HatBought -> context.getString(R.string.shop_bought)
-                is ShopEvent.HatEquipped -> context.getString(R.string.shop_hat_on, event.buddyName)
-                ShopEvent.HatRemoved -> context.getString(R.string.shop_hat_off)
-                ShopEvent.AdRewardGranted -> context.getString(R.string.shop_ad_done)
-                ShopEvent.AdNotReady -> context.getString(R.string.shop_ad_not_ready)
-                is ShopEvent.AdCooldown ->
-                    context.getString(R.string.shop_free_wait, formatDuration(event.millisRemaining))
-                is ShopEvent.PurchaseFailed -> when (event.messageKey) {
-                    ShopViewModel.COINS_SHORT -> context.getString(R.string.shop_not_enough_coins)
-                    ShopViewModel.BITES_SHORT -> context.getString(R.string.shop_not_enough_bites)
-                    ShopViewModel.MAXED -> context.getString(R.string.shop_maxed_out)
-                    else -> context.getString(R.string.shop_error)
-                }
-            }
-        }
-    }
-    LaunchedEffect(message) {
-        if (message != null) {
-            delay(2_500)
-            message = null
-        }
-    }
+    ShopEventEffect(viewModel) { message = it }
+    MessageDismissEffect(message) { message = null }
 
     ShopScreenContent(
         state = state,
         message = message,
-        onBuySlot = viewModel::onBuySlotConfirmed,
-        onBuyMegaTicket = viewModel::onBuyMegaTicketConfirmed,
-        onBuyBaseShield = viewModel::onBuyBaseShieldConfirmed,
-        onOpenSlotShields = { shieldSheetOpen = true },
-        onUpgrade = viewModel::onUpgradeConfirmed,
-        onBuyHat = { pendingHatPurchase = it },
-        onEquipHat = { hatEquipHatId = it },
-        onWatchAd = { kind -> viewModel.onWatchAdConfirmed(kind, activity) },
+        actions = ShopActions(
+            purchase = ShopPurchaseActions(
+                onBuySlot = viewModel::onBuySlotConfirmed,
+                onBuyMegaTicket = viewModel::onBuyMegaTicketConfirmed,
+                onBuyBaseShield = viewModel::onBuyBaseShieldConfirmed,
+                onOpenSlotShields = { shieldSheetOpen = true },
+                onUpgrade = viewModel::onUpgradeConfirmed,
+                onBuyHat = { pendingHatPurchase = it },
+                onEquipHat = { hatEquipHatId = it },
+            ),
+            engage = ShopEngageActions(
+                onWatchAd = { kind -> viewModel.onWatchAdConfirmed(kind, activity) },
+            ),
+        ),
     )
 
-    if (shieldSheetOpen) {
+    ShopRouteDialogs(
+        dialogUi = ShopDialogUi(
+            shieldSheetOpen = shieldSheetOpen,
+            hatEquipHatId = hatEquipHatId,
+            pendingHatPurchase = pendingHatPurchase,
+            onShieldSheetDismiss = { shieldSheetOpen = false },
+            onHatEquipDismiss = { hatEquipHatId = null },
+            onHatPurchaseDismiss = { pendingHatPurchase = null },
+        ),
+        state = state,
+        viewModel = viewModel,
+        activity = activity,
+    )
+}
+
+/** Callbacks that spend coins/bites. */
+data class ShopPurchaseActions(
+    val onBuySlot: () -> Unit,
+    val onBuyMegaTicket: () -> Unit,
+    val onBuyBaseShield: () -> Unit,
+    val onOpenSlotShields: () -> Unit,
+    val onUpgrade: (String) -> Unit,
+    val onBuyHat: (String) -> Unit,
+    val onEquipHat: (String) -> Unit,
+)
+
+/** Callbacks for rewarded ads. */
+data class ShopEngageActions(
+    val onWatchAd: (AdRewardKind) -> Unit,
+)
+
+/** All [ShopScreenContent] callbacks, grouped by kind. */
+data class ShopActions(
+    val purchase: ShopPurchaseActions,
+    val engage: ShopEngageActions,
+)
+
+/** Dialog/sheet state for the route. */
+data class ShopDialogUi(
+    val shieldSheetOpen: Boolean,
+    val hatEquipHatId: String?,
+    val pendingHatPurchase: String?,
+    val onShieldSheetDismiss: () -> Unit,
+    val onHatEquipDismiss: () -> Unit,
+    val onHatPurchaseDismiss: () -> Unit,
+)
+
+/** How long a shop toast message stays visible. */
+private const val MESSAGE_DISMISS_MS = 2_500L
+
+@Composable
+private fun ShopEventEffect(
+    viewModel: ShopViewModel,
+    onMessage: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            onMessage(shopEventMessage(event, context))
+        }
+    }
+}
+
+@Composable
+private fun MessageDismissEffect(message: String?, onDismiss: () -> Unit) {
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(MESSAGE_DISMISS_MS)
+            onDismiss()
+        }
+    }
+}
+
+private fun shopEventMessage(event: ShopEvent, context: Context): String =
+    when (event) {
+        ShopEvent.SlotUnlocked -> context.getString(R.string.shop_bought)
+        ShopEvent.MegaTicketBought -> context.getString(R.string.shop_bought)
+        ShopEvent.BaseShieldBought -> context.getString(R.string.shop_bought)
+        is ShopEvent.SlotShieldBought -> context.getString(R.string.shop_bought)
+        is ShopEvent.BuddyUpgraded ->
+            context.getString(R.string.shop_upgraded, event.name, event.level)
+        ShopEvent.HatBought -> context.getString(R.string.shop_bought)
+        is ShopEvent.HatEquipped -> context.getString(R.string.shop_hat_on, event.buddyName)
+        ShopEvent.HatRemoved -> context.getString(R.string.shop_hat_off)
+        ShopEvent.AdRewardGranted -> context.getString(R.string.shop_ad_done)
+        ShopEvent.AdNotReady -> context.getString(R.string.shop_ad_not_ready)
+        is ShopEvent.AdCooldown ->
+            context.getString(R.string.shop_free_wait, formatDuration(event.millisRemaining))
+        is ShopEvent.PurchaseFailed -> purchaseFailedMessage(event, context)
+    }
+
+private fun purchaseFailedMessage(
+    event: ShopEvent.PurchaseFailed,
+    context: Context,
+): String = when (event.messageKey) {
+    ShopViewModel.COINS_SHORT -> context.getString(R.string.shop_not_enough_coins)
+    ShopViewModel.BITES_SHORT -> context.getString(R.string.shop_not_enough_bites)
+    ShopViewModel.MAXED -> context.getString(R.string.shop_maxed_out)
+    else -> context.getString(R.string.shop_error)
+}
+
+@Composable
+private fun ShopRouteDialogs(
+    dialogUi: ShopDialogUi,
+    state: ShopUiState,
+    viewModel: ShopViewModel,
+    activity: Activity,
+) {
+    if (dialogUi.shieldSheetOpen) {
         SlotShieldSheet(
             rows = state.slotShieldRows,
             onShieldSlot = viewModel::onBuySlotShieldConfirmed,
-            onDismiss = { shieldSheetOpen = false },
+            onDismiss = dialogUi.onShieldSheetDismiss,
         )
     }
-    val equipHatId = hatEquipHatId
+    val equipHatId = dialogUi.hatEquipHatId
     if (equipHatId != null) {
         HatEquipSheet(
-            hatId = equipHatId,
             buddies = state.upgrades,
             onPickBuddy = {
                 viewModel.onEquipHatConfirmed(equipHatId, it)
-                hatEquipHatId = null
+                dialogUi.onHatEquipDismiss()
             },
             onRemoveHat = {
                 viewModel.onRemoveHat(equipHatId)
-                hatEquipHatId = null
+                dialogUi.onHatEquipDismiss()
             },
-            onDismiss = { hatEquipHatId = null },
+            onDismiss = dialogUi.onHatEquipDismiss,
         )
     }
-    val hatId = pendingHatPurchase
+    val hatId = dialogUi.pendingHatPurchase
     if (hatId != null) {
         ParentGateDialog(
             requireMath = true,
             onPassed = {
                 viewModel.onHatBuyConfirmed(hatId, activity)
-                pendingHatPurchase = null
+                dialogUi.onHatPurchaseDismiss()
             },
-            onDismiss = { pendingHatPurchase = null },
+            onDismiss = dialogUi.onHatPurchaseDismiss,
         )
     }
 }
@@ -145,14 +230,7 @@ fun ShopRoute(viewModel: ShopViewModel = hiltViewModel()) {
 fun ShopScreenContent(
     state: ShopUiState,
     message: String?,
-    onBuySlot: () -> Unit,
-    onBuyMegaTicket: () -> Unit,
-    onBuyBaseShield: () -> Unit,
-    onOpenSlotShields: () -> Unit,
-    onUpgrade: (String) -> Unit,
-    onBuyHat: (String) -> Unit,
-    onEquipHat: (String) -> Unit,
-    onWatchAd: (AdRewardKind) -> Unit,
+    actions: ShopActions,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalAppColors.current
@@ -189,140 +267,86 @@ fun ShopScreenContent(
                     message = message,
                 )
             }
-            item(key = "slots-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.shop_section_slots))
-            }
-            item(key = "slots", contentType = "card") {
-                SlotSection(
-                    unlocked = state.unlockedSlots,
-                    nextCost = state.nextSlotCost,
-                    onBuySlot = onBuySlot,
-                )
-            }
-            if (state.onboardingDay >= TICKETS_UNLOCK_DAY) {
-                item(key = "tickets-header", contentType = "header") {
-                    SectionHeader(title = stringResource(R.string.shop_section_tickets))
-                }
-                item(key = "tickets", contentType = "card") {
-                    TicketSection(
-                        lucky = state.luckyTickets,
-                        mega = state.megaTickets,
-                        onBuyMegaTicket = onBuyMegaTicket,
-                    )
-                }
-            }
-            if (state.onboardingDay >= UPGRADES_UNLOCK_DAY) {
-                item(key = "upgrades-header", contentType = "header") {
-                    SectionHeader(title = stringResource(R.string.shop_section_upgrades))
-                }
-                item(key = "upgrades", contentType = "card") {
-                    UpgradeSection(
-                        upgrades = state.upgrades,
-                        onUpgrade = onUpgrade,
-                    )
-                }
-            }
-            if (state.onboardingDay >= SHIELDS_UNLOCK_DAY) {
-                item(key = "shields-header", contentType = "header") {
-                    SectionHeader(title = stringResource(R.string.shop_section_shields))
-                }
-                item(key = "shields", contentType = "card") {
-                    ShieldSection(
-                        baseShieldUntil = state.baseShieldUntil,
-                        onBuyBaseShield = onBuyBaseShield,
-                        onOpenSlotShields = onOpenSlotShields,
-                    )
-                }
-            }
-            item(key = "hats-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.shop_section_hats))
-            }
-            item(key = "hats", contentType = "card") {
-                HatSection(
-                    hats = state.hats,
-                    onBuyHat = onBuyHat,
-                    onEquipHat = onEquipHat,
-                )
-            }
-            if (!state.adsRemoved) {
-                item(key = "free-header", contentType = "header") {
-                    SectionHeader(title = stringResource(R.string.shop_section_free))
-                }
-                item(key = "free", contentType = "card") {
-                    FreeCoinsSection(
-                        adReady = state.adReady,
-                        onWatchAd = onWatchAd,
-                    )
-                }
-            }
+            shopSections(state, actions)
         }
     }
 }
 
 @Composable
 private fun MiloHeader(coins: Long, bites: Int, message: String?) {
-    val colors = LocalAppColors.current
     Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8)) {
-        GroupCard {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
-            ) {
-                BuddyImage(
-                    imageName = "hero_milo",
-                    contentDescription = null,
-                    modifier = Modifier.size(72.dp),
+        MiloBalanceCard(coins = coins, bites = bites)
+        if (message != null) {
+            MiloMessageCard(message = message)
+        }
+    }
+}
+
+@Composable
+private fun MiloBalanceCard(coins: Long, bites: Int) {
+    val colors = LocalAppColors.current
+    GroupCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
+        ) {
+            BuddyImage(
+                imageName = "hero_milo",
+                contentDescription = null,
+                modifier = Modifier.size(72.dp),
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spacing4)) {
+                Text(
+                    text = stringResource(R.string.shop_milo_greeting),
+                    style = AppTypography.headline,
+                    color = colors.label,
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spacing4)) {
-                    Text(
-                        text = stringResource(R.string.shop_milo_greeting),
-                        style = AppTypography.headline,
-                        color = colors.label,
-                    )
-                    Text(
-                        text = stringResource(R.string.coins_count, coins),
-                        style = AppTypography.title2,
-                        color = colors.accent,
-                    )
-                    Text(
-                        text = stringResource(R.string.bites_count, bites),
-                        style = AppTypography.subheadline,
-                        color = colors.secondaryLabel,
-                    )
-                }
+                Text(
+                    text = stringResource(R.string.coins_count, coins),
+                    style = AppTypography.title2,
+                    color = colors.accent,
+                )
+                Text(
+                    text = stringResource(R.string.bites_count, bites),
+                    style = AppTypography.subheadline,
+                    color = colors.secondaryLabel,
+                )
             }
         }
-        if (message != null) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = colors.accent.copy(alpha = 0.15f),
-                ),
-            ) {
-                Row(
-                    modifier = Modifier.padding(
-                        horizontal = AppDimens.spacing16,
-                        vertical = AppDimens.spacing12,
-                    ),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.ShoppingCart,
-                        contentDescription = null,
-                        tint = colors.accent,
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Text(
-                        text = message,
-                        style = AppTypography.body,
-                        color = colors.label,
-                    )
-                }
-            }
+    }
+}
+
+@Composable
+private fun MiloMessageCard(message: String) {
+    val colors = LocalAppColors.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.accent.copy(alpha = 0.15f),
+        ),
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                horizontal = AppDimens.spacing16,
+                vertical = AppDimens.spacing12,
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.ShoppingCart,
+                contentDescription = null,
+                tint = colors.accent,
+                modifier = Modifier.size(24.dp),
+            )
+            Text(
+                text = message,
+                style = AppTypography.body,
+                color = colors.label,
+            )
         }
     }
 }

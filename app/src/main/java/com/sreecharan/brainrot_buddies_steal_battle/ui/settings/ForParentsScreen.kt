@@ -4,6 +4,7 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -18,6 +19,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -47,34 +49,10 @@ fun ForParentsRoute(onBack: () -> Unit) {
 @Composable
 fun ForParentsScreenContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = LocalAppColors.current
-    val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.forparents_title),
-                        style = AppTypography.largeTitle,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_close),
-                            tint = colors.accent,
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = colors.groupedBackground,
-                    scrolledContainerColor = colors.groupedBackground,
-                ),
-            )
-        },
+        topBar = { ForParentsTopBar(scrollBehavior, onBack) },
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
@@ -83,67 +61,113 @@ fun ForParentsScreenContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
             ),
         ) {
-            item(key = "data-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.forparents_data_title))
-            }
-            item(key = "data", contentType = "card") {
-                ParentInfoCard(bodyRes = R.string.forparents_data_body)
-            }
-            item(key = "ads-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.forparents_ads_title))
-            }
-            item(key = "ads", contentType = "card") {
-                ParentInfoCard(bodyRes = R.string.forparents_ads_body)
-            }
-            item(key = "purchases-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.forparents_purchases_title))
-            }
-            item(key = "purchases", contentType = "card") {
-                ParentInfoCard(bodyRes = R.string.forparents_purchases_body)
-            }
-            item(key = "friends-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.forparents_friends_title))
-            }
-            item(key = "friends", contentType = "card") {
-                ParentInfoCard(bodyRes = R.string.forparents_friends_body)
-            }
-            item(key = "delete-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.forparents_data_delete_title))
-            }
-            item(key = "delete", contentType = "card") {
-                ParentInfoCard(bodyRes = R.string.forparents_data_delete_body)
-            }
+            infoSection(
+                key = "data",
+                headerRes = R.string.forparents_data_title,
+                bodyRes = R.string.forparents_data_body,
+            )
+            infoSection(
+                key = "ads",
+                headerRes = R.string.forparents_ads_title,
+                bodyRes = R.string.forparents_ads_body,
+            )
+            infoSection(
+                key = "purchases",
+                headerRes = R.string.forparents_purchases_title,
+                bodyRes = R.string.forparents_purchases_body,
+            )
+            infoSection(
+                key = "friends",
+                headerRes = R.string.forparents_friends_title,
+                bodyRes = R.string.forparents_friends_body,
+            )
+            infoSection(
+                key = "delete",
+                headerRes = R.string.forparents_data_delete_title,
+                bodyRes = R.string.forparents_data_delete_body,
+            )
             item(key = "contact-header", contentType = "header") {
                 SectionHeader(title = stringResource(R.string.forparents_contact_title))
             }
             item(key = "contact", contentType = "card") {
-                GroupCard {
-                    Column(
-                        modifier = Modifier.padding(AppDimens.spacing16),
-                        verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.forparents_contact_body),
-                            style = AppTypography.body,
-                            color = colors.label,
-                        )
-                        Button(
-                            onClick = {
-                                val url = context.getString(R.string.about_github_url)
-                                context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp),
-                            shape = AppShapes.capsule,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colors.accent,
-                            ),
-                        ) {
-                            Text(text = stringResource(R.string.forparents_contact_button))
-                        }
-                    }
-                }
+                ForParentsContactSection()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ForParentsTopBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+    onBack: () -> Unit,
+) {
+    val colors = LocalAppColors.current
+    LargeTopAppBar(
+        title = {
+            Text(
+                text = stringResource(R.string.forparents_title),
+                style = AppTypography.largeTitle,
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.action_close),
+                    tint = colors.accent,
+                )
+            }
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.largeTopAppBarColors(
+            containerColor = colors.groupedBackground,
+            scrolledContainerColor = colors.groupedBackground,
+        ),
+    )
+}
+
+private fun LazyListScope.infoSection(
+    key: String,
+    headerRes: Int,
+    bodyRes: Int,
+) {
+    item(key = "$key-header", contentType = "header") {
+        SectionHeader(title = stringResource(headerRes))
+    }
+    item(key = key, contentType = "card") {
+        ParentInfoCard(bodyRes = bodyRes)
+    }
+}
+
+@Composable
+private fun ForParentsContactSection() {
+    val colors = LocalAppColors.current
+    val context = LocalContext.current
+    GroupCard {
+        Column(
+            modifier = Modifier.padding(AppDimens.spacing16),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
+        ) {
+            Text(
+                text = stringResource(R.string.forparents_contact_body),
+                style = AppTypography.body,
+                color = colors.label,
+            )
+            Button(
+                onClick = {
+                    val url = context.getString(R.string.about_github_url)
+                    context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp),
+                shape = AppShapes.capsule,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accent,
+                ),
+            ) {
+                Text(text = stringResource(R.string.forparents_contact_button))
             }
         }
     }

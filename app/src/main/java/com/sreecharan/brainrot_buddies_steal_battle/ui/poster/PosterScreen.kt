@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,6 +34,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -77,30 +79,37 @@ fun PosterRoute(
 
     PosterScreenContent(
         state = state,
-        onBack = onBack,
-        onAddPhoto = { picker.launch("image/*") },
-        onConfirmPhoto = viewModel::onConfirmPhoto,
-        onPickAnother = {
-            viewModel.onPickAnother()
-            picker.launch("image/*")
-        },
-        onRemovePoster = viewModel::onRemovePoster,
-        onFailureDismissed = viewModel::onFailureDismissed,
+        actions = PosterActions(
+            onBack = onBack,
+            onAddPhoto = { picker.launch("image/*") },
+            onConfirmPhoto = viewModel::onConfirmPhoto,
+            onPickAnother = {
+                viewModel.onPickAnother()
+                picker.launch("image/*")
+            },
+            onRemovePoster = viewModel::onRemovePoster,
+            onFailureDismissed = viewModel::onFailureDismissed,
+        ),
         decodeFile = viewModel::decodePosterFile,
         savedAbsolutePath = viewModel.posterFile(state.posterRelativePath).absolutePath,
     )
 }
 
+/** All user actions on the poster import screen. */
+data class PosterActions(
+    val onBack: () -> Unit,
+    val onAddPhoto: () -> Unit,
+    val onConfirmPhoto: () -> Unit,
+    val onPickAnother: () -> Unit,
+    val onRemovePoster: () -> Unit,
+    val onFailureDismissed: () -> Unit,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PosterScreenContent(
     state: PosterUiState,
-    onBack: () -> Unit,
-    onAddPhoto: () -> Unit,
-    onConfirmPhoto: () -> Unit,
-    onPickAnother: () -> Unit,
-    onRemovePoster: () -> Unit,
-    onFailureDismissed: () -> Unit,
+    actions: PosterActions,
     decodeFile: suspend (String) -> Bitmap?,
     savedAbsolutePath: String,
     modifier: Modifier = Modifier,
@@ -109,30 +118,7 @@ fun PosterScreenContent(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.poster_title),
-                        style = AppTypography.largeTitle,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.action_close),
-                            tint = colors.accent,
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = colors.groupedBackground,
-                    scrolledContainerColor = colors.groupedBackground,
-                ),
-            )
-        },
+        topBar = { PosterTopBar(scrollBehavior, actions.onBack) },
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
@@ -141,64 +127,113 @@ fun PosterScreenContent(
                 bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
             ),
         ) {
-            item(key = "frame", contentType = "frame") {
-                val preview = state.previewPath
-                when {
-                    preview != null -> PosterPreview(
-                        path = preview,
-                        decodeFile = decodeFile,
-                        isSaving = state.isSaving,
-                        onConfirm = onConfirmPhoto,
-                        onRepick = onPickAnother,
-                    )
-                    state.hasPoster -> SavedPoster(
-                        path = savedAbsolutePath,
-                        decodeFile = decodeFile,
-                        onRepick = onAddPhoto,
-                        onRemove = onRemovePoster,
-                    )
-                    else -> EmptyPosterFrame(onAddPhoto = onAddPhoto)
-                }
+            posterFrameItem(state, actions, decodeFile, savedAbsolutePath)
+            footerItems(state.failed, actions.onFailureDismissed)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PosterTopBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+    onBack: () -> Unit,
+) {
+    val colors = LocalAppColors.current
+    LargeTopAppBar(
+        title = {
+            Text(
+                text = stringResource(R.string.poster_title),
+                style = AppTypography.largeTitle,
+            )
+        },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = stringResource(R.string.action_close),
+                    tint = colors.accent,
+                )
             }
-            if (state.failed) {
-                item(key = "failed", contentType = "message") {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colors.warning.copy(alpha = 0.15f),
-                        ),
-                    ) {
-                        TextButton(onClick = onFailureDismissed) {
-                            Text(
-                                text = stringResource(R.string.shop_error),
-                                style = AppTypography.body,
-                                color = colors.label,
-                                modifier = Modifier.padding(AppDimens.spacing8),
-                            )
-                        }
-                    }
-                }
-            }
-            item(key = "terms", contentType = "terms") {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(AppDimens.spacing4),
-                ) {
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.largeTopAppBarColors(
+            containerColor = colors.groupedBackground,
+            scrolledContainerColor = colors.groupedBackground,
+        ),
+    )
+}
+
+private fun LazyListScope.posterFrameItem(
+    state: PosterUiState,
+    actions: PosterActions,
+    decodeFile: suspend (String) -> Bitmap?,
+    savedAbsolutePath: String,
+) {
+    item(key = "frame", contentType = "frame") {
+        val preview = state.previewPath
+        when {
+            preview != null -> PosterPreview(
+                path = preview,
+                decodeFile = decodeFile,
+                isSaving = state.isSaving,
+                onConfirm = actions.onConfirmPhoto,
+                onRepick = actions.onPickAnother,
+            )
+            state.hasPoster -> SavedPoster(
+                path = savedAbsolutePath,
+                decodeFile = decodeFile,
+                onRepick = actions.onAddPhoto,
+                onRemove = actions.onRemovePoster,
+            )
+            else -> EmptyPosterFrame(onAddPhoto = actions.onAddPhoto)
+        }
+    }
+}
+
+private fun LazyListScope.footerItems(
+    failed: Boolean,
+    onFailureDismissed: () -> Unit,
+) {
+    if (failed) {
+        item(key = "failed", contentType = "message") {
+            val colors = LocalAppColors.current
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = colors.warning.copy(alpha = 0.15f),
+                ),
+            ) {
+                TextButton(onClick = onFailureDismissed) {
                     Text(
-                        text = stringResource(R.string.poster_terms),
-                        style = AppTypography.footnote,
-                        color = colors.secondaryLabel,
-                        textAlign = TextAlign.Center,
-                    )
-                    Text(
-                        text = stringResource(R.string.poster_private),
-                        style = AppTypography.caption,
-                        color = colors.secondaryLabel,
-                        textAlign = TextAlign.Center,
+                        text = stringResource(R.string.shop_error),
+                        style = AppTypography.body,
+                        color = colors.label,
+                        modifier = Modifier.padding(AppDimens.spacing8),
                     )
                 }
             }
+        }
+    }
+    item(key = "terms", contentType = "terms") {
+        val colors = LocalAppColors.current
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spacing4),
+        ) {
+            Text(
+                text = stringResource(R.string.poster_terms),
+                style = AppTypography.footnote,
+                color = colors.secondaryLabel,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.poster_private),
+                style = AppTypography.caption,
+                color = colors.secondaryLabel,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

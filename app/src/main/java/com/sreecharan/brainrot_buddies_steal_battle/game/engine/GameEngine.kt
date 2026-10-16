@@ -117,8 +117,6 @@ interface EconomyRules {
 
     fun buddyCoinsPerSec(baseCoinsPerSec: Int, level: Int): Double
 
-    fun buddyCoinsPerHour(baseCoinsPerSec: Int, level: Int): Double
-
     /**
      * Cost to unlock the [unlockNumber]-th extra slot (1..20, covering base
      * slots 4..23). §4 ladder: 50 ... 100000, then 150000 x9.
@@ -347,9 +345,6 @@ internal object EconomyEngine : EconomyRules {
     override fun buddyCoinsPerSec(baseCoinsPerSec: Int, level: Int): Double =
         baseCoinsPerSec * upgradeMultiplier(level)
 
-    override fun buddyCoinsPerHour(baseCoinsPerSec: Int, level: Int): Double =
-        buddyCoinsPerSec(baseCoinsPerSec, level) * SECONDS_PER_HOUR
-
     override fun slotUnlockCost(unlockNumber: Int): Long {
         require(unlockNumber in 1..MAX_SLOT_UNLOCKS) { "unlockNumber must be 1..20" }
         return SLOT_UNLOCK_COSTS[unlockNumber - 1]
@@ -407,7 +402,6 @@ internal object EconomyEngine : EconomyRules {
     private const val VAULT_CAP_HOURS = 4L
     private const val OFFLINE_CAP_MS = 4L * 60L * 60L * 1000L
     private const val MILLIS_PER_SECOND = 1000L
-    private const val SECONDS_PER_HOUR = 3600L
 
     // Misc economy (§4).
     private const val CONSOLATION_FRACTION = 0.5
@@ -547,3 +541,9 @@ internal object EventEngine : EventRules {
     private const val ZOOM_RACE_MINUTES = 20
     private const val DAYS_PER_WEEK = 7
 }
+
+private const val SECONDS_PER_HOUR = 3600L
+
+/** Hourly income derived from the per-second rate. */
+fun GameEngine.buddyCoinsPerHour(baseCoinsPerSec: Int, level: Int): Double =
+    buddyCoinsPerSec(baseCoinsPerSec, level) * SECONDS_PER_HOUR

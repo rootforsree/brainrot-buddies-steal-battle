@@ -47,17 +47,23 @@ extensions.configure<ApplicationExtension> {
         // must supply the real ID via -PadmobAppId or the ADMOB_APP_ID env
         // var. The default is Google's official SAMPLE App ID, safe for test
         // builds only.
-        val admobAppId = providers.gradleProperty("admobAppId")
-            .orElse(providers.environmentVariable("ADMOB_APP_ID"))
-            .getOrElse("ca-app-pub-3940256099942544~3347511713")
+        val admobAppId =
+            providers
+                .gradleProperty("admobAppId")
+                .orElse(providers.environmentVariable("ADMOB_APP_ID"))
+                .getOrElse("ca-app-pub-3940256099942544~3347511713")
         manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
     }
 
     buildTypes {
         getByName("release") {
             val hasKey = !System.getenv("KEYSTORE_PATH").isNullOrBlank()
-            signingConfig = if (hasKey) signingConfigs.getByName("release")
-                            else signingConfigs.getByName("debug")
+            signingConfig =
+                if (hasKey) {
+                    signingConfigs.getByName("release")
+                } else {
+                    signingConfigs.getByName("debug")
+                }
             if (!hasKey) logger.warn("No release keystore in env: signing release with debug key")
             isMinifyEnabled = true
             isShrinkResources = true
@@ -73,7 +79,6 @@ extensions.configure<ApplicationExtension> {
     buildFeatures {
         buildConfig = true
     }
-
 }
 
 // Proto DataStore codegen: lite runtime, protoc version pinned in the catalog.

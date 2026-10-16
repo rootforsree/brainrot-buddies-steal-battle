@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -82,95 +83,165 @@ fun SettingsRoute(
     var removeAdsGate by remember { mutableStateOf(false) }
     var deleteGate by remember { mutableStateOf(false) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            message = when (event) {
-                SettingsEvent.RemoveAdsPurchased ->
-                    context.getString(R.string.settings_remove_ads_done)
-                SettingsEvent.BillingFailed ->
-                    context.getString(R.string.shop_error)
-                SettingsEvent.DataDeleted ->
-                    context.getString(R.string.settings_delete_done)
-                SettingsEvent.DeleteFailed ->
-                    context.getString(R.string.settings_delete_failed)
-            }
-        }
-    }
-    LaunchedEffect(message) {
-        if (message != null) {
-            delay(2_500)
-            message = null
-        }
-    }
+    SettingsEventEffect(viewModel) { message = it }
+    MessageDismissEffect(message) { message = null }
 
     SettingsScreenContent(
         state = state,
         redeemState = redeemState,
         message = message,
-        onThemeModeSelected = viewModel::onThemeModeSelected,
-        onHapticsToggled = viewModel::onHapticsToggled,
-        onMusicVolume = viewModel::onMusicVolumeChanged,
-        onSfxVolume = viewModel::onSfxVolumeChanged,
-        onVoiceVolume = viewModel::onVoiceVolumeChanged,
-        onBennyHintsToggled = viewModel::onBennyHintsToggled,
-        onRedeem = giftsViewModel::onRedeemCode,
-        onRedeemConsumed = giftsViewModel::onRedeemResultConsumed,
-        onForParents = onForParents,
-        onPosterImport = onPosterImport,
-        onRemoveAds = { removeAdsGate = true },
-        onDeleteData = { deleteGate = true },
+        actions = SettingsActions(
+            audio = AudioSettingsActions(
+                onMusicVolume = viewModel::onMusicVolumeChanged,
+                onSfxVolume = viewModel::onSfxVolumeChanged,
+                onVoiceVolume = viewModel::onVoiceVolumeChanged,
+            ),
+            appearance = AppearanceSettingsActions(
+                onThemeModeSelected = viewModel::onThemeModeSelected,
+            ),
+            general = GeneralSettingsActions(
+                onHapticsToggled = viewModel::onHapticsToggled,
+                onBennyHintsToggled = viewModel::onBennyHintsToggled,
+            ),
+            redeem = RedeemSettingsActions(
+                onRedeem = giftsViewModel::onRedeemCode,
+                onRedeemConsumed = giftsViewModel::onRedeemResultConsumed,
+            ),
+            grownUp = GrownUpSettingsActions(
+                onForParents = onForParents,
+                onPosterImport = onPosterImport,
+                onRemoveAds = { removeAdsGate = true },
+                onDeleteData = { deleteGate = true },
+            ),
+        ),
     )
 
-    if (removeAdsGate) {
+    SettingsRouteDialogs(
+        gates = SettingsGates(
+            removeAdsGate = removeAdsGate,
+            deleteGate = deleteGate,
+            onRemoveAdsGateChange = { removeAdsGate = it },
+            onDeleteGateChange = { deleteGate = it },
+        ),
+        viewModel = viewModel,
+        activity = activity,
+    )
+}
+
+/** Parent-gate dialog state for the route. */
+private data class SettingsGates(
+    val removeAdsGate: Boolean,
+    val deleteGate: Boolean,
+    val onRemoveAdsGateChange: (Boolean) -> Unit,
+    val onDeleteGateChange: (Boolean) -> Unit,
+)
+
+@Composable
+private fun SettingsEventEffect(
+    viewModel: SettingsViewModel,
+    onMessage: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            onMessage(
+                when (event) {
+                    SettingsEvent.RemoveAdsPurchased ->
+                        context.getString(R.string.settings_remove_ads_done)
+                    SettingsEvent.BillingFailed ->
+                        context.getString(R.string.shop_error)
+                    SettingsEvent.DataDeleted ->
+                        context.getString(R.string.settings_delete_done)
+                    SettingsEvent.DeleteFailed ->
+                        context.getString(R.string.settings_delete_failed)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun MessageDismissEffect(message: String?, onDismiss: () -> Unit) {
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(MESSAGE_DISMISS_MS)
+            onDismiss()
+        }
+    }
+}
+
+@Composable
+private fun SettingsRouteDialogs(
+    gates: SettingsGates,
+    viewModel: SettingsViewModel,
+    activity: Activity,
+) {
+    if (gates.removeAdsGate) {
         ParentGateDialog(
             requireMath = true,
             onPassed = {
-                removeAdsGate = false
+                gates.onRemoveAdsGateChange(false)
                 viewModel.onRemoveAdsConfirmed(activity)
             },
-            onDismiss = { removeAdsGate = false },
+            onDismiss = { gates.onRemoveAdsGateChange(false) },
         )
     }
-    if (deleteGate) {
+    if (gates.deleteGate) {
         ParentGateDialog(
             title = stringResource(R.string.settings_delete_title),
             requireMath = true,
             onPassed = {
-                deleteGate = false
+                gates.onDeleteGateChange(false)
                 viewModel.onDeleteDataConfirmed()
             },
-            onDismiss = { deleteGate = false },
+            onDismiss = { gates.onDeleteGateChange(false) },
         )
     }
 }
 
-private data class ThemeOption(
-    val mode: ThemeMode,
-    @StringRes val titleRes: Int,
-    @StringRes val subtitleRes: Int,
-    val icon: ImageVector,
+/** Callbacks for the audio sliders. */
+data class AudioSettingsActions(
+    val onMusicVolume: (Int) -> Unit,
+    val onSfxVolume: (Int) -> Unit,
+    val onVoiceVolume: (Int) -> Unit,
 )
 
-private val ThemeOptions = persistentListOf(
-    ThemeOption(
-        mode = ThemeMode.SYSTEM,
-        titleRes = R.string.theme_system,
-        subtitleRes = R.string.theme_system_sub,
-        icon = Icons.Filled.SettingsBrightness,
-    ),
-    ThemeOption(
-        mode = ThemeMode.LIGHT,
-        titleRes = R.string.theme_light,
-        subtitleRes = R.string.theme_light_sub,
-        icon = Icons.Filled.LightMode,
-    ),
-    ThemeOption(
-        mode = ThemeMode.DARK,
-        titleRes = R.string.theme_dark,
-        subtitleRes = R.string.theme_dark_sub,
-        icon = Icons.Filled.DarkMode,
-    ),
+/** Callbacks for the appearance section. */
+data class AppearanceSettingsActions(
+    val onThemeModeSelected: (ThemeMode) -> Unit,
 )
+
+/** Callbacks for the general section. */
+data class GeneralSettingsActions(
+    val onHapticsToggled: (Boolean) -> Unit,
+    val onBennyHintsToggled: (Boolean) -> Unit,
+)
+
+/** Callbacks for the redeem-code section. */
+data class RedeemSettingsActions(
+    val onRedeem: (String) -> Unit,
+    val onRedeemConsumed: () -> Unit,
+)
+
+/** Callbacks for the grown-ups section. */
+data class GrownUpSettingsActions(
+    val onForParents: () -> Unit,
+    val onPosterImport: () -> Unit,
+    val onRemoveAds: () -> Unit,
+    val onDeleteData: () -> Unit,
+)
+
+/** All [SettingsScreenContent] callbacks, grouped by section. */
+data class SettingsActions(
+    val audio: AudioSettingsActions,
+    val appearance: AppearanceSettingsActions,
+    val general: GeneralSettingsActions,
+    val redeem: RedeemSettingsActions,
+    val grownUp: GrownUpSettingsActions,
+)
+
+/** How long a settings toast message stays visible. */
+private const val MESSAGE_DISMISS_MS = 2_500L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -178,18 +249,7 @@ fun SettingsScreenContent(
     state: SettingsUiState,
     redeemState: RedeemUiState,
     message: String?,
-    onThemeModeSelected: (ThemeMode) -> Unit,
-    onHapticsToggled: (Boolean) -> Unit,
-    onMusicVolume: (Int) -> Unit,
-    onSfxVolume: (Int) -> Unit,
-    onVoiceVolume: (Int) -> Unit,
-    onBennyHintsToggled: (Boolean) -> Unit,
-    onRedeem: (String) -> Unit,
-    onRedeemConsumed: () -> Unit,
-    onForParents: () -> Unit,
-    onPosterImport: () -> Unit,
-    onRemoveAds: () -> Unit,
-    onDeleteData: () -> Unit,
+    actions: SettingsActions,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalAppColors.current
@@ -219,289 +279,19 @@ fun SettingsScreenContent(
                 bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
             ),
         ) {
-            if (message != null) {
-                item(key = "message", contentType = "message") {
-                    Text(
-                        text = message,
-                        style = AppTypography.body,
-                        color = colors.label,
-                        modifier = Modifier.padding(horizontal = AppDimens.spacing16),
-                    )
-                }
-            }
-            item(key = "audio-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.settings_section_audio))
-            }
-            item(key = "audio-card", contentType = "card") {
-                GroupCard {
-                    AudioSliderRow(
-                        title = stringResource(R.string.settings_music),
-                        subtitle = stringResource(R.string.settings_music_sub),
-                        icon = Icons.Filled.MusicNote,
-                        value = state.musicVolume,
-                        onCommit = onMusicVolume,
-                    )
-                    RowDivider()
-                    AudioSliderRow(
-                        title = stringResource(R.string.settings_sounds),
-                        subtitle = stringResource(R.string.settings_sounds_sub),
-                        icon = Icons.Filled.VolumeUp,
-                        value = state.sfxVolume,
-                        onCommit = onSfxVolume,
-                    )
-                    RowDivider()
-                    AudioSliderRow(
-                        title = stringResource(R.string.settings_voices),
-                        subtitle = stringResource(R.string.settings_voices_sub),
-                        icon = Icons.Filled.RecordVoiceOver,
-                        value = state.voiceVolume,
-                        onCommit = onVoiceVolume,
-                    )
-                }
-            }
-            item(key = "appearance-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.section_appearance))
-            }
-            item(key = "appearance-card", contentType = "card") {
-                GroupCard {
-                    ThemeOptions.forEachIndexed { index, option ->
-                        if (index > 0) {
-                            RowDivider()
-                        }
-                        val selected = state.themeMode == option.mode
-                        SettingsRow(
-                            title = stringResource(option.titleRes),
-                            subtitle = stringResource(option.subtitleRes),
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = option.icon,
-                                    contentDescription = null,
-                                    tint = colors.secondaryLabel,
-                                    modifier = Modifier.size(AppDimens.iconSize),
-                                )
-                            },
-                            trailing = {
-                                RadioButton(
-                                    selected = selected,
-                                    onClick = null,
-                                    colors = RadioButtonDefaults.colors(
-                                        selectedColor = colors.accent,
-                                    ),
-                                )
-                            },
-                            selectableSelected = selected,
-                            onClick = { onThemeModeSelected(option.mode) },
-                        )
-                    }
-                }
-            }
-            item(key = "general-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.section_general))
-            }
-            item(key = "general-card", contentType = "card") {
-                GroupCard {
-                    SettingsRow(
-                        title = stringResource(R.string.settings_haptics_title),
-                        subtitle = stringResource(R.string.settings_haptics_sub),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Vibration,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        trailing = {
-                            Switch(
-                                checked = state.hapticsEnabled,
-                                onCheckedChange = null,
-                            )
-                        },
-                        toggleableValue = state.hapticsEnabled,
-                        onClick = { onHapticsToggled(!state.hapticsEnabled) },
-                    )
-                    RowDivider()
-                    SettingsRow(
-                        title = stringResource(R.string.settings_benny_title),
-                        subtitle = stringResource(R.string.settings_benny_sub),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Face,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        trailing = {
-                            Switch(
-                                checked = state.bennyHints,
-                                onCheckedChange = null,
-                            )
-                        },
-                        toggleableValue = state.bennyHints,
-                        onClick = { onBennyHintsToggled(!state.bennyHints) },
-                    )
-                    RowDivider()
-                    SettingsRow(
-                        title = stringResource(R.string.settings_notifications_title),
-                        subtitle = stringResource(R.string.settings_notifications_soon),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Notifications,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel.copy(alpha = 0.4f),
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                    )
-                }
-            }
+            messageItem(message)
+            audioSection(state, actions.audio)
+            appearanceSection(state, actions.appearance)
+            generalSection(state, actions.general)
             item(key = "redeem", contentType = "card") {
                 RedeemCodeSection(
                     redeemState = redeemState,
-                    onRedeem = onRedeem,
-                    onResultConsumed = onRedeemConsumed,
+                    onRedeem = actions.redeem.onRedeem,
+                    onResultConsumed = actions.redeem.onRedeemConsumed,
                 )
             }
-            item(key = "grownups-header", contentType = "header") {
-                SectionHeader(title = stringResource(R.string.settings_section_grownups))
-            }
-            item(key = "grownups-card", contentType = "card") {
-                GroupCard {
-                    SettingsRow(
-                        title = stringResource(R.string.settings_parents_title),
-                        subtitle = stringResource(R.string.settings_parents_sub),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Shield,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Filled.ChevronRight,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        onClick = onForParents,
-                    )
-                    RowDivider()
-                    SettingsRow(
-                        title = stringResource(R.string.settings_poster_title),
-                        subtitle = stringResource(R.string.settings_poster_sub),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Filled.Image,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        trailing = {
-                            Icon(
-                                imageVector = Icons.Filled.ChevronRight,
-                                contentDescription = null,
-                                tint = colors.secondaryLabel,
-                                modifier = Modifier.size(AppDimens.iconSize),
-                            )
-                        },
-                        onClick = onPosterImport,
-                    )
-                    RowDivider()
-                    if (state.adsRemoved) {
-                        SettingsRow(
-                            title = stringResource(R.string.settings_remove_ads),
-                            subtitle = stringResource(R.string.settings_remove_ads_done),
-                        )
-                    } else {
-                        SettingsRow(
-                            title = stringResource(R.string.settings_remove_ads),
-                            subtitle = stringResource(R.string.settings_remove_ads_sub),
-                            onClick = onRemoveAds,
-                        )
-                    }
-                    RowDivider()
-                    SettingsRow(
-                        title = stringResource(R.string.settings_delete_title),
-                        subtitle = stringResource(R.string.settings_delete_sub),
-                        trailing = if (state.isDeleting) {
-                            {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = colors.destructive,
-                                )
-                            }
-                        } else {
-                            null
-                        },
-                        onClick = onDeleteData,
-                    )
-                }
-            }
+            grownUpSection(state, actions.grownUp)
         }
     }
 }
 
-/**
- * 0-100 slider. Drags update locally for instant feedback; the value commits
- * to DataStore once when the finger lifts.
- */
-@Composable
-private fun AudioSliderRow(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    value: Int,
-    onCommit: (Int) -> Unit,
-) {
-    val colors = LocalAppColors.current
-    var slider by remember(value) { mutableFloatStateOf(value.toFloat()) }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = AppDimens.rowHorizontalPadding,
-                vertical = AppDimens.rowVerticalPadding,
-            ),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.secondaryLabel,
-                modifier = Modifier.size(AppDimens.iconSize),
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = AppTypography.body,
-                    color = colors.label,
-                )
-                Text(
-                    text = subtitle,
-                    style = AppTypography.footnote,
-                    color = colors.secondaryLabel,
-                )
-            }
-            Text(
-                text = slider.roundToInt().toString(),
-                style = AppTypography.headline,
-                color = colors.accent,
-            )
-        }
-        Slider(
-            value = slider,
-            onValueChange = { slider = it },
-            valueRange = 0f..100f,
-            steps = 99,
-            onValueChangeFinished = { onCommit(slider.roundToInt()) },
-        )
-    }
-}

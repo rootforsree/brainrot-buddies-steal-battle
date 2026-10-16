@@ -30,21 +30,21 @@ import javax.inject.Inject
  * for game state; GamePrefs (Preferences DataStore) holds flat flags. Every
  * failure surfaces as [Result.Error]; nothing raw crosses the boundary.
  */
-internal class CoreDaos(
+internal class CoreDaos @Inject constructor(
     val ownedBuddyDao: OwnedBuddyDao,
     val slotDao: BaseSlotDao,
     val vaultDao: VaultDao,
     val ticketDao: TicketDao,
 )
 
-internal class MetaDaos(
+internal class MetaDaos @Inject constructor(
     val shieldDao: ShieldDao,
     val raidRecordDao: RaidRecordDao,
     val friendDao: FriendDao,
     val calendarDao: CalendarDao,
 )
 
-internal class RepositoryHelpers(
+internal class RepositoryHelpers @Inject constructor(
     val gamePrefs: GamePrefs,
     @IoDispatcher val ioDispatcher: CoroutineDispatcher,
 ) {

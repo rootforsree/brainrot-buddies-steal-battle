@@ -13,6 +13,7 @@ import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
 import com.android.billingclient.api.queryProductDetails
@@ -95,43 +96,52 @@ class BillingManager @Inject constructor(
             _busy.value = true
             try {
                 guardBillingCall("refreshProducts failed", BillingEvent.StoreUnavailable) {
-                    val client = ensureConnected()
-                    if (client == null) {
-                        _events.emit(BillingEvent.StoreUnavailable)
-                        return@guardBillingCall
-                    }
-                val params = QueryProductDetailsParams.newBuilder()
-                    .setProductList(
-                        BillingProducts.ALL.map { id ->
-                            QueryProductDetailsParams.Product.newBuilder()
-                                .setProductId(id)
-                                .setProductType(BillingClient.ProductType.INAPP)
-                                .build()
-                        },
-                    )
-                    .build()
-                val result = client.queryProductDetails(params)
-                if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    productDetails.clear()
-                    result.productDetailsList.orEmpty().forEach { details ->
-                        productDetails[details.productId] = details
-                    }
-                    _products.value = BillingProducts.ALL.mapNotNull { id ->
-                        productDetails[id]?.let { details ->
-                            ProductOffer(
-                                productId = id,
-                                title = details.title.substringBefore(" ("),
-                                priceText = details.oneTimePurchaseOfferDetails?.formattedPrice.orEmpty(),
-                            )
-                        }
-                    }
-                    _events.emit(BillingEvent.ProductsRefreshed)
-                } else {
-                    Log.w(TAG, "queryProductDetails failed: ${result.billingResult.responseCode}")
-                    _events.emit(BillingEvent.StoreUnavailable)
+                    refreshProductsInternal()
                 }
             } finally {
                 _busy.value = false
+            }
+        }
+    }
+
+    private suspend fun refreshProductsInternal() {
+        val client = ensureConnected()
+        if (client == null) {
+            _events.emit(BillingEvent.StoreUnavailable)
+            return
+        }
+        val params = QueryProductDetailsParams.newBuilder()
+            .setProductList(
+                BillingProducts.ALL.map { id ->
+                    QueryProductDetailsParams.Product.newBuilder()
+                        .setProductId(id)
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                },
+            )
+            .build()
+        val result = client.queryProductDetails(params)
+        if (result.billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+            applyProductDetails(result)
+            _events.emit(BillingEvent.ProductsRefreshed)
+        } else {
+            Log.w(TAG, "queryProductDetails failed: ${result.billingResult.responseCode}")
+            _events.emit(BillingEvent.StoreUnavailable)
+        }
+    }
+
+    private fun applyProductDetails(result: QueryProductDetailsResult) {
+        productDetails.clear()
+        result.productDetailsList.orEmpty().forEach { details ->
+            productDetails[details.productId] = details
+        }
+        _products.value = BillingProducts.ALL.mapNotNull { id ->
+            productDetails[id]?.let { details ->
+                ProductOffer(
+                    productId = id,
+                    title = details.title.substringBefore(" ("),
+                    priceText = details.oneTimePurchaseOfferDetails?.formattedPrice.orEmpty(),
+                )
             }
         }
     }
@@ -147,42 +157,44 @@ class BillingManager @Inject constructor(
             _busy.value = true
             try {
                 guardBillingCall("startPurchase failed", BillingEvent.PurchaseFailed(productId)) {
-                    val client = ensureConnected()
-                    if (client == null) {
-                        _events.emit(BillingEvent.StoreUnavailable)
-                        return@guardBillingCall
-                    }
-                    var details = productDetails[productId]
-                    if (details == null) {
-                        refreshProductsSync(client)
-                        details = productDetails[productId]
-                    }
-                    if (details == null) {
-                        _events.emit(BillingEvent.StoreUnavailable)
-                        return@guardBillingCall
-                    }
-                val flowParams = BillingFlowParams.newBuilder()
-                    .setProductDetailsParamsList(
-                        listOf(
-                            BillingFlowParams.ProductDetailsParams.newBuilder()
-                                .setProductDetails(details)
-                                .build(),
-                        ),
-                    )
-                    .build()
-                val result = client.launchBillingFlow(activity, flowParams)
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) {
-                    Log.w(TAG, "launchBillingFlow failed: ${result.responseCode}")
-                    _events.emit(BillingEvent.PurchaseFailed(productId))
+                    startPurchaseInternal(activity, productId)
                 }
-                // Success/failure arrives via purchasesListener.
-            } catch (e: Exception) {
-                Log.w(TAG, "startPurchase failed", e)
-                _events.emit(BillingEvent.PurchaseFailed(productId))
             } finally {
                 _busy.value = false
             }
         }
+    }
+
+    private suspend fun startPurchaseInternal(activity: Activity, productId: String) {
+        val client = ensureConnected()
+        if (client == null) {
+            _events.emit(BillingEvent.StoreUnavailable)
+            return
+        }
+        var details = productDetails[productId]
+        if (details == null) {
+            refreshProductsSync(client)
+            details = productDetails[productId]
+        }
+        if (details == null) {
+            _events.emit(BillingEvent.StoreUnavailable)
+            return
+        }
+        val flowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(
+                listOf(
+                    BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(details)
+                        .build(),
+                ),
+            )
+            .build()
+        val result = client.launchBillingFlow(activity, flowParams)
+        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+            Log.w(TAG, "launchBillingFlow failed: ${result.responseCode}")
+            _events.emit(BillingEvent.PurchaseFailed(productId))
+        }
+        // Success/failure arrives via purchasesListener.
     }
 
     /** Re-applies entitlements for already-owned products (new device, reinstall). */
@@ -190,19 +202,19 @@ class BillingManager @Inject constructor(
         scope.launch {
             _busy.value = true
             try {
-                val client = ensureConnected() ?: run {
-                    _events.emit(BillingEvent.StoreUnavailable)
-                    return@launch
+                guardBillingCall("restorePurchases failed", BillingEvent.StoreUnavailable) {
+                    val client = ensureConnected()
+                    if (client == null) {
+                        _events.emit(BillingEvent.StoreUnavailable)
+                        return@guardBillingCall
+                    }
+                    val params = QueryPurchasesParams.newBuilder()
+                        .setProductType(BillingClient.ProductType.INAPP)
+                        .build()
+                    val result = client.queryPurchasesAsync(params)
+                    result.purchasesList.forEach { applyPurchase(it) }
+                    _events.emit(BillingEvent.RestoreCompleted)
                 }
-                val params = QueryPurchasesParams.newBuilder()
-                    .setProductType(BillingClient.ProductType.INAPP)
-                    .build()
-                val result = client.queryPurchasesAsync(params)
-                result.purchasesList.forEach { applyPurchase(it) }
-                _events.emit(BillingEvent.RestoreCompleted)
-            } catch (e: Exception) {
-                Log.w(TAG, "restorePurchases failed", e)
-                _events.emit(BillingEvent.StoreUnavailable)
             } finally {
                 _busy.value = false
             }
@@ -282,5 +294,32 @@ class BillingManager @Inject constructor(
 
     companion object {
         private const val TAG = "BillingManager"
+    }
+
+    /**
+     * Runs a billing body, converting Play/binder failure modes into the
+     * given fallback event. Only the realistic failure modes of the
+     * BillingClient are caught; anything else still surfaces.
+     */
+    private suspend fun guardBillingCall(
+        logMessage: String,
+        fallbackEvent: BillingEvent,
+        body: suspend () -> Unit,
+    ) {
+        try {
+            body()
+        } catch (e: RemoteException) {
+            Log.w(TAG, logMessage, e)
+            _events.emit(fallbackEvent)
+        } catch (e: IllegalStateException) {
+            Log.w(TAG, logMessage, e)
+            _events.emit(fallbackEvent)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, logMessage, e)
+            _events.emit(fallbackEvent)
+        } catch (e: IOException) {
+            Log.w(TAG, logMessage, e)
+            _events.emit(fallbackEvent)
+        }
     }
 }

@@ -4,6 +4,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode
 import com.sreecharan.brainrot_buddies_steal_battle.ui.gifts.RedeemUiState
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.AppearanceSettingsActions
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.AudioSettingsActions
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.GeneralSettingsActions
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.GrownUpSettingsActions
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.RedeemSettingsActions
+import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsActions
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsScreenContent
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsUiState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
@@ -50,18 +56,30 @@ class SettingsScreenshotTest {
                     state = state,
                     redeemState = RedeemUiState(),
                     message = null,
-                    onThemeModeSelected = {},
-                    onHapticsToggled = {},
-                    onMusicVolume = {},
-                    onSfxVolume = {},
-                    onVoiceVolume = {},
-                    onBennyHintsToggled = {},
-                    onRedeem = {},
-                    onRedeemConsumed = {},
-                    onForParents = {},
-                    onPosterImport = {},
-                    onRemoveAds = {},
-                    onDeleteData = {},
+                    actions = SettingsActions(
+                        audio = AudioSettingsActions(
+                            onMusicVolume = {},
+                            onSfxVolume = {},
+                            onVoiceVolume = {},
+                        ),
+                        appearance = AppearanceSettingsActions(
+                            onThemeModeSelected = {},
+                        ),
+                        general = GeneralSettingsActions(
+                            onHapticsToggled = {},
+                            onBennyHintsToggled = {},
+                        ),
+                        redeem = RedeemSettingsActions(
+                            onRedeem = {},
+                            onRedeemConsumed = {},
+                        ),
+                        grownUp = GrownUpSettingsActions(
+                            onForParents = {},
+                            onPosterImport = {},
+                            onRemoveAds = {},
+                            onDeleteData = {},
+                        ),
+                    ),
                 )
             }
         }

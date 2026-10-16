@@ -291,13 +291,20 @@ class GiftsViewModel @Inject constructor(
         return true
     }
 
-    private fun rollWeeklyBuddy() = when (Random.nextInt(100)) {
-        in 0 until 70 -> BuddyCatalog.all.filter { it.rarity == Rarity.COMMON }.randomOrNull()
-        in 70 until 95 -> BuddyCatalog.all.filter { it.rarity == Rarity.RARE }.randomOrNull()
-        else -> BuddyCatalog.all.filter { it.rarity == Rarity.EPIC }.randomOrNull()
+    private fun rollWeeklyBuddy() = when (Random.nextInt(WEEKLY_ROLL_MAX)) {
+        in 0 until WEEKLY_COMMON_MAX ->
+            BuddyCatalog.all.filter { it.rarity == Rarity.COMMON }.randomOrNull()
+        in WEEKLY_COMMON_MAX until WEEKLY_RARE_MAX ->
+            BuddyCatalog.all.filter { it.rarity == Rarity.RARE }.randomOrNull()
+        else ->
+            BuddyCatalog.all.filter { it.rarity == Rarity.EPIC }.randomOrNull()
     }
 
     companion object {
+        /** Weekly Flippy roll: common/rare/epic weights per 100 rolls. */
+        const val WEEKLY_ROLL_MAX = 100
+        const val WEEKLY_COMMON_MAX = 70
+        const val WEEKLY_RARE_MAX = 95
         /**
          * The day a claim right now would reward: currentDay + 1 when
          * yesterday was claimed (consecutive, mirroring

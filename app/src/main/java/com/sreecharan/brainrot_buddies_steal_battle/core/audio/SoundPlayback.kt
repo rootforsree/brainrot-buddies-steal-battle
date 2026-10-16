@@ -134,10 +134,16 @@ internal class SoundPlaybackCore @Inject constructor(
             finalPitch *= 1f + jitter()
             finalVolume *= 1f + jitter()
         }
-        if (finalVolume <= MIN_PLAYABLE_VOLUME) return null
-        val soundId = engine.loadOneShot(spec.resName)
-        if (soundId <= 0) return null
-        return PlayRequest(soundId, finalVolume.coerceIn(0f, 1f), finalPitch)
+        val soundId = if (finalVolume > MIN_PLAYABLE_VOLUME) {
+            engine.loadOneShot(spec.resName)
+        } else {
+            0
+        }
+        return if (soundId > 0) {
+            PlayRequest(soundId, finalVolume.coerceIn(0f, 1f), finalPitch)
+        } else {
+            null
+        }
     }
 
     private fun launchStream(spec: SoundSpec, request: PlayRequest) {

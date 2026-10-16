@@ -236,11 +236,13 @@ internal class OneShotEngineImpl @Inject constructor(
 
     private fun loadNewSound(resName: String): Int {
         val resId = core.resIdFor(resName)
-        if (resId == 0) return -1
-        val soundId = core.soundPool.load(core.context, resId, 1)
-        if (soundId == 0) return -1
-        core.loadedSounds[resName] = soundId
-        return soundId
+        val soundId = if (resId == 0) 0 else core.soundPool.load(core.context, resId, 1)
+        return if (soundId == 0) {
+            -1
+        } else {
+            core.loadedSounds[resName] = soundId
+            soundId
+        }
     }
 
     private fun startOneShot(
@@ -288,9 +290,8 @@ internal class VoiceEngineImpl @Inject constructor(
 
     private fun createVoicePlayer(resName: String): MediaPlayer? {
         val resId = core.resIdFor(resName)
-        if (resId == 0) return null
-        val player = MediaPlayer.create(core.context, resId) ?: return null
-        player.setAudioAttributes(
+        val player = if (resId == 0) null else MediaPlayer.create(core.context, resId)
+        player?.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_GAME)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)

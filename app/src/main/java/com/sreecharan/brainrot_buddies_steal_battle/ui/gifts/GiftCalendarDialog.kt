@@ -63,26 +63,12 @@ fun GiftCalendarRoute(
     viewModel: GiftsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     var toast by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            toast = when (event) {
-                is GiftsEvent.GiftClaimed ->
-                    context.getString(R.string.gifts_opened_day, event.day)
-                GiftsEvent.CatchUpDone ->
-                    context.getString(R.string.shop_bought)
-                is GiftsEvent.WeeklyClaimed ->
-                    context.getString(R.string.gifts_weekly_got, event.buddyName)
-                GiftsEvent.ActionFailed ->
-                    context.getString(R.string.shop_error)
-            }
-        }
-    }
+    GiftToastEffect(viewModel) { toast = it }
     LaunchedEffect(toast) {
         if (toast != null) {
-            delay(2_500)
+            delay(TOAST_DISMISS_MS)
             toast = null
         }
     }
@@ -90,19 +76,69 @@ fun GiftCalendarRoute(
     GiftCalendarContent(
         state = state,
         toast = toast,
-        onClaimToday = viewModel::onClaimToday,
-        onCatchUp = viewModel::onCatchUpConfirmed,
-        onClaimWeekly = viewModel::onClaimWeekly,
-        onDismiss = onDismiss,
+        actions = GiftCalendarActions(
+            onClaimToday = viewModel::onClaimToday,
+            onCatchUp = viewModel::onCatchUpConfirmed,
+            onClaimWeekly = viewModel::onClaimWeekly,
+            onDismiss = onDismiss,
+        ),
     )
 }
 
+/** All user actions on the gift calendar dialog. */
+data class GiftCalendarActions(
+    val onClaimToday: () -> Unit,
+    val onCatchUp: () -> Unit,
+    val onClaimWeekly: () -> Unit,
+    val onDismiss: () -> Unit,
+)
+
+/** How long a toast stays visible before dismissing. */
+private const val TOAST_DISMISS_MS = 2_500L
+
+/** Length of the gift calendar. */
+private const val CALENDAR_DAYS = 30
+
+/** Day cells per grid row. */
+private const val DAYS_PER_ROW = 5
+
+/** Milestone days with special reward text. */
+private const val REWARD_DAY_1 = 1
+private const val REWARD_DAY_7 = 7
+private const val REWARD_DAY_14 = 14
+private const val REWARD_DAY_21 = 21
+private const val REWARD_DAY_30 = 30
+
+@Composable
+private fun GiftToastEffect(
+    viewModel: GiftsViewModel,
+    onToast: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            onToast(
+                when (event) {
+                    is GiftsEvent.GiftClaimed ->
+                        context.getString(R.string.gifts_opened_day, event.day)
+                    GiftsEvent.CatchUpDone ->
+                        context.getString(R.string.shop_bought)
+                    is GiftsEvent.WeeklyClaimed ->
+                        context.getString(R.string.gifts_weekly_got, event.buddyName)
+                    GiftsEvent.ActionFailed ->
+                        context.getString(R.string.shop_error)
+                },
+            )
+        }
+    }
+}
+
 private fun dayRewardRes(day: Int): Int = when (day) {
-    1 -> R.string.gifts_reward_day1
-    7 -> R.string.gifts_reward_day7
-    14 -> R.string.gifts_reward_day14
-    21 -> R.string.gifts_reward_day21
-    30 -> R.string.gifts_reward_day30
+    REWARD_DAY_1 -> R.string.gifts_reward_day1
+    REWARD_DAY_7 -> R.string.gifts_reward_day7
+    REWARD_DAY_14 -> R.string.gifts_reward_day14
+    REWARD_DAY_21 -> R.string.gifts_reward_day21
+    REWARD_DAY_30 -> R.string.gifts_reward_day30
     else -> R.string.gifts_reward_surprise
 }
 
@@ -110,15 +146,12 @@ private fun dayRewardRes(day: Int): Int = when (day) {
 fun GiftCalendarContent(
     state: GiftsUiState,
     toast: String?,
-    onClaimToday: () -> Unit,
-    onCatchUp: () -> Unit,
-    onClaimWeekly: () -> Unit,
-    onDismiss: () -> Unit,
+    actions: GiftCalendarActions,
     modifier: Modifier = Modifier,
 ) {
     val colors = LocalAppColors.current
     Dialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = actions.onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
@@ -129,24 +162,7 @@ fun GiftCalendarContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.gifts_title),
-                    style = AppTypography.largeTitle,
-                    color = colors.label,
-                )
-                IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.action_close),
-                        tint = colors.secondaryLabel,
-                    )
-                }
-            }
+            GiftCalendarHeader(onDismiss = actions.onDismiss)
 
             if (state.streakDays > 0) {
                 Text(
@@ -156,77 +172,14 @@ fun GiftCalendarContent(
                 )
             }
 
-            if (toast != null) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = colors.accent.copy(alpha = 0.15f),
-                    ),
-                ) {
-                    Text(
-                        text = toast,
-                        style = AppTypography.body,
-                        color = colors.label,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(AppDimens.spacing12),
-                    )
-                }
-            }
+            CalendarToast(toast)
 
-            // Today's gift card.
-            GroupCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AppDimens.spacing16),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
-                ) {
-                    BuddyImage(
-                        imageName = "hero_flip",
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                    )
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.gifts_today),
-                            style = AppTypography.headline,
-                            color = colors.label,
-                        )
-                        Text(
-                            text = stringResource(dayRewardRes(state.upcomingDay)),
-                            style = AppTypography.body,
-                            color = colors.secondaryLabel,
-                        )
-                    }
-                }
-                if (state.canClaimToday) {
-                    Button(
-                        onClick = onClaimToday,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = AppDimens.spacing16,
-                                end = AppDimens.spacing16,
-                                bottom = AppDimens.spacing16,
-                            )
-                            .heightIn(min = 56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.gifts_open),
-                            style = AppTypography.headline,
-                        )
-                    }
-                }
-            }
+            TodayGiftCard(state, actions.onClaimToday)
 
             // 30-day grid: claimed = check, today = accent, future = gray.
             // Plain rows (not lazy): 30 fixed cells inside the scrolling column.
             Column(verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8)) {
-                (1..30).chunked(5).forEach { row ->
+                for (row in (1..CALENDAR_DAYS).chunked(DAYS_PER_ROW)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
@@ -247,78 +200,186 @@ fun GiftCalendarContent(
 
             // Catch-up: missed day pauses, never resets; 500 coins to catch up.
             if (state.catchUpAvailable) {
-                GroupCard {
-                    Column(
-                        modifier = Modifier.padding(AppDimens.spacing16),
-                        verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.gifts_catchup_title),
-                            style = AppTypography.headline,
-                            color = colors.label,
-                        )
-                        Text(
-                            text = stringResource(R.string.gifts_catchup_sub),
-                            style = AppTypography.footnote,
-                            color = colors.secondaryLabel,
-                        )
-                        HoldToConfirmButton(
-                            text = stringResource(R.string.gifts_catchup_buy),
-                            onConfirm = onCatchUp,
-                            modifier = Modifier.fillMaxWidth(),
-                            holdMillis = 1500,
-                        )
-                    }
-                }
+                CatchUpCard(onCatchUp = actions.onCatchUp)
             }
 
             // Weekly Flippy gift.
             if (state.weeklyGiftAvailable) {
-                GroupCard {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(AppDimens.spacing16),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
-                    ) {
-                        BuddyImage(
-                            imageName = "hero_flip",
-                            contentDescription = null,
-                            modifier = Modifier.size(56.dp),
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(R.string.gifts_weekly_title),
-                                style = AppTypography.headline,
-                                color = colors.label,
-                            )
-                            Text(
-                                text = stringResource(R.string.gifts_weekly_sub),
-                                style = AppTypography.footnote,
-                                color = colors.secondaryLabel,
-                            )
-                        }
-                    }
-                    Button(
-                        onClick = onClaimWeekly,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = AppDimens.spacing16,
-                                end = AppDimens.spacing16,
-                                bottom = AppDimens.spacing16,
-                            )
-                            .heightIn(min = 56.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.gifts_weekly_open),
-                            style = AppTypography.headline,
-                        )
-                    }
-                }
+                WeeklyGiftCard(onClaimWeekly = actions.onClaimWeekly)
             }
+        }
+    }
+}
+
+@Composable
+private fun GiftCalendarHeader(onDismiss: () -> Unit) {
+    val colors = LocalAppColors.current
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.gifts_title),
+            style = AppTypography.largeTitle,
+            color = colors.label,
+        )
+        IconButton(onClick = onDismiss, modifier = Modifier.size(48.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Close,
+                contentDescription = stringResource(R.string.action_close),
+                tint = colors.secondaryLabel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarToast(toast: String?) {
+    if (toast == null) return
+    val colors = LocalAppColors.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.accent.copy(alpha = 0.15f),
+        ),
+    ) {
+        Text(
+            text = toast,
+            style = AppTypography.body,
+            color = colors.label,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing12),
+        )
+    }
+}
+
+@Composable
+private fun TodayGiftCard(state: GiftsUiState, onClaimToday: () -> Unit) {
+    val colors = LocalAppColors.current
+    GroupCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
+        ) {
+            BuddyImage(
+                imageName = "hero_flip",
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.gifts_today),
+                    style = AppTypography.headline,
+                    color = colors.label,
+                )
+                Text(
+                    text = stringResource(dayRewardRes(state.upcomingDay)),
+                    style = AppTypography.body,
+                    color = colors.secondaryLabel,
+                )
+            }
+        }
+        if (state.canClaimToday) {
+            Button(
+                onClick = onClaimToday,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = AppDimens.spacing16,
+                        end = AppDimens.spacing16,
+                        bottom = AppDimens.spacing16,
+                    )
+                    .heightIn(min = 56.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+            ) {
+                Text(
+                    text = stringResource(R.string.gifts_open),
+                    style = AppTypography.headline,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CatchUpCard(onCatchUp: () -> Unit) {
+    val colors = LocalAppColors.current
+    GroupCard {
+        Column(
+            modifier = Modifier.padding(AppDimens.spacing16),
+            verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
+        ) {
+            Text(
+                text = stringResource(R.string.gifts_catchup_title),
+                style = AppTypography.headline,
+                color = colors.label,
+            )
+            Text(
+                text = stringResource(R.string.gifts_catchup_sub),
+                style = AppTypography.footnote,
+                color = colors.secondaryLabel,
+            )
+            HoldToConfirmButton(
+                text = stringResource(R.string.gifts_catchup_buy),
+                onConfirm = onCatchUp,
+                modifier = Modifier.fillMaxWidth(),
+                holdMillis = 1500,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeeklyGiftCard(onClaimWeekly: () -> Unit) {
+    val colors = LocalAppColors.current
+    GroupCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
+        ) {
+            BuddyImage(
+                imageName = "hero_flip",
+                contentDescription = null,
+                modifier = Modifier.size(56.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.gifts_weekly_title),
+                    style = AppTypography.headline,
+                    color = colors.label,
+                )
+                Text(
+                    text = stringResource(R.string.gifts_weekly_sub),
+                    style = AppTypography.footnote,
+                    color = colors.secondaryLabel,
+                )
+            }
+        }
+        Button(
+            onClick = onClaimWeekly,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = AppDimens.spacing16,
+                    end = AppDimens.spacing16,
+                    bottom = AppDimens.spacing16,
+                )
+                .heightIn(min = 56.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+        ) {
+            Text(
+                text = stringResource(R.string.gifts_weekly_open),
+                style = AppTypography.headline,
+            )
         }
     }
 }

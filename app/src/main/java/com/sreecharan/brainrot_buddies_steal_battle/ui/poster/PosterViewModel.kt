@@ -31,6 +31,10 @@ private const val POSTER_DIR = "posters"
 private const val POSTER_FILE = "poster.jpg"
 private const val PREVIEW_FILE = "poster_preview.jpg"
 private const val POSTER_SIZE = 1024
+/** Cap for the bitmap downsampling factor. */
+private const val MAX_SAMPLE_SIZE = 16
+/** JPEG quality for the stored poster preview. */
+private const val JPEG_QUALITY = 90
 
 /**
  * "My Poster": local-only photo import (contract §1).
@@ -65,7 +69,7 @@ class PosterViewModel @Inject constructor(
 
     private enum class Working { IDLE, SAVING, FAILED }
 
-    val uiState: StateFlow<PosterUiState> field = combine(
+    val uiState: StateFlow<PosterUiState> = combine(
         repository.observePosterPath(),
         previewState,
         workingState,
@@ -172,7 +176,7 @@ class PosterViewModel @Inject constructor(
             }
             var sample = 1
             val maxSide = maxOf(bounds.outWidth, bounds.outHeight)
-            while (maxSide / (sample * 2) > POSTER_SIZE * 2 && sample < 16) {
+            while (maxSide / (sample * 2) > POSTER_SIZE * 2 && sample < MAX_SAMPLE_SIZE) {
                 sample *= 2
             }
             val opts = BitmapFactory.Options().apply { inSampleSize = sample }
@@ -192,7 +196,7 @@ class PosterViewModel @Inject constructor(
             if (scaled != cropped) cropped.recycle()
             val preview = File(context.cacheDir, PREVIEW_FILE)
             FileOutputStream(preview).use { out ->
-                scaled.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                scaled.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)
             }
             if (!scaled.isRecycled) scaled.recycle()
             preview

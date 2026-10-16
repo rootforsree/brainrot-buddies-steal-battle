@@ -131,6 +131,15 @@ class ShopViewModel @Inject constructor(
     private val eventsChannel = Channel<ShopEvent>(Channel.BUFFERED)
     val events = eventsChannel.receiveAsFlow()
 
+    private val transactions = ShopTransactions(
+        repository = repository,
+        gamePrefs = gamePrefs,
+        engine = engine,
+        adsManager = adsManager,
+        scope = viewModelScope,
+        eventsChannel = eventsChannel,
+    )
+
     private data class ShopSources(
         val vault: VaultEntity?,
         val tickets: List<TicketEntity>,
@@ -174,12 +183,12 @@ class ShopViewModel @Inject constructor(
             coins = src.vault?.coins ?: 0L,
             bites = src.bites,
             unlockedSlots = unlocked,
-            nextSlotCost = nextSlotCost(unlocked),
+            nextSlotCost = engine.nextSlotCost(unlocked),
             luckyTickets = src.tickets.ticketCount(TicketType.LUCKY),
             megaTickets = src.tickets.ticketCount(TicketType.MEGA),
             baseShieldUntil = src.shield?.baseShieldUntil ?: 0L,
             onboardingDay = (src.day ?: 1).coerceAtLeast(1),
-            upgrades = src.buddies.mapNotNull { it.toUpgradeRow() }.toImmutableList(),
+            upgrades = src.buddies.mapNotNull { it.toUpgradeRow(engine) }.toImmutableList(),
             hats = BillingProducts.HATS.map { hatId ->
                 val equipped = src.buddies.firstOrNull { it.hatId == hatId }
                 HatRow(
@@ -236,156 +245,28 @@ class ShopViewModel @Inject constructor(
         }
     }
 
-    fun onBuySlotConfirmed() {
-        viewModelScope.launch {
-            val vault = repository.observeVault().awaitData()
-                ?: return@launch fail(GENERIC)
-            val slots = repository.observeSlots().awaitData()
-                ?: return@launch fail(GENERIC)
-            val unlocked = slots.count { it.unlocked }
-            val cost = nextSlotCost(unlocked) ?: return@launch fail(MAXED)
-            if (vault.coins < cost) return@launch fail(COINS_SHORT)
-            repository.upsertVault(vault.copy(coins = vault.coins - cost))
-            repository.unlockSlot(unlocked)
-            eventsChannel.send(ShopEvent.SlotUnlocked)
-        }
-    }
+    fun onBuySlotConfirmed() = transactions.buySlot()
 
-    fun onBuyMegaTicketConfirmed() {
-        viewModelScope.launch {
-            val vault = repository.observeVault().awaitData()
-                ?: return@launch fail(GENERIC)
-            if (vault.coins < MEGA_TICKET_COST) return@launch fail(COINS_SHORT)
-            repository.upsertVault(vault.copy(coins = vault.coins - MEGA_TICKET_COST))
-            repository.addTickets(TicketType.MEGA, 1)
-            eventsChannel.send(ShopEvent.MegaTicketBought)
-        }
-    }
+    fun onBuyMegaTicketConfirmed() = transactions.buyMegaTicket()
 
-    fun onBuyBaseShieldConfirmed() {
-        viewModelScope.launch {
-            val vault = repository.observeVault().awaitData()
-                ?: return@launch fail(GENERIC)
-            if (vault.coins < BASE_SHIELD_COST) return@launch fail(COINS_SHORT)
-            repository.upsertVault(vault.copy(coins = vault.coins - BASE_SHIELD_COST))
-            repository.setBaseShieldUntil(System.currentTimeMillis() + SHIELD_DURATION_MS)
-            eventsChannel.send(ShopEvent.BaseShieldBought)
-        }
-    }
+    fun onBuyBaseShieldConfirmed() = transactions.buyBaseShield()
 
-    fun onBuySlotShieldConfirmed(slotIndex: Int) {
-        viewModelScope.launch {
-            val vault = repository.observeVault().awaitData()
-                ?: return@launch fail(GENERIC)
-            if (vault.coins < SLOT_SHIELD_COST) return@launch fail(COINS_SHORT)
-            repository.upsertVault(vault.copy(coins = vault.coins - SLOT_SHIELD_COST))
-            repository.setSlotShieldUntil(slotIndex, System.currentTimeMillis() + SHIELD_DURATION_MS)
-            eventsChannel.send(ShopEvent.SlotShieldBought(slotIndex))
-        }
-    }
+    fun onBuySlotShieldConfirmed(slotIndex: Int) = transactions.buySlotShield(slotIndex)
 
-    fun onUpgradeConfirmed(uid: String) {
-        viewModelScope.launch {
-            val buddies = repository.observeOwnedBuddies().awaitData()
-                ?: return@launch fail(GENERIC)
-            val buddy = buddies.firstOrNull { it.uid == uid }
-                ?: return@launch fail(GENERIC)
-            if (buddy.level >= MAX_BUDDY_LEVEL) return@launch fail(MAXED)
-            val def = BuddyCatalog.find(BuddyId(buddy.buddyId))
-                ?: return@launch fail(GENERIC)
-            val targetLevel = buddy.level + 1
-            val coinCost = engine.upgradeCostCoins(def.baseCoinsPerSec, targetLevel)
-            val biteCost = engine.upgradeCostBites(targetLevel)
-            val vault = repository.observeVault().awaitData()
-                ?: return@launch fail(GENERIC)
-            val bites = gamePrefs.buddyBites.first()
-            if (vault.coins < coinCost) return@launch fail(COINS_SHORT)
-            if (bites < biteCost) return@launch fail(BITES_SHORT)
-            repository.upsertVault(vault.copy(coins = vault.coins - coinCost))
-            gamePrefs.setBuddyBites(bites - biteCost)
-            repository.upsertOwnedBuddy(buddy.copy(level = targetLevel))
-            eventsChannel.send(ShopEvent.BuddyUpgraded(def.name, targetLevel))
-        }
-    }
+    fun onUpgradeConfirmed(uid: String) = transactions.upgrade(uid)
 
     /** Called after the parent gate passes for a hat IAP. Never called otherwise. */
     fun onHatBuyConfirmed(hatId: String, activity: Activity) {
         billingManager.startPurchase(activity, hatId)
     }
 
-    fun onEquipHatConfirmed(hatId: String, buddyUid: String) {
-        viewModelScope.launch {
-            val buddies = repository.observeOwnedBuddies().awaitData() ?: return@launch
-            val buddy = buddies.firstOrNull { it.uid == buddyUid } ?: return@launch
-            repository.upsertOwnedBuddy(buddy.copy(hatId = hatId))
-            val name = BuddyCatalog.find(BuddyId(buddy.buddyId))?.name ?: return@launch
-            eventsChannel.send(ShopEvent.HatEquipped(name))
-        }
-    }
+    fun onEquipHatConfirmed(hatId: String, buddyUid: String) =
+        transactions.equipHat(hatId, buddyUid)
 
-    fun onRemoveHat(hatId: String) {
-        viewModelScope.launch {
-            val buddies = repository.observeOwnedBuddies().awaitData() ?: return@launch
-            val buddy = buddies.firstOrNull { it.hatId == hatId } ?: return@launch
-            repository.upsertOwnedBuddy(buddy.copy(hatId = null))
-            eventsChannel.send(ShopEvent.HatRemoved)
-        }
-    }
+    fun onRemoveHat(hatId: String) = transactions.removeHat(hatId)
 
-    /**
-     * Called after hold-to-confirm on the Free Coins button. This is the ONE
-     * rewarded-ad placement in the game; the manager enforces G-rated,
-     * non-personalized, max 1 show per 30 minutes.
-     */
-    fun onWatchAdConfirmed(kind: AdRewardKind, activity: Activity) {
-        adsManager.showAd(activity) {
-            viewModelScope.launch { grantAdReward(kind) }
-        }
-    }
-
-    private suspend fun grantAdReward(kind: AdRewardKind) {
-        when (kind) {
-            AdRewardKind.COINS -> {
-                val vault = repository.observeVault().awaitData() ?: return
-                repository.upsertVault(
-                    vault.copy(
-                        coins = vault.coins + AD_REWARD_COINS,
-                        lifetimeCoins = vault.lifetimeCoins + AD_REWARD_COINS,
-                    ),
-                )
-            }
-            AdRewardKind.BITES -> {
-                val bites = gamePrefs.buddyBites.first()
-                gamePrefs.setBuddyBites(bites + AD_REWARD_BITES)
-            }
-        }
-        eventsChannel.send(ShopEvent.AdRewardGranted)
-    }
-
-    private fun nextSlotCost(unlocked: Int): Long? {
-        if (unlocked >= MAX_SLOTS) return null
-        return engine.slotUnlockCost(unlocked - START_SLOTS + 1)
-    }
-
-    private fun OwnedBuddyEntity.toUpgradeRow(): UpgradeRow? {
-        val def = BuddyCatalog.find(BuddyId(buddyId)) ?: return null
-        val maxed = level >= MAX_BUDDY_LEVEL
-        val targetLevel = (level + 1).coerceAtMost(MAX_BUDDY_LEVEL)
-        return UpgradeRow(
-            uid = uid,
-            buddyId = buddyId,
-            name = def.name,
-            level = level,
-            coinCost = if (maxed) 0L else engine.upgradeCostCoins(def.baseCoinsPerSec, targetLevel),
-            biteCost = if (maxed) 0 else engine.upgradeCostBites(targetLevel),
-            incomePerSec = engine.buddyCoinsPerSec(def.baseCoinsPerSec, level),
-            isMaxed = maxed,
-        )
-    }
-
-    private suspend fun fail(messageKey: String) {
-        eventsChannel.send(ShopEvent.PurchaseFailed(messageKey))
-    }
+    fun onWatchAdConfirmed(kind: AdRewardKind, activity: Activity) =
+        transactions.watchAd(kind, activity)
 
     companion object {
         // Message keys resolved to strings.xml in the UI layer.
@@ -400,10 +281,3 @@ private fun <T> Result<T>.dataOrNull(): T? = (this as? Result.Success<T>)?.data
 
 private fun List<TicketEntity>.ticketCount(type: TicketType): Int =
     firstOrNull { it.type == type.key }?.count ?: 0
-
-private suspend fun <T> Flow<Result<T>>.awaitData(): T? {
-    return when (val result = first { it !is Result.Loading }) {
-        is Result.Success -> result.data
-        else -> null
-    }
-}

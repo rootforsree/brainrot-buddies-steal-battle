@@ -60,17 +60,19 @@ class GameRepositoryAdapter @Inject constructor(
         repository.observeRaidsUsed(),
     ) { buddiesR, slotsR, vaultR, ticketsR, shieldR, nameR, dayR, tutorialR, raidsR, lastWindowR, raidsUsedR ->
         buildSnapshot(
-            buddies = buddiesR.getOrNull().orEmpty(),
-            slots = slotsR.getOrNull().orEmpty(),
-            vault = vaultR.getOrNull() ?: VaultEntity(),
-            tickets = ticketsR.getOrNull().orEmpty(),
-            shield = shieldR.getOrNull(),
-            baseName = nameR.getOrNull().orEmpty(),
-            onboardingDay = dayR.getOrNull() ?: 1,
-            tutorialDone = tutorialR.getOrNull() == true,
-            raids = raidsR.getOrNull().orEmpty(),
-            lastRaidWindow = lastWindowR.getOrNull().orEmpty(),
-            raidsUsed = raidsUsedR.getOrNull() ?: 0,
+            SnapshotInputs(
+                buddies = buddiesR.getOrNull().orEmpty(),
+                slots = slotsR.getOrNull().orEmpty(),
+                vault = vaultR.getOrNull() ?: VaultEntity(),
+                tickets = ticketsR.getOrNull().orEmpty(),
+                shield = shieldR.getOrNull(),
+                baseName = nameR.getOrNull().orEmpty(),
+                onboardingDay = dayR.getOrNull() ?: 1,
+                tutorialDone = tutorialR.getOrNull() == true,
+                raids = raidsR.getOrNull().orEmpty(),
+                lastRaidWindow = lastWindowR.getOrNull().orEmpty(),
+                raidsUsed = raidsUsedR.getOrNull() ?: 0,
+            ),
         )
     }.flowOn(ioDispatcher)
 
@@ -83,11 +85,10 @@ class GameRepositoryAdapter @Inject constructor(
             unlocked && entity?.ownedBuddyUid == null
         } ?: return ClaimPlacement.BaseFull
         val uid = UUID.randomUUID().toString()
-        repository.upsertOwnedBuddy(
-            OwnedBuddyEntity(uid = uid, buddyId = buddyId, level = 1, acquiredAt = now),
-        )
+        val entity = OwnedBuddyEntity(uid = uid, buddyId = buddyId, level = 1, acquiredAt = now)
+        repository.upsertOwnedBuddy(entity)
         repository.setSlotBuddy(index, uid)
-        val buddy = toSlotted(uid, buddyId, level = 1, hatId = null, stealCooldownUntil = 0L)
+        val buddy = entity.toSlotted()
         ClaimPlacement.Placed(index, buddy)
     }
 
@@ -148,23 +149,26 @@ class GameRepositoryAdapter @Inject constructor(
     // Snapshot assembly
     // ------------------------------------------------------------------
 
-    private fun buildSnapshot(
-        buddies: List<OwnedBuddyEntity>,
-        slots: List<BaseSlotEntity>,
-        vault: VaultEntity,
-        tickets: List<TicketEntity>,
-        shield: ShieldEntity?,
-        baseName: String,
-        onboardingDay: Int,
-        tutorialDone: Boolean,
-        raids: List<RaidRecordEntity>,
-        lastRaidWindow: String,
-        raidsUsed: Int,
-    ): BaseSnapshot {
+    /** The eleven snapshot inputs, bundled so [buildSnapshot] takes one param. */
+    private data class SnapshotInputs(
+        val buddies: List<OwnedBuddyEntity>,
+        val slots: List<BaseSlotEntity>,
+        val vault: VaultEntity,
+        val tickets: List<TicketEntity>,
+        val shield: ShieldEntity?,
+        val baseName: String,
+        val onboardingDay: Int,
+        val tutorialDone: Boolean,
+        val raids: List<RaidRecordEntity>,
+        val lastRaidWindow: String,
+        val raidsUsed: Int,
+    )
+
+    private fun buildSnapshot(input: SnapshotInputs): BaseSnapshot {
         val now = System.currentTimeMillis()
-        val byUid = buddies.associateBy { it.uid }
+        val byUid = input.buddies.associateBy { it.uid }
         val slotUis = (0 until SLOT_COUNT).map { index ->
-            val entity = slots.find { it.slotIndex == index }
+            val entity = input.slots.find { it.slotIndex == index }
             val unlocked = entity?.unlocked ?: (index < START_SLOTS)
             SlotUi(
                 index = index,
@@ -174,27 +178,27 @@ class GameRepositoryAdapter @Inject constructor(
                 unlockCost = if (unlocked) 0L else engine.slotUnlockCost(index - START_SLOTS + 1),
             )
         }
-        val totalCps = buddies.sumOf { totalCpsOf(it) }
+        val totalCps = input.buddies.sumOf { totalCpsOf(it) }
         val windowBucket = engine.raidWindowBucket(engine.currentRaidWindow())
-        val usedThisWindow = if (lastRaidWindow == windowBucket) raidsUsed else 0
+        val usedThisWindow = if (input.lastRaidWindow == windowBucket) input.raidsUsed else 0
         return BaseSnapshot(
-            baseName = baseName,
+            baseName = input.baseName,
             slots = slotUis,
-            vaultCoins = vault.coins,
+            vaultCoins = input.vault.coins,
             vaultCap = engine.vaultCapCoins(totalCps),
-            shieldActive = (shield?.baseShieldUntil ?: 0L) > now,
-            shieldEndsAtMs = shield?.baseShieldUntil ?: 0L,
+            shieldActive = (input.shield?.baseShieldUntil ?: 0L) > now,
+            shieldEndsAtMs = input.shield?.baseShieldUntil ?: 0L,
             raidWindowActive = true,
             raidsLeft = (RAIDS_PER_WINDOW - usedThisWindow).coerceAtLeast(0),
             nextRaidWindowMs = now + engine.millisUntilNextRaidWindow(),
-            luckyTickets = tickets.firstOrNull { it.type == TicketType.LUCKY.key }?.count ?: 0,
-            megaTickets = tickets.firstOrNull { it.type == TicketType.MEGA.key }?.count ?: 0,
-            coachMark = if (onboardingDay <= 1 && !tutorialDone) {
+            luckyTickets = input.tickets.firstOrNull { it.type == TicketType.LUCKY.key }?.count ?: 0,
+            megaTickets = input.tickets.firstOrNull { it.type == TicketType.MEGA.key }?.count ?: 0,
+            coachMark = if (input.onboardingDay <= 1 && !input.tutorialDone) {
                 CoachMarkUi(CoachTarget.CONVEYOR, COACH_TEXT)
             } else {
                 null
             },
-            pendingReplay = newestUnseenReplay(raids),
+            pendingReplay = newestUnseenReplay(input.raids),
         )
     }
 
@@ -221,16 +225,7 @@ class GameRepositoryAdapter @Inject constructor(
         )
     }
 
-    private fun OwnedBuddyEntity.toSlotted(): SlottedBuddyUi =
-        toSlotted(uid, buddyId, level, hatId, stealCooldownUntil)
-
-    private fun toSlotted(
-        uid: String,
-        buddyId: String,
-        level: Int,
-        hatId: String?,
-        stealCooldownUntil: Long,
-    ): SlottedBuddyUi {
+    private fun OwnedBuddyEntity.toSlotted(): SlottedBuddyUi {
         val def = BuddyCatalog.find(BuddyId(buddyId))
         return SlottedBuddyUi(
             uid = uid,
@@ -253,12 +248,6 @@ class GameRepositoryAdapter @Inject constructor(
         return engine.buddyCoinsPerSec(def?.baseCoinsPerSec ?: 0, buddy.level)
     }
 
-    private suspend fun <T> Flow<Result<T>>.firstSuccess(): T? {
-        val result = first { it is Result.Success }
-        @Suppress("UNCHECKED_CAST")
-        return (result as Result.Success<T>).data
-    }
-
     companion object {
         const val SLOT_COUNT = 24
         const val START_SLOTS = 4
@@ -272,3 +261,10 @@ class GameRepositoryAdapter @Inject constructor(
 
 /** Nullable unwrap for the data layer's sealed [Result]. */
 private fun <T> Result<T>.getOrNull(): T? = (this as? Result.Success<T>)?.data
+
+/** First successful emission of a [Result] flow, or null when the flow is empty. */
+private suspend fun <T> Flow<Result<T>>.firstSuccess(): T? {
+    val result = first { it is Result.Success }
+    @Suppress("UNCHECKED_CAST")
+    return (result as Result.Success<T>).data
+}

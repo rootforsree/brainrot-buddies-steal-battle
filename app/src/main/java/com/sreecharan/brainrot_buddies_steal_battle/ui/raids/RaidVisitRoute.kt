@@ -22,18 +22,11 @@ import com.sreecharan.brainrot_buddies_steal_battle.R
  * Stateful raid-visit route. Builder C wires this into AppNavHost under the
  * §7 `RaidVisit(friendGuestId)` route and passes [onNavigateBack] as
  * `{ navController.popBackStack() }`.
- *
- * Staged 5s auto-replays (§2 V1.1) are Builder B's juice: [onPlayStealReplay],
- * [onPlayRevengeReplay], and [onPlayStealFail] are the seams where Builder B
- * plugs the cinematic player. They default to no-ops so this screen works
- * before Builder B lands.
  */
 @Composable
 fun RaidVisitRoute(
     onNavigateBack: () -> Unit,
-    onPlayStealReplay: (buddyName: String, attackerName: String) -> Unit = {},
-    onPlayRevengeReplay: (buddyName: String, attackerName: String) -> Unit = {},
-    onPlayStealFail: () -> Unit = {},
+    replayCallbacks: RaidReplayCallbacks = RaidReplayCallbacks(),
     viewModel: RaidVisitViewModel = hiltViewModel(),
     modifier: Modifier = Modifier,
 ) {
@@ -45,9 +38,11 @@ fun RaidVisitRoute(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is RaidVisitEvent.PlayStealReplay -> onPlayStealReplay(event.buddyName, event.attackerName)
-                is RaidVisitEvent.PlayRevengeReplay -> onPlayRevengeReplay(event.buddyName, event.attackerName)
-                is RaidVisitEvent.PlayStealFail -> onPlayStealFail()
+                is RaidVisitEvent.PlayStealReplay ->
+                    replayCallbacks.onPlayStealReplay(event.buddyName, event.attackerName)
+                is RaidVisitEvent.PlayRevengeReplay ->
+                    replayCallbacks.onPlayRevengeReplay(event.buddyName, event.attackerName)
+                is RaidVisitEvent.PlayStealFail -> replayCallbacks.onPlayStealFail()
                 is RaidVisitEvent.ShowMessage -> snackbarHostState.showSnackbar(
                     context.getString(event.resId),
                 )

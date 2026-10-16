@@ -88,6 +88,9 @@ class GuidedClaimsViewModel @Inject constructor(
     }
 
     companion object {
+        /** Slot count the player starts with; buying one is a guided step. */
+        const val SLOTS_BEFORE_BUY_STEP = 5
+
         fun deriveStep(
             ownedIds: Set<String>,
             unlockedSlots: Int,
@@ -96,7 +99,7 @@ class GuidedClaimsViewModel @Inject constructor(
         ): GuidedStep? = when {
             "frogboot" !in ownedIds -> GuidedStep.CLAIM_FROGBOOT
             "pip_mcsnacks" !in ownedIds -> GuidedStep.CLAIM_PIP
-            unlockedSlots < 5 -> GuidedStep.BUY_SLOT
+            unlockedSlots < SLOTS_BEFORE_BUY_STEP -> GuidedStep.BUY_SLOT
             "splorch" !in ownedIds -> GuidedStep.CLAIM_SPLORCH
             vaultCoins > 0 -> GuidedStep.COLLECT_VAULT
             giftClaimableToday -> GuidedStep.OPEN_GIFT

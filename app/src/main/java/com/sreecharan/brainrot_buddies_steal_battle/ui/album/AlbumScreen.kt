@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,6 +23,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -59,25 +61,9 @@ import kotlinx.coroutines.delay
 @Composable
 fun AlbumRoute(viewModel: AlbumViewModel = hiltViewModel()) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     var message by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            message = when (event) {
-                is AlbumEvent.BonusClaimed ->
-                    context.getString(R.string.album_claim, event.amount)
-                AlbumEvent.ClaimFailed ->
-                    context.getString(R.string.shop_error)
-            }
-        }
-    }
-    LaunchedEffect(message) {
-        if (message != null) {
-            delay(2_500)
-            message = null
-        }
-    }
+    AlbumEventEffect(viewModel = viewModel, message = message) { message = it }
 
     AlbumScreenContent(
         state = state,
@@ -85,6 +71,42 @@ fun AlbumRoute(viewModel: AlbumViewModel = hiltViewModel()) {
         onStickerTapped = viewModel::onStickerTapped,
         onClaimBonus = viewModel::onClaimBonus,
     )
+}
+
+/** Sticker grid columns. */
+private const val GRID_COLUMNS = 3
+
+/** Sticker card aspect ratio. */
+private const val CARD_ASPECT_RATIO = 0.8f
+
+/** How long a toast message stays visible. */
+private const val MESSAGE_DISMISS_MS = 2_500L
+
+@Composable
+private fun AlbumEventEffect(
+    viewModel: AlbumViewModel,
+    message: String?,
+    onMessage: (String?) -> Unit,
+) {
+    val context = LocalContext.current
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            onMessage(
+                when (event) {
+                    is AlbumEvent.BonusClaimed ->
+                        context.getString(R.string.album_claim, event.amount)
+                    AlbumEvent.ClaimFailed ->
+                        context.getString(R.string.shop_error)
+                },
+            )
+        }
+    }
+    LaunchedEffect(message) {
+        if (message != null) {
+            delay(MESSAGE_DISMISS_MS)
+            onMessage(null)
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,25 +122,11 @@ fun AlbumScreenContent(
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            LargeTopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.album_title),
-                        style = AppTypography.largeTitle,
-                    )
-                },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = colors.groupedBackground,
-                    scrolledContainerColor = colors.groupedBackground,
-                ),
-            )
-        },
+        topBar = { AlbumTopBar(scrollBehavior) },
         containerColor = colors.groupedBackground,
     ) { padding ->
         LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
+            columns = GridCells.Fixed(GRID_COLUMNS),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
@@ -129,77 +137,122 @@ fun AlbumScreenContent(
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
-            if (message != null) {
-                item(span = { GridItemSpan(3) }, key = "message", contentType = "message") {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = colors.accent.copy(alpha = 0.15f),
-                        ),
-                    ) {
-                        Text(
-                            text = message,
-                            style = AppTypography.body,
-                            color = colors.label,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(AppDimens.spacing12),
-                        )
-                    }
-                }
-            }
+            messageItem(message)
             state.bonuses.forEach { bonus ->
-                item(
-                    span = { GridItemSpan(3) },
-                    key = "tier-${bonus.rarity}",
-                    contentType = "tier",
-                ) {
-                    TierHeader(
-                        bonus = bonus,
-                        onClaim = { onClaimBonus(bonus.rarity) },
-                    )
-                }
-                val stickers = when (bonus.rarity) {
-                    Rarity.COMMON -> state.commons
-                    Rarity.RARE -> state.rares
-                    Rarity.EPIC -> state.epics
-                }
-                items(
-                    items = stickers,
-                    key = { it.buddyId },
-                    contentType = { "sticker" },
-                ) { sticker ->
-                    StickerCard(
-                        sticker = sticker,
-                        onTap = { onStickerTapped(sticker) },
-                    )
-                }
-            }
-            item(span = { GridItemSpan(3) }, key = "soon-header", contentType = "tier") {
-                Text(
-                    text = stringResource(R.string.album_section_soon),
-                    style = AppTypography.title2,
-                    color = colors.label,
-                    modifier = Modifier.padding(top = AppDimens.spacing8),
+                tierSection(
+                    bonus = bonus,
+                    stickers = when (bonus.rarity) {
+                        Rarity.COMMON -> state.commons
+                        Rarity.RARE -> state.rares
+                        Rarity.EPIC -> state.epics
+                    },
+                    onClaimBonus = onClaimBonus,
+                    onStickerTapped = onStickerTapped,
                 )
             }
-            itemsIndexed(
-                items = state.comingSoon,
-                key = { index, _ -> "soon-$index" },
-                contentType = { _, _ -> "coming-soon" },
-            ) { _, soon ->
-                ComingSoonCard(
-                    kindLabel = stringResource(
-                        if (soon.kind == "Legendary") {
-                            R.string.album_kind_legendary
-                        } else {
-                            R.string.album_kind_mythic
-                        },
-                    ),
+            comingSoonSection(state.comingSoon)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AlbumTopBar(
+    scrollBehavior: TopAppBarScrollBehavior,
+) {
+    val colors = LocalAppColors.current
+    LargeTopAppBar(
+        title = {
+            Text(
+                text = stringResource(R.string.album_title),
+                style = AppTypography.largeTitle,
+            )
+        },
+        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.largeTopAppBarColors(
+            containerColor = colors.groupedBackground,
+            scrolledContainerColor = colors.groupedBackground,
+        ),
+    )
+}
+
+private fun LazyGridScope.messageItem(message: String?) {
+    if (message != null) {
+        item(span = { GridItemSpan(GRID_COLUMNS) }, key = "message", contentType = "message") {
+            val colors = LocalAppColors.current
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = colors.accent.copy(alpha = 0.15f),
+                ),
+            ) {
+                Text(
+                    text = message,
+                    style = AppTypography.body,
+                    color = colors.label,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(AppDimens.spacing12),
                 )
             }
         }
+    }
+}
+
+private fun LazyGridScope.tierSection(
+    bonus: TierBonusState,
+    stickers: List<Sticker>,
+    onClaimBonus: (Rarity) -> Unit,
+    onStickerTapped: (Sticker) -> Unit,
+) {
+    item(
+        span = { GridItemSpan(GRID_COLUMNS) },
+        key = "tier-${bonus.rarity}",
+        contentType = "tier",
+    ) {
+        TierHeader(
+            bonus = bonus,
+            onClaim = { onClaimBonus(bonus.rarity) },
+        )
+    }
+    items(
+        items = stickers,
+        key = { it.buddyId },
+        contentType = { "sticker" },
+    ) { sticker ->
+        StickerCard(
+            sticker = sticker,
+            onTap = { onStickerTapped(sticker) },
+        )
+    }
+}
+
+private fun LazyGridScope.comingSoonSection(
+    comingSoon: List<ComingSoonBuddy>,
+) {
+    item(span = { GridItemSpan(GRID_COLUMNS) }, key = "soon-header", contentType = "tier") {
+        Text(
+            text = stringResource(R.string.album_section_soon),
+            style = AppTypography.title2,
+            color = LocalAppColors.current.label,
+            modifier = Modifier.padding(top = AppDimens.spacing8),
+        )
+    }
+    itemsIndexed(
+        items = comingSoon,
+        key = { index, _ -> "soon-$index" },
+        contentType = { _, _ -> "coming-soon" },
+    ) { _, soon ->
+        ComingSoonCard(
+            kindLabel = stringResource(
+                if (soon.kind == "Legendary") {
+                    R.string.album_kind_legendary
+                } else {
+                    R.string.album_kind_mythic
+                },
+            ),
+        )
     }
 }
 
@@ -248,7 +301,7 @@ private fun StickerCard(sticker: Sticker, onTap: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.8f)
+            .aspectRatio(CARD_ASPECT_RATIO)
             .clip(AppShapes.card)
             .clickable(
                 role = Role.Button,
@@ -296,7 +349,7 @@ private fun ComingSoonCard(kindLabel: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.8f),
+            .aspectRatio(CARD_ASPECT_RATIO),
         shape = AppShapes.card,
         colors = CardDefaults.cardColors(
             containerColor = colors.cardSurface.copy(alpha = 0.5f),

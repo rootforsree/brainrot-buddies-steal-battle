@@ -10,8 +10,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.local.TicketEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.VaultEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Result
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
-import com.sreecharan.brainrot_buddies_steal_battle.di.IoDispatcher
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
@@ -239,25 +237,14 @@ internal class GameLifecycleOps(
 }
 
 /**
- * Builds the nine operation groups from the injected DAOs. Kept as one
- * holder so [GameRepositoryImpl]'s delegating constructor stays readable.
+ * Builds the nine operation groups from the injected DAO holders. Kept as
+ * one holder so [GameRepositoryImpl]'s delegating constructor stays readable.
  */
 internal class RepositoryOps @Inject constructor(
-    ownedBuddyDao: OwnedBuddyDao,
-    slotDao: BaseSlotDao,
-    vaultDao: VaultDao,
-    ticketDao: TicketDao,
-    shieldDao: ShieldDao,
-    raidRecordDao: RaidRecordDao,
-    friendDao: FriendDao,
-    calendarDao: CalendarDao,
-    gamePrefs: GamePrefs,
-    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    private val core: CoreDaos,
+    private val meta: MetaDaos,
+    private val helpers: RepositoryHelpers,
 ) {
-    private val helpers = RepositoryHelpers(gamePrefs, ioDispatcher)
-    private val core = CoreDaos(ownedBuddyDao, slotDao, vaultDao, ticketDao)
-    private val meta = MetaDaos(shieldDao, raidRecordDao, friendDao, calendarDao)
-
     val buddyReads: BuddyReads = BuddyReadsOps(core, meta, helpers)
     val identityReads: IdentityPrefsReads = IdentityPrefsReadsOps(helpers)
     val settingsReads: SettingsPrefsReads = SettingsPrefsReadsOps(helpers)

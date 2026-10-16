@@ -67,7 +67,12 @@ class LiveRaidResponder @Inject constructor(
         }
         val stolen = (verdict as? StealVerdict.Accepted)?.let { buddy }
         if (stolen != null) {
-            acceptRaid(request, stolen.buddyId, stolen.level, stolen.uid, slotEntity?.slotIndex, now)
+            acceptRaid(
+                request = request,
+                stolen = StolenBuddy(buddyId = stolen.buddyId, buddyLevel = stolen.level, buddyUid = stolen.uid),
+                slotIndex = slotEntity?.slotIndex,
+                now = now,
+            )
         } else {
             val reason = (verdict as? StealVerdict.Rejected)?.reason ?: StealRejectReason.EMPTY
             reject(request.raidId, reason)
@@ -92,27 +97,32 @@ class LiveRaidResponder @Inject constructor(
         gameRepository.grantCoins(consolationFor(notice.buddyId, notice.buddyLevel))
     }
 
+    /** The buddy being stolen, bundled so the accept path takes 4 params. */
+    private data class StolenBuddy(
+        val buddyId: String,
+        val buddyLevel: Int,
+        val buddyUid: String,
+    )
+
     private suspend fun acceptRaid(
         request: RaidRequest,
-        buddyId: String,
-        buddyLevel: Int,
-        buddyUid: String,
+        stolen: StolenBuddy,
         slotIndex: Int?,
         now: Long,
     ): RaidResult {
-        gameRepository.removeOwnedBuddy(buddyUid)
+        gameRepository.removeOwnedBuddy(stolen.buddyUid)
         if (slotIndex != null) {
             gameRepository.setSlotBuddy(slotIndex, null)
         }
-        gameRepository.grantCoins(consolationFor(buddyId, buddyLevel))
+        gameRepository.grantCoins(consolationFor(stolen.buddyId, stolen.buddyLevel))
         gameRepository.upsertRaidRecord(
             RaidRecordEntity(
                 raidId = request.raidId,
                 direction = "in",
                 otherGuestId = request.attackerGuestId,
                 otherBaseName = request.attackerBaseName,
-                buddyId = buddyId,
-                buddyLevel = buddyLevel,
+                buddyId = stolen.buddyId,
+                buddyLevel = stolen.buddyLevel,
                 createdAt = now,
                 revengeUsed = false,
                 revengeDeadline = now + RaidRules.REVENGE_WINDOW_MS,
@@ -123,8 +133,8 @@ class LiveRaidResponder @Inject constructor(
             v = 1,
             raidId = request.raidId,
             accepted = true,
-            buddyId = buddyId,
-            buddyLevel = buddyLevel,
+            buddyId = stolen.buddyId,
+            buddyLevel = stolen.buddyLevel,
         )
     }
 

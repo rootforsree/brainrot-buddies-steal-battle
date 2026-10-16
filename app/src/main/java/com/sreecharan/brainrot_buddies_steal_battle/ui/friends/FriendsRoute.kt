@@ -48,7 +48,7 @@ fun FriendsRoute(
 
     val requestBluetooth = rememberBluetoothRequest(
         bluetoothGranted = state.bluetoothGranted,
-        onGranted = viewModel::onBluetoothGranted,
+        onGranted = viewModel.pairing::onBluetoothGranted,
     )
 
     LaunchedEffect(viewModel) {
@@ -70,20 +70,20 @@ fun FriendsRoute(
         FriendsScreen(
             state = state,
             onTurnOnNearby = requestBluetooth,
-            onFindNearby = viewModel::onFindNearby,
-            onStopFinding = viewModel::onStopFinding,
-            onPeerSelected = viewModel::onPeerSelected,
-            onMatchConfirmed = viewModel::onMatchConfirmed,
-            onPairingCancelled = viewModel::onPairingCancelled,
-            onCodeConfirmed = viewModel::onCodeConfirmed,
-            onCodeRejected = viewModel::onCodeRejected,
+            onFindNearby = viewModel.pairing::onFindNearby,
+            onStopFinding = viewModel.pairing::onStopFinding,
+            onPeerSelected = viewModel.pairing::onPeerSelected,
+            onMatchConfirmed = viewModel.pairing::onMatchConfirmed,
+            onPairingCancelled = viewModel.pairing::onPairingCancelled,
+            onCodeConfirmed = viewModel.pairing::onCodeConfirmed,
+            onCodeRejected = viewModel.pairing::onCodeRejected,
             onShowCode = { gateForCode = true },
-            onHideCode = viewModel::onHideCode,
-            onUnpair = viewModel::onUnpair,
-            onVisit = { viewModel.onVisitFriend(it) },
-            onRaid = { viewModel.onVisitFriend(it) },
-            onDismissRaid = viewModel::onDismissRaid,
-            onRevenge = viewModel::onRevenge,
+            onHideCode = viewModel.pairing::onHideCode,
+            onUnpair = viewModel.roster::onUnpair,
+            onVisit = { viewModel.roster.onVisitFriend(it) },
+            onRaid = { viewModel.roster.onVisitFriend(it) },
+            onDismissRaid = viewModel.roster::onDismissRaid,
+            onRevenge = viewModel.roster::onRevenge,
             modifier = Modifier.padding(padding),
         )
     }
@@ -92,7 +92,7 @@ fun FriendsRoute(
         ParentGateDialog(
             onPassed = {
                 gateForCode = false
-                viewModel.onRevealCode()
+                viewModel.pairing.onRevealCode()
             },
             onDismiss = { gateForCode = false },
         )
