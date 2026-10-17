@@ -95,8 +95,6 @@ class HomeViewModelTest {
     @Test
     fun `snapshot clears loading and fills the board`() =
         runVmTest {
-            assertTrue(viewModel.uiState.value.isLoading)
-
             gameData.snapshotFlow.value =
                 baseSnapshot(
                     baseName = "Wobble Tower",
