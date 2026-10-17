@@ -2,6 +2,7 @@ package com.sreecharan.brainrot_buddies_steal_battle.ui.home
 
 import android.content.Context
 import android.os.SystemClock
+import androidx.lifecycle.viewModelScope
 import app.cash.turbine.test
 import com.sreecharan.brainrot_buddies_steal_battle.core.audio.SoundManager
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Rarity
@@ -15,6 +16,7 @@ import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -75,10 +77,10 @@ class HomeViewModelTest {
     }
 
     /**
-     * Runs [body] on the shared test dispatcher and always clears the
-     * ViewModel afterwards. Clearing stops the ViewModel's infinite tick
-     * loop: runTest drains the shared scheduler when the body finishes, and
-     * a live infinite loop would never drain, hanging the test. The
+     * Runs [body] on the shared test dispatcher and always cancels the
+     * ViewModel's scope afterwards. Cancelling stops the ViewModel's infinite
+     * tick loop: runTest drains the shared scheduler when the body finishes,
+     * and a live infinite loop would never drain, hanging the test. The
      * try/finally keeps a failing assertion from turning into that hang.
      */
     private fun runVmTest(body: suspend TestScope.() -> Unit): TestResult =
@@ -86,7 +88,7 @@ class HomeViewModelTest {
             try {
                 body()
             } finally {
-                viewModel.clear()
+                viewModel.viewModelScope.cancel()
             }
         }
 
