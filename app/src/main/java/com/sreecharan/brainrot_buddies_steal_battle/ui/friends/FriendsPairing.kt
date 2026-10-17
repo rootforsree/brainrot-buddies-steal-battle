@@ -72,7 +72,10 @@ internal fun PairingCard(
 }
 
 @Composable
-private fun PairIdle(bluetoothGranted: Boolean, onFindNearby: () -> Unit) {
+private fun PairIdle(
+    bluetoothGranted: Boolean,
+    onFindNearby: () -> Unit,
+) {
     Button(
         onClick = onFindNearby,
         enabled = bluetoothGranted,
@@ -224,7 +227,10 @@ private fun PairPaired(onFindNearby: () -> Unit) {
 }
 
 @Composable
-private fun PairFailed(phase: PairingPhase.Failed, onFindNearby: () -> Unit) {
+private fun PairFailed(
+    phase: PairingPhase.Failed,
+    onFindNearby: () -> Unit,
+) {
     Text(
         text = phase.message,
         style = MaterialTheme.typography.bodyMedium,
@@ -235,4 +241,3 @@ private fun PairFailed(phase: PairingPhase.Failed, onFindNearby: () -> Unit) {
         Text(stringResource(R.string.friend_find_button))
     }
 }
-

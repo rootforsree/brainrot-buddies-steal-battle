@@ -20,31 +20,37 @@ object BillingProducts {
     const val HAT_TINY_CROWN = "hat_tiny_crown"
     const val HAT_PROPELLER_CAP = "hat_propeller_cap"
 
-    val ALL: List<String> = listOf(
-        REMOVE_ADS,
-        HAT_PARTY_CONE,
-        HAT_TINY_CROWN,
-        HAT_PROPELLER_CAP,
-    )
+    val ALL: List<String> =
+        listOf(
+            REMOVE_ADS,
+            HAT_PARTY_CONE,
+            HAT_TINY_CROWN,
+            HAT_PROPELLER_CAP,
+        )
 
-    val HATS: List<String> = listOf(
-        HAT_PARTY_CONE,
-        HAT_TINY_CROWN,
-        HAT_PROPELLER_CAP,
-    )
+    val HATS: List<String> =
+        listOf(
+            HAT_PARTY_CONE,
+            HAT_TINY_CROWN,
+            HAT_PROPELLER_CAP,
+        )
 
     /** Pure mapping from Play product id to the entitlement it unlocks. Null for unknown ids. */
-    fun entitlementFor(productId: String): ProductEntitlement? = when (productId) {
-        REMOVE_ADS -> ProductEntitlement.RemoveAds
-        HAT_PARTY_CONE, HAT_TINY_CROWN, HAT_PROPELLER_CAP -> ProductEntitlement.Hat(productId)
-        else -> null
-    }
+    fun entitlementFor(productId: String): ProductEntitlement? =
+        when (productId) {
+            REMOVE_ADS -> ProductEntitlement.RemoveAds
+            HAT_PARTY_CONE, HAT_TINY_CROWN, HAT_PROPELLER_CAP -> ProductEntitlement.Hat(productId)
+            else -> null
+        }
 }
 
 /** What a purchased product unlocks. Deterministic, never random. */
 sealed interface ProductEntitlement {
     data object RemoveAds : ProductEntitlement
-    data class Hat(val hatId: String) : ProductEntitlement
+
+    data class Hat(
+        val hatId: String,
+    ) : ProductEntitlement
 }
 
 /** The player's deterministic entitlements, persisted in DataStore. */
@@ -66,9 +72,17 @@ data class ProductOffer(
 
 /** One-shot billing outcomes for the UI. */
 sealed interface BillingEvent {
-    data class PurchaseSucceeded(val productId: String) : BillingEvent
-    data class PurchaseFailed(val productId: String) : BillingEvent
+    data class PurchaseSucceeded(
+        val productId: String,
+    ) : BillingEvent
+
+    data class PurchaseFailed(
+        val productId: String,
+    ) : BillingEvent
+
     data object StoreUnavailable : BillingEvent
+
     data object ProductsRefreshed : BillingEvent
+
     data object RestoreCompleted : BillingEvent
 }

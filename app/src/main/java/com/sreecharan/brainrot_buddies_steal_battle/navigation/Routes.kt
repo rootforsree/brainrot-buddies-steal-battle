@@ -23,7 +23,9 @@ object Friends
 object Settings
 
 @Serializable
-data class RaidVisit(val friendGuestId: String)
+data class RaidVisit(
+    val friendGuestId: String,
+)
 
 @Serializable
 object ForParents

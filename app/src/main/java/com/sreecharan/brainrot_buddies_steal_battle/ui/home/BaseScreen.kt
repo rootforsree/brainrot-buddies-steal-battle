@@ -54,32 +54,44 @@ fun BaseScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is HomeEvent.Haptic -> haptics.performHapticFeedback(
-                    when (event.kind) {
-                        HapticKind.TAP -> HapticFeedbackType.TextHandleMove
-                        HapticKind.SUCCESS -> HapticFeedbackType.LongPress
-                        HapticKind.CELEBRATION -> HapticFeedbackType.LongPress
-                        HapticKind.WARNING -> HapticFeedbackType.Reject
-                    },
-                )
-                HomeEvent.BigMoment -> haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                HomeEvent.NavigateToFriends -> onNavigateToFriends()
-                HomeEvent.NavigateToShop -> onNavigateToShop()
+                is HomeEvent.Haptic -> {
+                    haptics.performHapticFeedback(
+                        when (event.kind) {
+                            HapticKind.TAP -> HapticFeedbackType.TextHandleMove
+                            HapticKind.SUCCESS -> HapticFeedbackType.LongPress
+                            HapticKind.CELEBRATION -> HapticFeedbackType.LongPress
+                            HapticKind.WARNING -> HapticFeedbackType.Reject
+                        },
+                    )
+                }
+
+                HomeEvent.BigMoment -> {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                }
+
+                HomeEvent.NavigateToFriends -> {
+                    onNavigateToFriends()
+                }
+
+                HomeEvent.NavigateToShop -> {
+                    onNavigateToShop()
+                }
             }
         }
     }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            // Contract §9: no audio before the first tap. Every intent also
-            // unlocks, but a tap that hits no control still counts.
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-                    viewModel.onFirstInteraction()
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxSize()
+                // Contract §9: no audio before the first tap. Every intent also
+                // unlocks, but a tap that hits no control still counts.
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        viewModel.onFirstInteraction()
+                    }
+                },
     ) {
         HomeScreen(
             state = state.value,

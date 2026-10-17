@@ -4,10 +4,10 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -47,7 +47,10 @@ fun ForParentsRoute(onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ForParentsScreenContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun ForParentsScreenContent(
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = LocalAppColors.current
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
@@ -56,10 +59,11 @@ fun ForParentsScreenContent(onBack: () -> Unit, modifier: Modifier = Modifier) {
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
-            contentPadding = PaddingValues(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
-            ),
+            contentPadding =
+                PaddingValues(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
+                ),
         ) {
             infoSection(
                 key = "data",
@@ -120,10 +124,11 @@ private fun ForParentsTopBar(
             }
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.groupedBackground,
-            scrolledContainerColor = colors.groupedBackground,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = colors.groupedBackground,
+                scrolledContainerColor = colors.groupedBackground,
+            ),
     )
 }
 
@@ -159,13 +164,15 @@ private fun ForParentsContactSection() {
                     val url = context.getString(R.string.about_github_url)
                     context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
                 shape = AppShapes.capsule,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accent,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = colors.accent,
+                    ),
             ) {
                 Text(text = stringResource(R.string.forparents_contact_button))
             }

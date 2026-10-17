@@ -54,9 +54,7 @@ import kotlinx.coroutines.CancellationException
  *
  * Coin purchases use [HoldToConfirmButton] directly (mis-tap protection,
  * no math). The math step is reserved for the parental gate.
- */
-
-/**
+ *
  * Press-and-hold button. The fill sweeps while held; releasing early resets
  * with no side effect, so mis-taps cost nothing. TalkBack's double-tap-and-hold
  * gesture drives the same press path.
@@ -73,32 +71,33 @@ fun HoldToConfirmButton(
     val progress = remember { Animatable(0f) }
     val holdDescription = stringResource(R.string.gate_hold)
     Box(
-        modifier = modifier
-            .height(56.dp)
-            .clip(AppShapes.capsule)
-            .background(if (enabled) colors.accent else colors.secondaryLabel.copy(alpha = 0.3f))
-            .pointerInput(enabled, holdMillis, onConfirm) {
-                detectTapGestures(
-                    onPress = {
-                        if (!enabled) return@detectTapGestures
-                        try {
-                            progress.animateTo(1f, tween(holdMillis))
-                            onConfirm()
-                        } catch (_: CancellationException) {
-                            // Released early: no-op, progress resets below.
-                        }
-                        progress.snapTo(0f)
-                    },
-                )
-            }
-            .semantics { contentDescription = "$text. $holdDescription" },
+        modifier =
+            modifier
+                .height(56.dp)
+                .clip(AppShapes.capsule)
+                .background(if (enabled) colors.accent else colors.secondaryLabel.copy(alpha = 0.3f))
+                .pointerInput(enabled, holdMillis, onConfirm) {
+                    detectTapGestures(
+                        onPress = {
+                            if (!enabled) return@detectTapGestures
+                            try {
+                                progress.animateTo(1f, tween(holdMillis))
+                                onConfirm()
+                            } catch (_: CancellationException) {
+                                // Released early: no-op, progress resets below.
+                            }
+                            progress.snapTo(0f)
+                        },
+                    )
+                }.semantics { contentDescription = "$text. $holdDescription" },
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth(progress.value)
-                .fillMaxHeight()
-                .background(Color.White.copy(alpha = 0.25f)),
+            modifier =
+                Modifier
+                    .fillMaxWidth(progress.value)
+                    .fillMaxHeight()
+                    .background(Color.White.copy(alpha = 0.25f)),
         )
         Text(
             text = text,
@@ -147,16 +146,21 @@ fun ParentGateDialog(
                     textAlign = TextAlign.Center,
                 )
                 when (step) {
-                    GateStep.HOLD -> HoldStepContent(
-                        onHoldConfirmed = {
-                            if (requireMath) {
-                                step = GateStep.MATH
-                            } else {
-                                onPassed()
-                            }
-                        },
-                    )
-                    GateStep.MATH -> MathQuestionStep(onPassed = onPassed)
+                    GateStep.HOLD -> {
+                        HoldStepContent(
+                            onHoldConfirmed = {
+                                if (requireMath) {
+                                    step = GateStep.MATH
+                                } else {
+                                    onPassed()
+                                }
+                            },
+                        )
+                    }
+
+                    GateStep.MATH -> {
+                        MathQuestionStep(onPassed = onPassed)
+                    }
                 }
                 TextButton(onClick = onDismiss) {
                     Text(
@@ -244,14 +248,16 @@ private fun MathOptionRow(
         row.forEach { option ->
             Button(
                 onClick = { onOption(option) },
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = 56.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 56.dp),
                 shape = AppShapes.card,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.accent.copy(alpha = 0.15f),
-                    contentColor = colors.label,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = colors.accent.copy(alpha = 0.15f),
+                        contentColor = colors.label,
+                    ),
             ) {
                 Text(text = option.toString(), style = AppTypography.title2)
             }

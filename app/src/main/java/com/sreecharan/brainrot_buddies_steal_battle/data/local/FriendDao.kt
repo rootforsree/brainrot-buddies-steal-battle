@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FriendDao {
-
     @Query("SELECT * FROM friends ORDER BY baseName ASC")
     fun observeAll(): Flow<List<FriendEntity>>
 

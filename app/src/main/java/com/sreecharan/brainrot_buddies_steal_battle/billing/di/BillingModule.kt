@@ -26,22 +26,19 @@ annotation class BillingPreferences
 @Module
 @InstallIn(SingletonComponent::class)
 object BillingModule {
-
     private val Context.billingPreferences by preferencesDataStore(name = "billing_prefs")
 
     @Provides
     @Singleton
     @BillingPreferences
-    fun provideBillingPreferences(@ApplicationContext context: Context): DataStore<Preferences> =
-        context.billingPreferences
+    fun provideBillingPreferences(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> = context.billingPreferences
 }
 
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class BillingBindingModule {
-
     @Binds
-    abstract fun bindEntitlementStore(
-        impl: DataStoreBillingEntitlementStore,
-    ): BillingEntitlementStore
+    abstract fun bindEntitlementStore(impl: DataStoreBillingEntitlementStore): BillingEntitlementStore
 }

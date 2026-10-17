@@ -4,9 +4,9 @@ import androidx.compose.runtime.Immutable
 
 /**
  * UI-agnostic P2P models shared by the Friends and Raid screens.
+ *
+ * One nearby endpoint found during discovery. The name is the player's base name.
  */
-
-/** One nearby endpoint found during discovery. The name is the player's base name. */
 @Immutable
 data class DiscoveredPeer(
     val endpointId: String,
@@ -20,27 +20,62 @@ data class DiscoveredPeer(
  */
 sealed interface PairingPhase {
     data object Idle : PairingPhase
+
     data object Discovering : PairingPhase
-    data class AwaitingToken(val peerBaseName: String, val weInitiated: Boolean) : PairingPhase
-    data class ConfirmToken(val peerBaseName: String, val authToken: String) : PairingPhase
-    data class VerifyCode(val peerBaseName: String, val peerCode: String) : PairingPhase
-    data class Paired(val baseName: String) : PairingPhase
-    data class Failed(val message: String) : PairingPhase
+
+    data class AwaitingToken(
+        val peerBaseName: String,
+        val weInitiated: Boolean,
+    ) : PairingPhase
+
+    data class ConfirmToken(
+        val peerBaseName: String,
+        val authToken: String,
+    ) : PairingPhase
+
+    data class VerifyCode(
+        val peerBaseName: String,
+        val peerCode: String,
+    ) : PairingPhase
+
+    data class Paired(
+        val baseName: String,
+    ) : PairingPhase
+
+    data class Failed(
+        val message: String,
+    ) : PairingPhase
 }
 
 /** Connection lifecycle events for visit/pairing orchestration. */
 sealed interface ConnectionEvent {
-    data class PeerFound(val peer: DiscoveredPeer) : ConnectionEvent
-    data class PeerLost(val endpointId: String) : ConnectionEvent
+    data class PeerFound(
+        val peer: DiscoveredPeer,
+    ) : ConnectionEvent
+
+    data class PeerLost(
+        val endpointId: String,
+    ) : ConnectionEvent
+
     data class TokenReady(
         val endpointId: String,
         val baseName: String,
         val authToken: String,
         val incoming: Boolean,
     ) : ConnectionEvent
-    data class Connected(val endpointId: String, val baseName: String) : ConnectionEvent
-    data class ConnectFailed(val endpointId: String) : ConnectionEvent
-    data class Disconnected(val endpointId: String) : ConnectionEvent
+
+    data class Connected(
+        val endpointId: String,
+        val baseName: String,
+    ) : ConnectionEvent
+
+    data class ConnectFailed(
+        val endpointId: String,
+    ) : ConnectionEvent
+
+    data class Disconnected(
+        val endpointId: String,
+    ) : ConnectionEvent
 }
 
 /** One decoded inbound payload with its sender. */

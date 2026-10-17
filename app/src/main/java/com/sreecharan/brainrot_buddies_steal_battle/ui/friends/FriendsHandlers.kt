@@ -84,19 +84,21 @@ class FriendsVmCore(
 
     suspend fun sendMySnapshot(endpointId: String?) {
         if (endpointId == null) return
-        val snapshot = gameRepository.exportSnapshot(
-            gameEngine = gameEngine,
-            guestId = myGuestId,
-            baseName = myBaseName,
-            nowMs = System.currentTimeMillis(),
-        ) ?: return
+        val snapshot =
+            gameRepository.exportSnapshot(
+                gameEngine = gameEngine,
+                guestId = myGuestId,
+                baseName = myBaseName,
+                nowMs = System.currentTimeMillis(),
+            ) ?: return
         nearbyManager.sendPayload(endpointId, snapshot)
     }
 }
 
 /** Pairing ceremony intents (§8). */
-class PairingIntents(private val core: FriendsVmCore) {
-
+class PairingIntents(
+    private val core: FriendsVmCore,
+) {
     /** Called by the Route after the in-context Bluetooth permission grant. */
     fun onBluetoothGranted() {
         core.uiState.update { it.copy(bluetoothGranted = true) }
@@ -190,8 +192,9 @@ class PairingIntents(private val core: FriendsVmCore) {
 }
 
 /** Friend-list and raid-inbox intents. */
-class RosterIntents(private val core: FriendsVmCore) {
-
+class RosterIntents(
+    private val core: FriendsVmCore,
+) {
     fun onUnpair(friend: FriendItem) {
         core.scope.launch(core.ioDispatcher) {
             core.gameRepository.removeFriend(friend.guestId)
@@ -212,8 +215,9 @@ class RosterIntents(private val core: FriendsVmCore) {
 }
 
 /** Nearby connection events and inbound payloads. */
-internal class FriendsConnection(private val core: FriendsVmCore) {
-
+internal class FriendsConnection(
+    private val core: FriendsVmCore,
+) {
     suspend fun collectConnectionEvents() {
         core.nearbyManager.connectionEvents.collect { event ->
             when (event) {
@@ -275,11 +279,15 @@ internal class FriendsConnection(private val core: FriendsVmCore) {
         }
     }
 
-    private suspend fun onHelloReceived(endpointId: String, hello: Hello) {
+    private suspend fun onHelloReceived(
+        endpointId: String,
+        hello: Hello,
+    ) {
         val phase = core.uiState.value.pairingPhase
-        val isPairing = phase is PairingPhase.ConfirmToken ||
-            phase is PairingPhase.AwaitingToken ||
-            phase is PairingPhase.VerifyCode
+        val isPairing =
+            phase is PairingPhase.ConfirmToken ||
+                phase is PairingPhase.AwaitingToken ||
+                phase is PairingPhase.VerifyCode
         if (isPairing && endpointId == core.pairingEndpoint) {
             core.pairingHello = hello
             core.uiState.update {
@@ -289,8 +297,11 @@ internal class FriendsConnection(private val core: FriendsVmCore) {
         }
         // Visit-mode hosting: strangers are disconnected; friends get a
         // heartbeat and a fresh snapshot for the attacker's map.
-        val friend = core.gameRepository.observeFriends().firstData()
-            ?.firstOrNull { it.guestId == hello.guestId }
+        val friend =
+            core.gameRepository
+                .observeFriends()
+                .firstData()
+                ?.firstOrNull { it.guestId == hello.guestId }
         if (friend == null) {
             core.nearbyManager.disconnect(endpointId)
         } else {
@@ -300,8 +311,11 @@ internal class FriendsConnection(private val core: FriendsVmCore) {
     }
 
     private suspend fun onSnapshotReceived(snapshot: BaseSnapshot) {
-        val friend = core.gameRepository.observeFriends().firstData()
-            ?.firstOrNull { it.guestId == snapshot.guestId } ?: return
+        val friend =
+            core.gameRepository
+                .observeFriends()
+                .firstData()
+                ?.firstOrNull { it.guestId == snapshot.guestId } ?: return
         val now = System.currentTimeMillis()
         core.gameRepository.upsertFriend(
             friend.copy(
@@ -315,8 +329,9 @@ internal class FriendsConnection(private val core: FriendsVmCore) {
 }
 
 /** Friend directory and the first-heist ceremony. */
-internal class FriendsDirectory(private val core: FriendsVmCore) {
-
+internal class FriendsDirectory(
+    private val core: FriendsVmCore,
+) {
     suspend fun collectDirectory() {
         combine(
             core.gameRepository.observeFriends(),
@@ -325,33 +340,37 @@ internal class FriendsDirectory(private val core: FriendsVmCore) {
         ) { friendsResult, recordsResult, viewed ->
             val friends = friendsResult.getOrNull().orEmpty()
             val records = recordsResult.getOrNull().orEmpty()
-            val items = friends.map { friend ->
-                FriendItem(
-                    guestId = friend.guestId,
-                    baseName = friend.baseName,
-                    snapshotStatus = when {
-                        friend.snapshotJson == null -> SnapshotStatus.NONE
-                        friend.snapshotRaided -> SnapshotStatus.RAIDED
-                        else -> SnapshotStatus.FRESH
-                    },
-                    lastSeenAt = friend.lastSeenAt,
-                )
-            }.toImmutableList()
-            val incoming = records
-                .filter { it.direction == "in" && it.raidId !in viewed }
-                .sortedByDescending { it.createdAt }
-                .map { record ->
-                    IncomingRaid(
-                        raidId = record.raidId,
-                        attackerGuestId = record.otherGuestId,
-                        attackerBaseName = record.otherBaseName,
-                        buddyName = BuddyCatalog.find(BuddyId(record.buddyId))?.name.orEmpty(),
-                        isShadow = record.isShadow,
-                        revengeDeadlineMs = record.revengeDeadline,
-                        revengeUsed = record.revengeUsed,
-                        createdAt = record.createdAt,
-                    )
-                }.toImmutableList()
+            val items =
+                friends
+                    .map { friend ->
+                        FriendItem(
+                            guestId = friend.guestId,
+                            baseName = friend.baseName,
+                            snapshotStatus =
+                                when {
+                                    friend.snapshotJson == null -> SnapshotStatus.NONE
+                                    friend.snapshotRaided -> SnapshotStatus.RAIDED
+                                    else -> SnapshotStatus.FRESH
+                                },
+                            lastSeenAt = friend.lastSeenAt,
+                        )
+                    }.toImmutableList()
+            val incoming =
+                records
+                    .filter { it.direction == "in" && it.raidId !in viewed }
+                    .sortedByDescending { it.createdAt }
+                    .map { record ->
+                        IncomingRaid(
+                            raidId = record.raidId,
+                            attackerGuestId = record.otherGuestId,
+                            attackerBaseName = record.otherBaseName,
+                            buddyName = BuddyCatalog.find(BuddyId(record.buddyId))?.name.orEmpty(),
+                            isShadow = record.isShadow,
+                            revengeDeadlineMs = record.revengeDeadline,
+                            revengeUsed = record.revengeUsed,
+                            createdAt = record.createdAt,
+                        )
+                    }.toImmutableList()
             maybeFireFirstHeistCeremony(records.any { it.direction == "in" }, incoming)
             core.uiState.update { it.copy(friends = items, incomingRaids = incoming) }
         }.collect { }

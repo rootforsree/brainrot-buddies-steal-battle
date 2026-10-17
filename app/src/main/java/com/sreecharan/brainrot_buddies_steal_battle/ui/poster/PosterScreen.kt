@@ -71,25 +71,27 @@ fun PosterRoute(
     viewModel: PosterViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val picker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-    ) { uri ->
-        if (uri != null) viewModel.onPhotoPicked(uri)
-    }
+    val picker =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+        ) { uri ->
+            if (uri != null) viewModel.onPhotoPicked(uri)
+        }
 
     PosterScreenContent(
         state = state,
-        actions = PosterActions(
-            onBack = onBack,
-            onAddPhoto = { picker.launch("image/*") },
-            onConfirmPhoto = viewModel::onConfirmPhoto,
-            onPickAnother = {
-                viewModel.onPickAnother()
-                picker.launch("image/*")
-            },
-            onRemovePoster = viewModel::onRemovePoster,
-            onFailureDismissed = viewModel::onFailureDismissed,
-        ),
+        actions =
+            PosterActions(
+                onBack = onBack,
+                onAddPhoto = { picker.launch("image/*") },
+                onConfirmPhoto = viewModel::onConfirmPhoto,
+                onPickAnother = {
+                    viewModel.onPickAnother()
+                    picker.launch("image/*")
+                },
+                onRemovePoster = viewModel::onRemovePoster,
+                onFailureDismissed = viewModel::onFailureDismissed,
+            ),
         decodeFile = viewModel::decodePosterFile,
         savedAbsolutePath = viewModel.posterFile(state.posterRelativePath).absolutePath,
     )
@@ -122,10 +124,11 @@ fun PosterScreenContent(
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
-            contentPadding = PaddingValues(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
-            ),
+            contentPadding =
+                PaddingValues(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
+                ),
         ) {
             posterFrameItem(state, actions, decodeFile, savedAbsolutePath)
             footerItems(state.failed, actions.onFailureDismissed)
@@ -157,10 +160,11 @@ private fun PosterTopBar(
             }
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.groupedBackground,
-            scrolledContainerColor = colors.groupedBackground,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = colors.groupedBackground,
+                scrolledContainerColor = colors.groupedBackground,
+            ),
     )
 }
 
@@ -173,20 +177,28 @@ private fun LazyListScope.posterFrameItem(
     item(key = "frame", contentType = "frame") {
         val preview = state.previewPath
         when {
-            preview != null -> PosterPreview(
-                path = preview,
-                decodeFile = decodeFile,
-                isSaving = state.isSaving,
-                onConfirm = actions.onConfirmPhoto,
-                onRepick = actions.onPickAnother,
-            )
-            state.hasPoster -> SavedPoster(
-                path = savedAbsolutePath,
-                decodeFile = decodeFile,
-                onRepick = actions.onAddPhoto,
-                onRemove = actions.onRemovePoster,
-            )
-            else -> EmptyPosterFrame(onAddPhoto = actions.onAddPhoto)
+            preview != null -> {
+                PosterPreview(
+                    path = preview,
+                    decodeFile = decodeFile,
+                    isSaving = state.isSaving,
+                    onConfirm = actions.onConfirmPhoto,
+                    onRepick = actions.onPickAnother,
+                )
+            }
+
+            state.hasPoster -> {
+                SavedPoster(
+                    path = savedAbsolutePath,
+                    decodeFile = decodeFile,
+                    onRepick = actions.onAddPhoto,
+                    onRemove = actions.onRemovePoster,
+                )
+            }
+
+            else -> {
+                EmptyPosterFrame(onAddPhoto = actions.onAddPhoto)
+            }
         }
     }
 }
@@ -200,9 +212,10 @@ private fun LazyListScope.footerItems(
             val colors = LocalAppColors.current
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = colors.warning.copy(alpha = 0.15f),
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = colors.warning.copy(alpha = 0.15f),
+                    ),
             ) {
                 TextButton(onClick = onFailureDismissed) {
                     Text(
@@ -246,14 +259,15 @@ private fun ChunkyFrame(
 ) {
     val colors = LocalAppColors.current
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(24.dp))
-            .background(colors.cardSurface)
-            .border(12.dp, colors.accent.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
-            .padding(12.dp)
-            .clip(RoundedCornerShape(12.dp)),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(24.dp))
+                .background(colors.cardSurface)
+                .border(12.dp, colors.accent.copy(alpha = 0.35f), RoundedCornerShape(24.dp))
+                .padding(12.dp)
+                .clip(RoundedCornerShape(12.dp)),
         contentAlignment = Alignment.Center,
         content = { content() },
     )
@@ -350,9 +364,10 @@ private fun PosterPreview(
         Button(
             onClick = onConfirm,
             enabled = !isSaving,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
         ) {
             if (isSaving) {
@@ -396,9 +411,10 @@ private fun SavedPoster(
         }
         Button(
             onClick = onRepick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
         ) {
             Text(

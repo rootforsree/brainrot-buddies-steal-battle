@@ -65,136 +65,147 @@ class RewardedAdManager
         private val throttle: AdThrottle,
         @AdsPreferences private val prefs: DataStore<Preferences>,
     ) {
+        private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        private var rewardedAd: RewardedAd? = null
+        private var configured = false
 
-    private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
-    private var rewardedAd: RewardedAd? = null
-    private var configured = false
+        private val _adReady = MutableStateFlow(false)
+        val adReady: StateFlow<Boolean> = _adReady.asStateFlow()
 
-    private val _adReady = MutableStateFlow(false)
-    val adReady: StateFlow<Boolean> = _adReady.asStateFlow()
+        private val _events = MutableSharedFlow<AdEvent>(extraBufferCapacity = 4)
+        val events: SharedFlow<AdEvent> = _events.asSharedFlow()
 
-    private val _events = MutableSharedFlow<AdEvent>(extraBufferCapacity = 4)
-    val events: SharedFlow<AdEvent> = _events.asSharedFlow()
+        private val lastShownAt: Flow<Long> = prefs.data.map { it[KEY_LAST_SHOWN_AT] ?: 0L }
 
-    private val lastShownAt: Flow<Long> = prefs.data.map { it[KEY_LAST_SHOWN_AT] ?: 0L }
-
-    /** Preloads the rewarded ad. No-op when ads were removed: nothing is loaded, ever. */
-    fun loadAd() {
-    scope.launch {
-        if (gameRepository.observeAdsRemoved().firstData() ?: false) {
-            _adReady.value = false
-            return@launch
-        }
-        ensureConfigured()
-        if (rewardedAd != null) {
-            _adReady.value = true
-            return@launch
-        }
-        val extras = Bundle().apply { putString("npa", "1") }
-        val request = AdRequest.Builder()
-            .addNetworkExtrasBundle(AdMobAdapter::class.java, extras)
-            .build()
-        withContext(mainDispatcher) {
-            RewardedAd.load(context, REWARDED_AD_UNIT_ID, request, loadCallback)
-        }
-    }
-    }
-
-    /**
-     * Shows the ad. The Shop calls this only from its "Free coins" button.
-     * [onReward] grants 100 coins or 5 bites (Shop's choice, contract §4).
-     */
-    fun showAd(activity: Activity, onReward: () -> Unit) {
-    scope.launch {
-        if (gameRepository.observeAdsRemoved().firstData() ?: false) return@launch
-        val now = System.currentTimeMillis()
-        val lastShown = lastShownAt.first()
-        if (!throttle.canShow(now, lastShown)) {
-            _events.emit(AdEvent.CooldownActive(throttle.millisUntilNextShow(now, lastShown)))
-            return@launch
-        }
-        val ad = rewardedAd ?: run {
-            _events.emit(AdEvent.NotReady)
-            loadAd()
-            return@launch
-        }
-        withContext(mainDispatcher) {
-            // Contract: ads start muted; the Shop shows the unmute chip.
-            MobileAds.setAppMuted(true)
-            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    rewardedAd = null
+        /** Preloads the rewarded ad. No-op when ads were removed: nothing is loaded, ever. */
+        fun loadAd() {
+            scope.launch {
+                if (gameRepository.observeAdsRemoved().firstData() ?: false) {
                     _adReady.value = false
-                    scope.launch {
-                        prefs.edit { it[KEY_LAST_SHOWN_AT] = System.currentTimeMillis() }
-                        _events.emit(AdEvent.Closed)
-                        loadAd()
-                    }
+                    return@launch
                 }
-
-                override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) {
-                    Log.w(TAG, "Ad failed to show: ${error.message}")
-                    rewardedAd = null
-                    _adReady.value = false
-                    scope.launch {
-                        _events.emit(AdEvent.NotReady)
-                        loadAd()
-                    }
+                ensureConfigured()
+                if (rewardedAd != null) {
+                    _adReady.value = true
+                    return@launch
+                }
+                val extras = Bundle().apply { putString("npa", "1") }
+                val request =
+                    AdRequest
+                        .Builder()
+                        .addNetworkExtrasBundle(AdMobAdapter::class.java, extras)
+                        .build()
+                withContext(mainDispatcher) {
+                    RewardedAd.load(context, REWARDED_AD_UNIT_ID, request, loadCallback)
                 }
             }
-            ad.show(activity, OnUserEarnedRewardListener { onReward() })
+        }
+
+        /**
+         * Shows the ad. The Shop calls this only from its "Free coins" button.
+         * [onReward] grants 100 coins or 5 bites (Shop's choice, contract §4).
+         */
+        fun showAd(
+            activity: Activity,
+            onReward: () -> Unit,
+        ) {
+            scope.launch {
+                if (gameRepository.observeAdsRemoved().firstData() ?: false) return@launch
+                val now = System.currentTimeMillis()
+                val lastShown = lastShownAt.first()
+                if (!throttle.canShow(now, lastShown)) {
+                    _events.emit(AdEvent.CooldownActive(throttle.millisUntilNextShow(now, lastShown)))
+                    return@launch
+                }
+                val ad =
+                    rewardedAd ?: run {
+                        _events.emit(AdEvent.NotReady)
+                        loadAd()
+                        return@launch
+                    }
+                withContext(mainDispatcher) {
+                    // Contract: ads start muted; the Shop shows the unmute chip.
+                    MobileAds.setAppMuted(true)
+                    ad.fullScreenContentCallback =
+                        object : FullScreenContentCallback() {
+                            override fun onAdDismissedFullScreenContent() {
+                                rewardedAd = null
+                                _adReady.value = false
+                                scope.launch {
+                                    prefs.edit { it[KEY_LAST_SHOWN_AT] = System.currentTimeMillis() }
+                                    _events.emit(AdEvent.Closed)
+                                    loadAd()
+                                }
+                            }
+
+                            override fun onAdFailedToShowFullScreenContent(error: com.google.android.gms.ads.AdError) {
+                                Log.w(TAG, "Ad failed to show: ${error.message}")
+                                rewardedAd = null
+                                _adReady.value = false
+                                scope.launch {
+                                    _events.emit(AdEvent.NotReady)
+                                    loadAd()
+                                }
+                            }
+                        }
+                    ad.show(activity, OnUserEarnedRewardListener { onReward() })
+                }
+            }
+        }
+
+        /** Called by the Shop's unmute chip. */
+        fun setAdMuted(muted: Boolean) {
+            MobileAds.setAppMuted(muted)
+        }
+
+        private val loadCallback =
+            object : RewardedAdLoadCallback() {
+                override fun onAdLoaded(ad: RewardedAd) {
+                    rewardedAd = ad
+                    _adReady.value = true
+                }
+
+                override fun onAdFailedToLoad(error: LoadAdError) {
+                    Log.w(TAG, "Rewarded ad failed to load: ${error.message}")
+                    rewardedAd = null
+                    _adReady.value = false
+                }
+            }
+
+        private fun ensureConfigured() {
+            if (configured) return
+            configured = true
+            MobileAds.setRequestConfiguration(
+                RequestConfiguration
+                    .Builder()
+                    .setTagForChildDirectedTreatment(
+                        RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE,
+                    ).setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
+                    .build(),
+            )
+            MobileAds.initialize(context) { }
+        }
+
+        companion object {
+            private const val TAG = "RewardedAdManager"
+
+            /**
+             * Google's official SAMPLE rewarded ad unit id. Replace with the real
+             * rewarded ad unit id before any release build.
+             */
+            const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+
+            private val KEY_LAST_SHOWN_AT = longPreferencesKey("last_rewarded_ad_shown_at")
         }
     }
-    }
-
-    /** Called by the Shop's unmute chip. */
-    fun setAdMuted(muted: Boolean) {
-    MobileAds.setAppMuted(muted)
-    }
-
-    private val loadCallback = object : RewardedAdLoadCallback() {
-    override fun onAdLoaded(ad: RewardedAd) {
-        rewardedAd = ad
-        _adReady.value = true
-    }
-
-    override fun onAdFailedToLoad(error: LoadAdError) {
-        Log.w(TAG, "Rewarded ad failed to load: ${error.message}")
-        rewardedAd = null
-        _adReady.value = false
-    }
-    }
-
-    private fun ensureConfigured() {
-    if (configured) return
-    configured = true
-    MobileAds.setRequestConfiguration(
-        RequestConfiguration.Builder()
-            .setTagForChildDirectedTreatment(
-                RequestConfiguration.TAG_FOR_CHILD_DIRECTED_TREATMENT_TRUE,
-            )
-            .setMaxAdContentRating(RequestConfiguration.MAX_AD_CONTENT_RATING_G)
-            .build(),
-    )
-    MobileAds.initialize(context) { }
-    }
-
-    companion object {
-    private const val TAG = "RewardedAdManager"
-
-    /**
-     * Google's official SAMPLE rewarded ad unit id. Replace with the real
-     * rewarded ad unit id before any release build.
-     */
-    const val REWARDED_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
-
-    private val KEY_LAST_SHOWN_AT = longPreferencesKey("last_rewarded_ad_shown_at")
-    }
-}
 
 /** One-shot ad outcomes for the Shop UI. */
 sealed interface AdEvent {
     data object NotReady : AdEvent
-    data class CooldownActive(val millisRemaining: Long) : AdEvent
+
+    data class CooldownActive(
+        val millisRemaining: Long,
+    ) : AdEvent
+
     data object Closed : AdEvent
 }

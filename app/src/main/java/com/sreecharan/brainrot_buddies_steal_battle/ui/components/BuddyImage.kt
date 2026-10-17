@@ -27,9 +27,10 @@ fun BuddyImage(
     colorFilter: ColorFilter? = null,
 ) {
     val context = LocalContext.current
-    val resId = remember(imageName) {
-        context.resources.getIdentifier(imageName, "drawable", context.packageName)
-    }
+    val resId =
+        remember(imageName) {
+            context.resources.getIdentifier(imageName, "drawable", context.packageName)
+        }
     Image(
         painter = painterResource(id = if (resId != 0) resId else R.drawable.buddy_placeholder),
         contentDescription = contentDescription,

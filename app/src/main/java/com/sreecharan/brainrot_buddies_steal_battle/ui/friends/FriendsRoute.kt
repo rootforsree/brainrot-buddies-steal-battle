@@ -37,6 +37,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.components.ParentGateDial
  * shown only behind Builder C's ParentGateDialog.
  */
 @Composable
+@Suppress("LongMethod")
 fun FriendsRoute(
     onNavigateToRaidVisit: (friendGuestId: String) -> Unit,
     viewModel: FriendsViewModel = hiltViewModel(),
@@ -48,19 +49,28 @@ fun FriendsRoute(
     var gateForCode by remember { mutableStateOf(false) }
     var ceremonyFor by remember { mutableStateOf<String?>(null) }
 
-    val requestBluetooth = rememberBluetoothRequest(
-        bluetoothGranted = state.bluetoothGranted,
-        onGranted = viewModel.pairing::onBluetoothGranted,
-    )
+    val requestBluetooth =
+        rememberBluetoothRequest(
+            bluetoothGranted = state.bluetoothGranted,
+            onGranted = viewModel.pairing::onBluetoothGranted,
+        )
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is FriendsEvent.NavigateToRaidVisit -> onNavigateToRaidVisit(event.friendGuestId)
-                is FriendsEvent.ShowMessage -> snackbarHostState.showSnackbar(
-                    context.getString(event.resId, event.arg),
-                )
-                is FriendsEvent.ShowCeremony -> ceremonyFor = event.friendBaseName
+                is FriendsEvent.NavigateToRaidVisit -> {
+                    onNavigateToRaidVisit(event.friendGuestId)
+                }
+
+                is FriendsEvent.ShowMessage -> {
+                    snackbarHostState.showSnackbar(
+                        context.getString(event.resId, event.arg),
+                    )
+                }
+
+                is FriendsEvent.ShowCeremony -> {
+                    ceremonyFor = event.friendBaseName
+                }
             }
         }
     }
@@ -118,35 +128,42 @@ private fun rememberBluetoothRequest(
     onGranted: () -> Unit,
 ): () -> Unit {
     val context = LocalContext.current
-    val permissions = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            arrayOf(
-                Manifest.permission.BLUETOOTH_ADVERTISE,
-                Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.BLUETOOTH_SCAN,
-            )
-        } else {
-            emptyArray()
+    val permissions =
+        remember {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                arrayOf(
+                    Manifest.permission.BLUETOOTH_ADVERTISE,
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_SCAN,
+                )
+            } else {
+                emptyArray()
+            }
         }
-    }
-    val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions(),
-    ) { grants ->
-        if (grants.values.all { it }) onGranted()
-    }
+    val launcher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions(),
+        ) { grants ->
+            if (grants.values.all { it }) onGranted()
+        }
 
     // If permissions were granted earlier (e.g. after rotation), pick up hosting.
     LaunchedEffect(Unit) {
-        val granted = permissions.isNotEmpty() && permissions.all { permission ->
-            ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        }
+        val granted =
+            permissions.isNotEmpty() &&
+                permissions.all { permission ->
+                    ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                }
         if (granted && !bluetoothGranted) onGranted()
     }
     return { launcher.launch(permissions) }
 }
 
 @Composable
-private fun CeremonyDialog(baseName: String, onDismiss: () -> Unit) {
+private fun CeremonyDialog(
+    baseName: String,
+    onDismiss: () -> Unit,
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {

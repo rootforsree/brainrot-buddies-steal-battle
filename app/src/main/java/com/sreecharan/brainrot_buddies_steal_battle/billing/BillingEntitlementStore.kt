@@ -17,24 +17,26 @@ import javax.inject.Singleton
  */
 interface BillingEntitlementStore {
     val ownedHats: Flow<Set<String>>
+
     suspend fun grantHat(hatId: String)
 }
 
 @Singleton
-class DataStoreBillingEntitlementStore @Inject constructor(
-    @BillingPreferences private val store: DataStore<Preferences>,
-) : BillingEntitlementStore {
+class DataStoreBillingEntitlementStore
+    @Inject
+    constructor(
+        @BillingPreferences private val store: DataStore<Preferences>,
+    ) : BillingEntitlementStore {
+        override val ownedHats: Flow<Set<String>> =
+            store.data.map { it[KEY_OWNED_HATS] ?: emptySet() }
 
-    override val ownedHats: Flow<Set<String>> =
-        store.data.map { it[KEY_OWNED_HATS] ?: emptySet() }
+        override suspend fun grantHat(hatId: String) {
+            store.edit { prefs ->
+                prefs[KEY_OWNED_HATS] = (prefs[KEY_OWNED_HATS] ?: emptySet()) + hatId
+            }
+        }
 
-    override suspend fun grantHat(hatId: String) {
-        store.edit { prefs ->
-            prefs[KEY_OWNED_HATS] = (prefs[KEY_OWNED_HATS] ?: emptySet()) + hatId
+        companion object {
+            private val KEY_OWNED_HATS = stringSetPreferencesKey("owned_hats")
         }
     }
-
-    companion object {
-        private val KEY_OWNED_HATS = stringSetPreferencesKey("owned_hats")
-    }
-}

@@ -156,13 +156,24 @@ fun RaidVisitScreen(
 }
 
 @Composable
-private fun ConnectionBadge(connection: VisitConnection, friendBaseName: String) {
-    val text = when (connection) {
-        VisitConnection.LIVE -> stringResource(R.string.raid_live)
-        VisitConnection.SNAPSHOT -> stringResource(R.string.raid_snapshot)
-        VisitConnection.SEARCHING, VisitConnection.FAILED ->
-            stringResource(R.string.raid_connecting, friendBaseName)
-    }
+private fun ConnectionBadge(
+    connection: VisitConnection,
+    friendBaseName: String,
+) {
+    val text =
+        when (connection) {
+            VisitConnection.LIVE -> {
+                stringResource(R.string.raid_live)
+            }
+
+            VisitConnection.SNAPSHOT -> {
+                stringResource(R.string.raid_snapshot)
+            }
+
+            VisitConnection.SEARCHING, VisitConnection.FAILED -> {
+                stringResource(R.string.raid_connecting, friendBaseName)
+            }
+        }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -180,9 +191,10 @@ private fun ConnectionBadge(connection: VisitConnection, friendBaseName: String)
 private fun RevengeCard(onRevengeClicked: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+            ),
     ) {
         Column(Modifier.padding(AppDimens.spacing16)) {
             Text(
@@ -254,9 +266,10 @@ private fun LazyListScope.stealResultSection(state: RaidVisitUiState) {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        ),
                 ) {
                     Column(Modifier.padding(AppDimens.spacing16)) {
                         Text(
@@ -271,13 +284,15 @@ private fun LazyListScope.stealResultSection(state: RaidVisitUiState) {
                 }
             }
         }
+
         StealOutcome.FAILED -> {
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    ),
+                    colors =
+                        CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        ),
                 ) {
                     Column(Modifier.padding(AppDimens.spacing16)) {
                         Text(
@@ -294,7 +309,8 @@ private fun LazyListScope.stealResultSection(state: RaidVisitUiState) {
                 }
             }
         }
-        else -> Unit
+
+        else -> {}
     }
 }
 
@@ -306,18 +322,24 @@ private fun LazyListScope.chatSection(messages: ImmutableList<ChatUi>) {
 }
 
 @Composable
-private fun SlotCell(slot: RaidSlotUi, selected: Boolean, onClick: () -> Unit) {
+private fun SlotCell(
+    slot: RaidSlotUi,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
     val occupied = slot.buddyId.isNotEmpty()
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .aspectRatio(1f)
-            .alpha(if (!slot.stealable && occupied) DIMMED_ALPHA else 1f),
-        border = if (selected) {
-            BorderStroke(SELECTED_BORDER_WIDTH, MaterialTheme.colorScheme.primary)
-        } else {
-            null
-        },
+        modifier =
+            Modifier
+                .aspectRatio(1f)
+                .alpha(if (!slot.stealable && occupied) DIMMED_ALPHA else 1f),
+        border =
+            if (selected) {
+                BorderStroke(SELECTED_BORDER_WIDTH, MaterialTheme.colorScheme.primary)
+            } else {
+                null
+            },
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(AppDimens.spacing4),
@@ -356,11 +378,15 @@ private fun SlotCell(slot: RaidSlotUi, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun EmoteButton(emoteId: String, onClick: () -> Unit) {
+private fun EmoteButton(
+    emoteId: String,
+    onClick: () -> Unit,
+) {
     val context = LocalContext.current
-    val resId = remember(emoteId) {
-        context.resources.getIdentifier(emoteId, "drawable", context.packageName)
-    }
+    val resId =
+        remember(emoteId) {
+            context.resources.getIdentifier(emoteId, "drawable", context.packageName)
+        }
     // Emote art ships with the coordinator; skip any that are missing.
     if (resId == 0) return
     OutlinedButton(onClick = onClick, contentPadding = PaddingValues(AppDimens.spacing8)) {
@@ -379,28 +405,32 @@ private fun ChatBubble(message: ChatUi) {
         horizontalArrangement = if (message.mine) Arrangement.End else Arrangement.Start,
     ) {
         Card(
-            colors = CardDefaults.cardColors(
-                containerColor = if (message.mine) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceVariant
-                },
-            ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        if (message.mine) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.surfaceVariant
+                        },
+                ),
         ) {
             if (message.kind == RaidChatContent.KIND_PHRASE) {
                 Text(
                     text = message.text,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(
-                        horizontal = AppDimens.spacing12,
-                        vertical = AppDimens.spacing8,
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            horizontal = AppDimens.spacing12,
+                            vertical = AppDimens.spacing8,
+                        ),
                 )
             } else {
                 val context = LocalContext.current
-                val resId = remember(message.refId) {
-                    context.resources.getIdentifier(message.refId, "drawable", context.packageName)
-                }
+                val resId =
+                    remember(message.refId) {
+                        context.resources.getIdentifier(message.refId, "drawable", context.packageName)
+                    }
                 if (resId != 0) {
                     Image(
                         painter = painterResource(resId),

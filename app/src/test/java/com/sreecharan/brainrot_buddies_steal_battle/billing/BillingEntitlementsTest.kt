@@ -1,7 +1,11 @@
 package com.sreecharan.brainrot_buddies_steal_battle.billing
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -11,7 +15,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BillingEntitlementsTest {
-
     @TempDir
     lateinit var tempDir: Path
 
@@ -61,36 +64,47 @@ class BillingEntitlementsTest {
     // ---- DataStore persistence of hat entitlements ----
 
     @Test
-    fun `granted hats persist across store instances`() = runTest {
-        fun newStore() = DataStoreBillingEntitlementStore(
-            PreferenceDataStoreFactory.create(
-                scope = backgroundScope,
-                produceFile = { tempDir.resolve("billing_prefs.preferences_pb").toFile() },
-            ),
-        )
+    fun `granted hats persist across store instances`() =
+        runTest {
+            val produceFile = { tempDir.resolve("billing_prefs.preferences_pb").toFile() }
 
-        val first = newStore()
-        assertEquals(emptySet(), first.ownedHats.first())
-        first.grantHat(BillingProducts.HAT_PARTY_CONE)
-        assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), first.ownedHats.first())
+            fun newStore(scope: CoroutineScope) =
+                DataStoreBillingEntitlementStore(
+                    PreferenceDataStoreFactory.create(
+                        scope = scope,
+                        produceFile = produceFile,
+                    ),
+                )
 
-        // A fresh store over the same file sees the grant: deterministic.
-        val second = newStore()
-        assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), second.ownedHats.first())
+            // The first instance gets its own scope so it can be retired: a
+            // DataStore is active only while its scope is active, and two
+            // instances may never share a file.
+            val firstScope = CoroutineScope(SupervisorJob())
+            val first = newStore(firstScope)
+            assertEquals(emptySet(), first.ownedHats.first())
+            first.grantHat(BillingProducts.HAT_PARTY_CONE)
+            assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), first.ownedHats.first())
+            firstScope.cancel()
+            firstScope.coroutineContext.job.join()
 
-        second.grantHat(BillingProducts.HAT_TINY_CROWN)
-        assertEquals(
-            setOf(BillingProducts.HAT_PARTY_CONE, BillingProducts.HAT_TINY_CROWN),
-            second.ownedHats.first(),
-        )
-    }
+            // A fresh store over the same file sees the grant: deterministic.
+            val second = newStore(backgroundScope)
+            assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), second.ownedHats.first())
+
+            second.grantHat(BillingProducts.HAT_TINY_CROWN)
+            assertEquals(
+                setOf(BillingProducts.HAT_PARTY_CONE, BillingProducts.HAT_TINY_CROWN),
+                second.ownedHats.first(),
+            )
+        }
 
     @Test
     fun `entitlements model reports hat ownership`() {
-        val entitlements = Entitlements(
-            adsRemoved = true,
-            ownedHats = kotlinx.collections.immutable.persistentSetOf(BillingProducts.HAT_PARTY_CONE),
-        )
+        val entitlements =
+            Entitlements(
+                adsRemoved = true,
+                ownedHats = kotlinx.collections.immutable.persistentSetOf(BillingProducts.HAT_PARTY_CONE),
+            )
         assertTrue(entitlements.adsRemoved)
         assertTrue(entitlements.ownsHat(BillingProducts.HAT_PARTY_CONE))
         assertTrue(!entitlements.ownsHat(BillingProducts.HAT_TINY_CROWN))

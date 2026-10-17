@@ -16,7 +16,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class AudioModule {
-
     @Binds
     @Singleton
     abstract fun bindAudioEngine(impl: AndroidAudioEngine): AudioEngine

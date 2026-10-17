@@ -69,25 +69,36 @@ private fun RedeemResultBanner(
 ) {
     if (result == null) return
     val colors = LocalAppColors.current
-    val message = when (result) {
-        is RedeemResultUi.Success -> {
-            val parts = buildList {
-                if (result.coins > 0) add(stringResource(R.string.coins_count, result.coins))
-                if (result.luckyTickets > 0) {
-                    add(stringResource(R.string.base_lucky_ticket, result.luckyTickets))
-                }
-                if (result.megaTickets > 0) {
-                    add(stringResource(R.string.base_mega_ticket, result.megaTickets))
-                }
+    val message =
+        when (result) {
+            is RedeemResultUi.Success -> {
+                val parts =
+                    buildList {
+                        if (result.coins > 0) add(stringResource(R.string.coins_count, result.coins))
+                        if (result.luckyTickets > 0) {
+                            add(stringResource(R.string.base_lucky_ticket, result.luckyTickets))
+                        }
+                        if (result.megaTickets > 0) {
+                            add(stringResource(R.string.base_mega_ticket, result.megaTickets))
+                        }
+                    }
+                // The STEALFUN26 party emote has no §5 home yet; coins are
+                // granted and the emote gap is flagged for the coordinator.
+                stringResource(R.string.shop_bought) + " " + parts.joinToString(", ")
             }
-            // The STEALFUN26 party emote has no §5 home yet; coins are
-            // granted and the emote gap is flagged for the coordinator.
-            stringResource(R.string.shop_bought) + " " + parts.joinToString(", ")
+
+            RedeemResultUi.Invalid -> {
+                stringResource(R.string.gifts_redeem_invalid)
+            }
+
+            RedeemResultUi.AlreadyUsed -> {
+                stringResource(R.string.gifts_redeem_used)
+            }
+
+            RedeemResultUi.Error -> {
+                stringResource(R.string.shop_error)
+            }
         }
-        RedeemResultUi.Invalid -> stringResource(R.string.gifts_redeem_invalid)
-        RedeemResultUi.AlreadyUsed -> stringResource(R.string.gifts_redeem_used)
-        RedeemResultUi.Error -> stringResource(R.string.shop_error)
-    }
     LaunchedEffect(result) {
         delay(RESULT_DISMISS_MS)
         onResultConsumed()
@@ -95,10 +106,11 @@ private fun RedeemResultBanner(
     Text(
         text = message,
         style = AppTypography.body,
-        color = when (result) {
-            is RedeemResultUi.Success -> colors.success
-            else -> colors.warning
-        },
+        color =
+            when (result) {
+                is RedeemResultUi.Success -> colors.success
+                else -> colors.warning
+            },
         modifier = Modifier.padding(bottom = AppDimens.spacing8),
     )
 }
@@ -130,7 +142,8 @@ private fun RedeemInputRow(
                     value = code,
                     onValueChange = { input ->
                         onCodeChange(
-                            input.uppercase()
+                            input
+                                .uppercase()
                                 .filter { it.isLetterOrDigit() }
                                 .take(MAX_CODE_LENGTH),
                         )

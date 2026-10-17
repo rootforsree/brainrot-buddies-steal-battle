@@ -23,6 +23,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.rememberHapticTick
 
+// Public API: SettingsScreen and AboutScreen call with all 9 arguments, so
+// the parameter list cannot be regrouped without breaking those call sites.
+
 /**
  * One settings row: at least 48dp tall, optional leading icon, title,
  * subtitle and trailing slot. Exactly one interaction mode is active:
@@ -30,8 +33,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.rememberHapticTick
  * Children merge into one TalkBack node so the row announces as a single
  * control, and every tap plays a light haptic tick unless haptics are off.
  */
-// Public API: SettingsScreen and AboutScreen call with all 9 arguments, so
-// the parameter list cannot be regrouped without breaking those call sites.
 @Suppress("LongParameterList")
 @Composable
 fun SettingsRow(
@@ -48,17 +49,17 @@ fun SettingsRow(
     val colors = LocalAppColors.current
     val tick = rememberHapticTick()
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = AppDimens.rowMinHeight)
-            .then(rowInteractionModifier(tick, onClick, toggleableValue, selectableSelected))
-            .semantics(mergeDescendants = true) {
-                this.contentDescription = rowDescription(title, subtitle, contentDescription)
-            }
-            .padding(
-                horizontal = AppDimens.rowHorizontalPadding,
-                vertical = AppDimens.rowVerticalPadding,
-            ),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = AppDimens.rowMinHeight)
+                .then(rowInteractionModifier(tick, onClick, toggleableValue, selectableSelected))
+                .semantics(mergeDescendants = true) {
+                    this.contentDescription = rowDescription(title, subtitle, contentDescription)
+                }.padding(
+                    horizontal = AppDimens.rowHorizontalPadding,
+                    vertical = AppDimens.rowVerticalPadding,
+                ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
     ) {
@@ -87,7 +88,11 @@ fun SettingsRow(
     }
 }
 
-private fun rowDescription(title: String, subtitle: String?, contentDescription: String?): String =
+private fun rowDescription(
+    title: String,
+    subtitle: String?,
+    contentDescription: String?,
+): String =
     contentDescription ?: buildString {
         append(title)
         if (subtitle != null) {
@@ -102,29 +107,41 @@ private fun rowInteractionModifier(
     onClick: (() -> Unit)?,
     toggleableValue: Boolean?,
     selectableSelected: Boolean?,
-): Modifier = when {
-    toggleableValue != null -> Modifier.toggleable(
-        value = toggleableValue,
-        role = Role.Switch,
-        onValueChange = {
-            tick()
-            onClick?.invoke()
-        },
-    )
-    selectableSelected != null -> Modifier.selectable(
-        selected = selectableSelected,
-        role = Role.RadioButton,
-        onClick = {
-            tick()
-            onClick?.invoke()
-        },
-    )
-    onClick != null -> Modifier.clickable(
-        role = Role.Button,
-        onClick = {
-            tick()
-            onClick()
-        },
-    )
-    else -> Modifier
-}
+): Modifier =
+    when {
+        toggleableValue != null -> {
+            Modifier.toggleable(
+                value = toggleableValue,
+                role = Role.Switch,
+                onValueChange = {
+                    tick()
+                    onClick?.invoke()
+                },
+            )
+        }
+
+        selectableSelected != null -> {
+            Modifier.selectable(
+                selected = selectableSelected,
+                role = Role.RadioButton,
+                onClick = {
+                    tick()
+                    onClick?.invoke()
+                },
+            )
+        }
+
+        onClick != null -> {
+            Modifier.clickable(
+                role = Role.Button,
+                onClick = {
+                    tick()
+                    onClick()
+                },
+            )
+        }
+
+        else -> {
+            Modifier
+        }
+    }

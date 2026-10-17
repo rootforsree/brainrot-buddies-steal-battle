@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -93,10 +93,13 @@ private fun AlbumEventEffect(
         viewModel.events.collect { event ->
             onMessage(
                 when (event) {
-                    is AlbumEvent.BonusClaimed ->
+                    is AlbumEvent.BonusClaimed -> {
                         context.getString(R.string.album_claim, event.amount)
-                    AlbumEvent.ClaimFailed ->
+                    }
+
+                    AlbumEvent.ClaimFailed -> {
                         context.getString(R.string.shop_error)
+                    }
                 },
             )
         }
@@ -127,12 +130,13 @@ fun AlbumScreenContent(
     ) { padding ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(GRID_COLUMNS),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = padding.calculateTopPadding(),
+                        bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
+                    ),
             contentPadding = PaddingValues(horizontal = AppDimens.screenMargin),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
@@ -141,11 +145,12 @@ fun AlbumScreenContent(
             state.bonuses.forEach { bonus ->
                 tierSection(
                     bonus = bonus,
-                    stickers = when (bonus.rarity) {
-                        Rarity.COMMON -> state.commons
-                        Rarity.RARE -> state.rares
-                        Rarity.EPIC -> state.epics
-                    },
+                    stickers =
+                        when (bonus.rarity) {
+                            Rarity.COMMON -> state.commons
+                            Rarity.RARE -> state.rares
+                            Rarity.EPIC -> state.epics
+                        },
                     onClaimBonus = onClaimBonus,
                     onStickerTapped = onStickerTapped,
                 )
@@ -157,9 +162,7 @@ fun AlbumScreenContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AlbumTopBar(
-    scrollBehavior: TopAppBarScrollBehavior,
-) {
+private fun AlbumTopBar(scrollBehavior: TopAppBarScrollBehavior) {
     val colors = LocalAppColors.current
     LargeTopAppBar(
         title = {
@@ -169,10 +172,11 @@ private fun AlbumTopBar(
             )
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.groupedBackground,
-            scrolledContainerColor = colors.groupedBackground,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = colors.groupedBackground,
+                scrolledContainerColor = colors.groupedBackground,
+            ),
     )
 }
 
@@ -182,18 +186,20 @@ private fun LazyGridScope.messageItem(message: String?) {
             val colors = LocalAppColors.current
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = colors.accent.copy(alpha = 0.15f),
-                ),
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = colors.accent.copy(alpha = 0.15f),
+                    ),
             ) {
                 Text(
                     text = message,
                     style = AppTypography.body,
                     color = colors.label,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AppDimens.spacing12),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(AppDimens.spacing12),
                 )
             }
         }
@@ -228,9 +234,7 @@ private fun LazyGridScope.tierSection(
     }
 }
 
-private fun LazyGridScope.comingSoonSection(
-    comingSoon: List<ComingSoonBuddy>,
-) {
+private fun LazyGridScope.comingSoonSection(comingSoon: List<ComingSoonBuddy>) {
     item(span = { GridItemSpan(GRID_COLUMNS) }, key = "soon-header", contentType = "tier") {
         Text(
             text = stringResource(R.string.album_section_soon),
@@ -245,29 +249,35 @@ private fun LazyGridScope.comingSoonSection(
         contentType = { _, _ -> "coming-soon" },
     ) { _, soon ->
         ComingSoonCard(
-            kindLabel = stringResource(
-                if (soon.kind == "Legendary") {
-                    R.string.album_kind_legendary
-                } else {
-                    R.string.album_kind_mythic
-                },
-            ),
+            kindLabel =
+                stringResource(
+                    if (soon.kind == "Legendary") {
+                        R.string.album_kind_legendary
+                    } else {
+                        R.string.album_kind_mythic
+                    },
+                ),
         )
     }
 }
 
 @Composable
-private fun TierHeader(bonus: TierBonusState, onClaim: () -> Unit) {
+private fun TierHeader(
+    bonus: TierBonusState,
+    onClaim: () -> Unit,
+) {
     val colors = LocalAppColors.current
-    val title = when (bonus.rarity) {
-        Rarity.COMMON -> stringResource(R.string.album_section_commons)
-        Rarity.RARE -> stringResource(R.string.album_section_rares)
-        Rarity.EPIC -> stringResource(R.string.album_section_epics)
-    }
+    val title =
+        when (bonus.rarity) {
+            Rarity.COMMON -> stringResource(R.string.album_section_commons)
+            Rarity.RARE -> stringResource(R.string.album_section_rares)
+            Rarity.EPIC -> stringResource(R.string.album_section_epics)
+        }
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = AppDimens.spacing8),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = AppDimens.spacing8),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -280,56 +290,68 @@ private fun TierHeader(bonus: TierBonusState, onClaim: () -> Unit) {
             )
         }
         when {
-            bonus.claimable -> Button(
-                onClick = onClaim,
-                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
-            ) {
-                Text(text = stringResource(R.string.album_claim, bonus.amount))
+            bonus.claimable -> {
+                Button(
+                    onClick = onClaim,
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                ) {
+                    Text(text = stringResource(R.string.album_claim, bonus.amount))
+                }
             }
-            bonus.claimed -> Text(
-                text = stringResource(R.string.album_claimed),
-                style = AppTypography.headline,
-                color = colors.success,
-            )
+
+            bonus.claimed -> {
+                Text(
+                    text = stringResource(R.string.album_claimed),
+                    style = AppTypography.headline,
+                    color = colors.success,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StickerCard(sticker: Sticker, onTap: () -> Unit) {
+private fun StickerCard(
+    sticker: Sticker,
+    onTap: () -> Unit,
+) {
     val colors = LocalAppColors.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(CARD_ASPECT_RATIO)
-            .clip(AppShapes.card)
-            .clickable(
-                role = Role.Button,
-                onClickLabel = stringResource(R.string.album_tap_hint),
-                onClick = onTap,
-                enabled = sticker.caught,
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(CARD_ASPECT_RATIO)
+                .clip(AppShapes.card)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = stringResource(R.string.album_tap_hint),
+                    onClick = onTap,
+                    enabled = sticker.caught,
+                ),
         shape = AppShapes.card,
         colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing8),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.spacing8),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             BuddyImage(
                 imageName = "buddy_${sticker.buddyId}",
                 contentDescription = if (sticker.caught) sticker.name else null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
-                colorFilter = if (sticker.caught) {
-                    null
-                } else {
-                    ColorFilter.tint(Color.Black)
-                },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
+                colorFilter =
+                    if (sticker.caught) {
+                        null
+                    } else {
+                        ColorFilter.tint(Color.Black)
+                    },
             )
             Text(
                 text = if (sticker.caught) sticker.name else stringResource(R.string.album_unknown),
@@ -347,27 +369,31 @@ private fun StickerCard(sticker: Sticker, onTap: () -> Unit) {
 private fun ComingSoonCard(kindLabel: String) {
     val colors = LocalAppColors.current
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(CARD_ASPECT_RATIO),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(CARD_ASPECT_RATIO),
         shape = AppShapes.card,
-        colors = CardDefaults.cardColors(
-            containerColor = colors.cardSurface.copy(alpha = 0.5f),
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = colors.cardSurface.copy(alpha = 0.5f),
+            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing8),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.spacing8),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             BuddyImage(
                 imageName = "buddy_placeholder",
                 contentDescription = null,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f),
                 colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
             )
             Text(

@@ -33,13 +33,13 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Day-based unlock moments (§1 ladder): systems arrive via gift moments, one
@@ -59,8 +59,9 @@ import kotlinx.coroutines.launch
  * onOpen grants the day-4 shield; the other moments are pure reveals.
  * Shown-state is session-scoped: an unopened moment re-appears next launch,
  * which is the desired behavior for kids.
+ *
+ * Days the unlock moments trigger on (§1 ladder).
  */
-/** Days the unlock moments trigger on (§1 ladder). */
 private const val TICKET_MOMENT_DAY = 2
 private const val UPGRADES_MOMENT_DAY = 3
 private const val SHIELD_MOMENT_DAY = 4
@@ -80,38 +81,40 @@ enum class UnlockMoment(
 }
 
 @HiltViewModel
-class UnlockMomentsViewModel @Inject constructor(
-    private val repository: GameRepository,
-) : ViewModel() {
+class UnlockMomentsViewModel
+    @Inject
+    constructor(
+        private val repository: GameRepository,
+    ) : ViewModel() {
+        private val shownThisSession = MutableStateFlow<Set<UnlockMoment>>(emptySet())
 
-    private val shownThisSession = MutableStateFlow<Set<UnlockMoment>>(emptySet())
+        val pendingMoment: StateFlow<UnlockMoment?> =
+            combine(
+                repository.observeOnboardingDay(),
+                shownThisSession,
+            ) { dayResult, shown ->
+                val day = dayResult.dataOrNull() ?: 1
+                UnlockMoment.entries.firstOrNull { it.day <= day && it !in shown }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = null,
+            )
 
-    val pendingMoment: StateFlow<UnlockMoment?> = combine(
-        repository.observeOnboardingDay(),
-        shownThisSession,
-    ) { dayResult, shown ->
-        val day = dayResult.dataOrNull() ?: 1
-        UnlockMoment.entries.firstOrNull { it.day <= day && it !in shown }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = null,
-    )
-
-    /** Reveal opened: grant the day-4 shield, mark the moment shown. */
-    fun onMomentOpened(moment: UnlockMoment) {
-        viewModelScope.launch {
-            if (moment == UnlockMoment.SHIELD) {
-                repository.setBaseShieldUntil(System.currentTimeMillis() + SHIELD_DURATION_MS)
+        /** Reveal opened: grant the day-4 shield, mark the moment shown. */
+        fun onMomentOpened(moment: UnlockMoment) {
+            viewModelScope.launch {
+                if (moment == UnlockMoment.SHIELD) {
+                    repository.setBaseShieldUntil(System.currentTimeMillis() + SHIELD_DURATION_MS)
+                }
+                shownThisSession.value = shownThisSession.value + moment
             }
+        }
+
+        fun onMomentDismissed(moment: UnlockMoment) {
             shownThisSession.value = shownThisSession.value + moment
         }
     }
-
-    fun onMomentDismissed(moment: UnlockMoment) {
-        shownThisSession.value = shownThisSession.value + moment
-    }
-}
 
 private fun <T> Result<T>.dataOrNull(): T? = (this as? Result.Success<T>)?.data
 
@@ -153,9 +156,10 @@ fun UnlockMomentDialog(
                 )
                 Button(
                     onClick = onOpen,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 56.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
                 ) {

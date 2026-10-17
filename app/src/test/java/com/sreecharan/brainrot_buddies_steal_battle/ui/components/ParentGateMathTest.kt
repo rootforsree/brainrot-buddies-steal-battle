@@ -1,12 +1,11 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.components
 
+import org.junit.jupiter.api.Test
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.Test
 
 class ParentGateMathTest {
-
     @Test
     fun `question has four unique positive options containing the answer`() {
         repeat(200) { seed ->

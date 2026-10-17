@@ -46,14 +46,15 @@ import kotlinx.coroutines.delay
 import kotlin.math.PI
 import kotlin.math.sin
 
+// Public API: HomeScreen calls with all 7 arguments, so the parameter list
+// cannot be regrouped without breaking that call site.
+
 /**
  * Mystery-pull ceremony for Lucky/Mega tickets, contract §2 V1.6:
  * drumroll, screen darken, slow reveal, escalating music, confetti physics.
  * Rare+ is skippable after 1 s (contract §10); the reveal auto-completes.
  */
-// Public API: HomeScreen calls with all 7 arguments, so the parameter list
-// cannot be regrouped without breaking that call site.
-@Suppress("LongParameterList")
+@Suppress("LongParameterList", "LongMethod")
 @Composable
 fun MysteryCeremonyOverlay(
     ceremony: MysteryCeremonyUi,
@@ -79,31 +80,37 @@ fun MysteryCeremonyOverlay(
     }
 
     // Skip unlocks 1 s into the reveal (§10).
-    val skippable = ceremony.phase == CeremonyPhase.REVEAL &&
-        frameTime.value - ceremony.phaseStartUptimeMs > JuiceTimings.SKIPPABLE_AFTER_MS
+    val skippable =
+        ceremony.phase == CeremonyPhase.REVEAL &&
+            frameTime.value - ceremony.phaseStartUptimeMs > JuiceTimings.SKIPPABLE_AFTER_MS
 
     Box(modifier = modifier.fillMaxSize()) {
         Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { if (skippable) onSkip() },
-                ),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { if (skippable) onSkip() },
+                    ),
         ) {
             val t = frameTime.value - ceremony.phaseStartUptimeMs
             val center = Offset(size.width / 2f, size.height * REVEAL_CENTER_Y_FRAC)
-            val frame = CeremonyFrame(
-                ceremony = ceremony,
-                t = t,
-                center = center,
-                buddyImage = buddyImage,
-                textMeasurer = textMeasurer,
-                reduceMotion = reduceMotion,
-            )
+            val frame =
+                CeremonyFrame(
+                    ceremony = ceremony,
+                    t = t,
+                    center = center,
+                    buddyImage = buddyImage,
+                    textMeasurer = textMeasurer,
+                    reduceMotion = reduceMotion,
+                )
             when (ceremony.phase) {
-                CeremonyPhase.DRUMROLL -> drawDrumroll(frame)
+                CeremonyPhase.DRUMROLL -> {
+                    drawDrumroll(frame)
+                }
+
                 CeremonyPhase.REVEAL -> {
                     if (buddy != null && !revealFxFired) {
                         revealFxFired = true
@@ -130,10 +137,11 @@ fun MysteryCeremonyOverlay(
 private fun BoxScope.CeremonySkipButton(onSkip: () -> Unit) {
     IconButton(
         onClick = onSkip,
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .padding(16.dp)
-            .size(48.dp),
+        modifier =
+            Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .size(48.dp),
     ) {
         Icon(
             imageVector = Icons.Filled.Close,
@@ -158,11 +166,12 @@ private fun DrawScope.drawDrumroll(frame: CeremonyFrame) {
     val darken = (frame.t / JuiceTimings.CEREMONY_DRUMROLL_MS.toFloat()).coerceIn(0f, 1f)
     drawRect(Color.Black.copy(alpha = DARKEN_MAX_ALPHA * darken))
     val ticketSize = TICKET_DP.toPx()
-    val shakeRot = if (frame.reduceMotion) {
-        0f
-    } else {
-        sin(2f * PI.toFloat() * frame.t / TICKET_SHAKE_PERIOD_MS) * TICKET_SHAKE_DEG * darken
-    }
+    val shakeRot =
+        if (frame.reduceMotion) {
+            0f
+        } else {
+            sin(2f * PI.toFloat() * frame.t / TICKET_SHAKE_PERIOD_MS) * TICKET_SHAKE_DEG * darken
+        }
     drawContext.canvas.save()
     drawContext.canvas.translate(frame.center.x, frame.center.y)
     drawContext.canvas.rotate(shakeRot)
@@ -173,14 +182,16 @@ private fun DrawScope.drawDrumroll(frame: CeremonyFrame) {
         cornerRadius = CornerRadius(18.dp.toPx()),
     )
     drawContext.canvas.restore()
-    val q = frame.textMeasurer.measure(
-        AnnotatedString("?"),
-        style = TextStyle(
-            fontSize = 64.sp,
-            fontWeight = FontWeight.Black,
-            color = Color.White.copy(alpha = darken),
-        ),
-    )
+    val q =
+        frame.textMeasurer.measure(
+            AnnotatedString("?"),
+            style =
+                TextStyle(
+                    fontSize = 64.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color.White.copy(alpha = darken),
+                ),
+        )
     drawText(
         q,
         topLeft = frame.center - Offset(q.size.width / 2f, q.size.height / 2f),
@@ -188,6 +199,7 @@ private fun DrawScope.drawDrumroll(frame: CeremonyFrame) {
 }
 
 /** Reveal: slow scale-up with an overshoot, never a flash. */
+@Suppress("LongMethod")
 private fun DrawScope.drawReveal(frame: CeremonyFrame) {
     val buddy = frame.ceremony.buddy ?: return
     drawRect(Color.Black.copy(alpha = DARKEN_MAX_ALPHA))
@@ -213,40 +225,49 @@ private fun DrawScope.drawReveal(frame: CeremonyFrame) {
     )
     val rarityText = if (buddy.rarity == Rarity.EPIC) "EPIC!" else "RARE!"
     val rarityColor = if (buddy.rarity == Rarity.EPIC) EPIC_GOLD else RARE_SKY
-    val label = frame.textMeasurer.measure(
-        AnnotatedString(rarityText),
-        style = TextStyle(
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Black,
-            color = rarityColor,
-        ),
-    )
+    val label =
+        frame.textMeasurer.measure(
+            AnnotatedString(rarityText),
+            style =
+                TextStyle(
+                    fontSize = 44.sp,
+                    fontWeight = FontWeight.Black,
+                    color = rarityColor,
+                ),
+        )
     drawText(
         label,
-        topLeft = Offset(
-            frame.center.x - label.size.width / 2f,
-            frame.center.y + buddySize * LABEL_DY_FRAC,
-        ),
+        topLeft =
+            Offset(
+                frame.center.x - label.size.width / 2f,
+                frame.center.y + buddySize * LABEL_DY_FRAC,
+            ),
     )
-    val name = frame.textMeasurer.measure(
-        AnnotatedString(buddy.name),
-        style = TextStyle(
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-        ),
-    )
+    val name =
+        frame.textMeasurer.measure(
+            AnnotatedString(buddy.name),
+            style =
+                TextStyle(
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                ),
+        )
     drawText(
         name,
-        topLeft = Offset(
-            frame.center.x - name.size.width / 2f,
-            frame.center.y + buddySize * LABEL_DY_FRAC + label.size.height + 4.dp.toPx(),
-        ),
+        topLeft =
+            Offset(
+                frame.center.x - name.size.width / 2f,
+                frame.center.y + buddySize * LABEL_DY_FRAC + label.size.height + 4.dp.toPx(),
+            ),
     )
 }
 
 /** Per-frame delta in seconds for particle updates; 1/60 s on the first frame. */
-private fun frameDtSeconds(lastFrame: MutableLongState, frameTime: State<Long>): Float {
+private fun frameDtSeconds(
+    lastFrame: MutableLongState,
+    frameTime: State<Long>,
+): Float {
     val last = lastFrame.longValue
     lastFrame.longValue = frameTime.value
     return if (last == 0L) {

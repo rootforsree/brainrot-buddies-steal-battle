@@ -99,8 +99,9 @@ fun GrownUpNudgeDialog(
 }
 
 @Composable
-private fun nudgeHeadline(kind: NudgeKind): String = when (kind) {
-    NudgeKind.EPIC_PULL -> stringResource(R.string.nudge_epic)
-    NudgeKind.STEAL -> stringResource(R.string.nudge_steal)
-    NudgeKind.REVENGE -> stringResource(R.string.nudge_revenge)
-}
+private fun nudgeHeadline(kind: NudgeKind): String =
+    when (kind) {
+        NudgeKind.EPIC_PULL -> stringResource(R.string.nudge_epic)
+        NudgeKind.STEAL -> stringResource(R.string.nudge_steal)
+        NudgeKind.REVENGE -> stringResource(R.string.nudge_revenge)
+    }

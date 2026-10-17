@@ -8,7 +8,6 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class FriendCodeTest {
-
     @Test
     fun `generated code is 6 chars from the frozen charset`() {
         val code = FriendCode.generate(Random(42))
@@ -31,7 +30,7 @@ class FriendCodeTest {
         listOf('0', 'O', '1', 'I', 'L').forEach { ambiguous ->
             assertFalse(ambiguous in FriendCode.CHARSET, "$ambiguous must not be in the charset")
         }
-        assertEquals(30, FriendCode.CHARSET.length)
+        assertEquals(31, FriendCode.CHARSET.length)
     }
 
     @Test

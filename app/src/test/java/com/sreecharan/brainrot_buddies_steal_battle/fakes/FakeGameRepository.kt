@@ -11,10 +11,10 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.local.VaultEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Result
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import com.sreecharan.brainrot_buddies_steal_battle.data.repository.GameRepository
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 /**
  * Functional fake of [GameRepository]. Every observation is a StateFlow of
@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.map
  * state (bites, album bonuses, weekly date) lives in [FakeGamePrefs].
  */
 class FakeGameRepository : GameRepository {
-
     val vaultState = MutableStateFlow(VaultEntity())
     val ticketsState = MutableStateFlow<List<TicketEntity>>(emptyList())
     val slotsState = MutableStateFlow<List<BaseSlotEntity>>(emptyList())
@@ -54,28 +53,47 @@ class FakeGameRepository : GameRepository {
     private fun <T> MutableStateFlow<T>.success(): Flow<Result<T>> = map { Result.Success(it) }
 
     override fun observeOwnedBuddies(): Flow<Result<List<OwnedBuddyEntity>>> = buddiesState.success()
+
     override fun observeSlots(): Flow<Result<List<BaseSlotEntity>>> = slotsState.success()
+
     override fun observeVault(): Flow<Result<VaultEntity>> = vaultState.success()
+
     override fun observeTickets(): Flow<Result<List<TicketEntity>>> = ticketsState.success()
+
     override fun observeShield(): Flow<Result<ShieldEntity>> = shieldState.success()
-    override fun observeRaidRecords(): Flow<Result<List<RaidRecordEntity>>> =
-        raidRecordsState.success()
+
+    override fun observeRaidRecords(): Flow<Result<List<RaidRecordEntity>>> = raidRecordsState.success()
+
     override fun observeFriends(): Flow<Result<List<FriendEntity>>> = friendsState.success()
+
     override fun observeCalendar(): Flow<Result<CalendarEntity>> = calendarState.success()
 
     override fun observeGuestId(): Flow<Result<String?>> = guestIdState.success()
+
     override fun observeBaseName(): Flow<Result<String>> = baseNameState.success()
+
     override fun observeMusicVolume(): Flow<Result<Int>> = musicVolumeState.success()
+
     override fun observeSfxVolume(): Flow<Result<Int>> = sfxVolumeState.success()
+
     override fun observeVoiceVolume(): Flow<Result<Int>> = voiceVolumeState.success()
+
     override fun observeHapticsEnabled(): Flow<Result<Boolean>> = hapticsState.success()
+
     override fun observeOnboardingDay(): Flow<Result<Int>> = onboardingDayState.success()
+
     override fun observeTutorialDone(): Flow<Result<Boolean>> = tutorialDoneState.success()
+
     override fun observeAdsRemoved(): Flow<Result<Boolean>> = adsRemovedState.success()
+
     override fun observePosterPath(): Flow<Result<String>> = posterPathState.success()
+
     override fun observeLastRaidWindow(): Flow<Result<String>> = lastRaidWindowState.success()
+
     override fun observeRaidsUsed(): Flow<Result<Int>> = raidsUsedState.success()
+
     override fun observeBennyHintsEnabled(): Flow<Result<Boolean>> = bennyHintsState.success()
+
     override fun observeUsedCodes(): Flow<Result<Set<String>>> = usedCodesState.success()
 
     override suspend fun upsertOwnedBuddy(buddy: OwnedBuddyEntity): Result<Unit> {
@@ -98,25 +116,34 @@ class FakeGameRepository : GameRepository {
 
     override suspend fun unlockSlot(slotIndex: Int): Result<Unit> {
         calls += "unlockSlot"
-        slotsState.value = slotsState.value.map {
-            if (it.slotIndex == slotIndex) it.copy(unlocked = true) else it
-        }
+        slotsState.value =
+            slotsState.value.map {
+                if (it.slotIndex == slotIndex) it.copy(unlocked = true) else it
+            }
         return Result.Success(Unit)
     }
 
-    override suspend fun setSlotBuddy(slotIndex: Int, buddyUid: String?): Result<Unit> {
+    override suspend fun setSlotBuddy(
+        slotIndex: Int,
+        buddyUid: String?,
+    ): Result<Unit> {
         calls += "setSlotBuddy"
-        slotsState.value = slotsState.value.map {
-            if (it.slotIndex == slotIndex) it.copy(ownedBuddyUid = buddyUid) else it
-        }
+        slotsState.value =
+            slotsState.value.map {
+                if (it.slotIndex == slotIndex) it.copy(ownedBuddyUid = buddyUid) else it
+            }
         return Result.Success(Unit)
     }
 
-    override suspend fun setSlotShieldUntil(slotIndex: Int, shieldUntilMs: Long): Result<Unit> {
+    override suspend fun setSlotShieldUntil(
+        slotIndex: Int,
+        shieldUntilMs: Long,
+    ): Result<Unit> {
         calls += "setSlotShieldUntil"
-        slotsState.value = slotsState.value.map {
-            if (it.slotIndex == slotIndex) it.copy(shieldUntil = shieldUntilMs) else it
-        }
+        slotsState.value =
+            slotsState.value.map {
+                if (it.slotIndex == slotIndex) it.copy(shieldUntil = shieldUntilMs) else it
+            }
         return Result.Success(Unit)
     }
 
@@ -126,14 +153,20 @@ class FakeGameRepository : GameRepository {
         return Result.Success(Unit)
     }
 
-    override suspend fun setTicketCount(type: TicketType, count: Int): Result<Unit> {
+    override suspend fun setTicketCount(
+        type: TicketType,
+        count: Int,
+    ): Result<Unit> {
         calls += "setTicketCount"
         ticketsState.value = ticketsState.value.filterNot { it.type == type.key } +
             TicketEntity(type = type.key, count = count)
         return Result.Success(Unit)
     }
 
-    override suspend fun addTickets(type: TicketType, delta: Int): Result<Unit> {
+    override suspend fun addTickets(
+        type: TicketType,
+        delta: Int,
+    ): Result<Unit> {
         calls += "addTickets"
         val current = ticketsState.value.firstOrNull { it.type == type.key }?.count ?: 0
         return setTicketCount(type, current + delta)
@@ -257,10 +290,11 @@ class FakeGameRepository : GameRepository {
         calls += "initializeNewGame"
         slotsState.value = freshSlots()
         vaultState.value = VaultEntity()
-        ticketsState.value = listOf(
-            TicketEntity(type = TicketType.LUCKY.key, count = 0),
-            TicketEntity(type = TicketType.MEGA.key, count = 0),
-        )
+        ticketsState.value =
+            listOf(
+                TicketEntity(type = TicketType.LUCKY.key, count = 0),
+                TicketEntity(type = TicketType.MEGA.key, count = 0),
+            )
         shieldState.value = ShieldEntity()
         calendarState.value = CalendarEntity()
         baseNameState.value = baseName
