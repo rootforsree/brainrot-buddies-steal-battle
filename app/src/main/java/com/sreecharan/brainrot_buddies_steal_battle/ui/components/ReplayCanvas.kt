@@ -326,7 +326,6 @@ private fun DrawScope.drawCaptionCard(
         style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.label),
     )
     drawText(
-        textMeasurer,
         visible,
         topLeft = center - Offset(visible.size.width / 2f, visible.size.height / 2f),
     )
