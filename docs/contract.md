@@ -380,6 +380,15 @@ audio-bible formula: [CHANT] + [PAYOFF with ONE stressed word], ≤8 words.
 `R.drawable.buddy_frogboot`), `hero_benny|wally|sammy|flip|milo|zara` for
 portraits. All WebP in `drawable-nodpi`.
 
+**Sprite system (3 poses per buddy, Charan 2026-10-16):** every buddy ships
+3 poses, not 1. Naming in `drawable-nodpi`: `<slug>.webp` (normal),
+`<slug>_happy.webp` (celebrating), `<slug>_sad.webp` (stolen). 40 characters
+× 3 = 120 files. All 1600×1600 square WebP, background knocked out to
+transparent. Game behavior: swap to the happy pose during the claim
+celebration moment, sad pose on the steal/stolen replay beat, normal
+otherwise. Pose swaps layer on top of the existing code-driven motion
+(squash, stretch, bob) — they do not replace it.
+
 **12 preset phrases:** "Nice grab!" · "My buddy! Give it back!" ·
 "Good game!" · "That was sneaky!" · "Wow, nice base!" · "Rematch?" ·
 "You got lucky!" · "I'll get you back!" · "Cool buddy!" ·

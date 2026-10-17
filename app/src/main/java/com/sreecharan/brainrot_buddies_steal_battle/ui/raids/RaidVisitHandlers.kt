@@ -1,10 +1,6 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
 
 import androidx.annotation.StringRes
-
-/** Returns true if the snapshot was already raided and there's no live connection. */
-private fun isSnapshotSpent(snapshotRaided: Boolean, liveEndpoint: String?): Boolean =
-    snapshotRaided && liveEndpoint == null
 import com.sreecharan.brainrot_buddies_steal_battle.R
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.OwnedBuddyEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.RaidRecordEntity
@@ -48,6 +44,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+
+/** Returns true if the snapshot was already raided and there's no live connection. */
+private fun isSnapshotSpent(snapshotRaided: Boolean, liveEndpoint: String?): Boolean =
+    snapshotRaided && liveEndpoint == null
 
 /** Inputs for a successful steal, grouped to keep the signature small. */
 data class StealSuccessInput(
