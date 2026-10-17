@@ -1,3 +1,4 @@
+@file:Suppress("KotlinConstantConditionIf")
 package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
 
 import androidx.annotation.StringRes

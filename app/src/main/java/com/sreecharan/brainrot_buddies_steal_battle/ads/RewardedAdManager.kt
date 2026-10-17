@@ -55,14 +55,16 @@ import javax.inject.Singleton
  *   ads are never loaded at all.
  */
 @Singleton
-class RewardedAdManager @Inject constructor(
-    @ApplicationContext private val context: Context,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
-    private val gameRepository: GameRepository,
-    private val throttle: AdThrottle,
-    @AdsPreferences private val prefs: DataStore<Preferences>,
-) {
+class RewardedAdManager
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+        @MainDispatcher private val mainDispatcher: CoroutineDispatcher,
+        private val gameRepository: GameRepository,
+        private val throttle: AdThrottle,
+        @AdsPreferences private val prefs: DataStore<Preferences>,
+    ) {
 
     private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
     private var rewardedAd: RewardedAd? = null
