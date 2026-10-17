@@ -583,11 +583,11 @@ class RaidVisitHelpers(
         val snapshotRaided = snapshotRaidedNow()
         val slots = (0 until RaidVisitCore.BASE_SLOT_COUNT).map { slot ->
             val target = snapshot?.let { SnapshotCodec.slotOf(it, slot) }
+            @Suppress("KotlinConstantConditionIf")
             val blockedBy = when {
                 target == null -> StealRejectReason.EMPTY
                 alreadyRaided -> StealRejectReason.ALREADY_RAIDED
                 !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
-                @Suppress("KotlinConstantConditionIf")
                 snapshotRaided && core.liveEndpoint == null -> StealRejectReason.SNAPSHOT_SPENT
                 snapshot != null && now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
                 else -> null

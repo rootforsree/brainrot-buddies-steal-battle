@@ -18,9 +18,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsViewMode
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import dagger.hilt.android.AndroidEntryPoint
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
