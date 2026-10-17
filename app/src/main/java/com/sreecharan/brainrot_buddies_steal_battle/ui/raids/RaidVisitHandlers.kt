@@ -1,3 +1,4 @@
+@file:Suppress("KotlinConstantConditionIf")
 package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
 
 import androidx.annotation.StringRes
@@ -46,10 +47,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 /** Returns true if the snapshot was already raided and there's no live connection. */
-private fun isSnapshotSpent(
-    snapshotRaided: Boolean,
-    liveEndpoint: String?,
-): Boolean = snapshotRaided && liveEndpoint == null
+private fun isSnapshotSpent(snapshotRaided: Boolean, liveEndpoint: String?): Boolean =
+    snapshotRaided && liveEndpoint == null
 
 /** Inputs for a successful steal, grouped to keep the signature small. */
 data class StealSuccessInput(
@@ -119,18 +118,13 @@ class RaidVisitCore(
 }
 
 /** Visit setup: identity, raid budget, pending revenge, hosting. */
-class RaidVisitSetup(
-    private val core: RaidVisitCore,
-) {
+class RaidVisitSetup(private val core: RaidVisitCore) {
     private val helpers = RaidVisitHelpers(core, this)
 
     suspend fun enterVisit() {
         val repo = core.gameRepository
-        val friend =
-            repo
-                .observeFriends()
-                .firstData()
-                ?.firstOrNull { it.guestId == core.friendGuestId }
+        val friend = repo.observeFriends().firstData()
+            ?.firstOrNull { it.guestId == core.friendGuestId }
         if (friend == null) {
             core.sendEvent(RaidVisitEvent.NavigateBack)
             return
@@ -154,12 +148,11 @@ class RaidVisitSetup(
         }
         helpers.rebuildSlots()
 
-        val hello =
-            Hello(
-                guestId = core.myGuestId,
-                baseName = core.myBaseName,
-                code = FriendCode.deriveFrom(core.myGuestId),
-            )
+        val hello = Hello(
+            guestId = core.myGuestId,
+            baseName = core.myBaseName,
+            code = FriendCode.deriveFrom(core.myGuestId),
+        )
         core.nearbyManager.startHosting(core.myBaseName, hello, HostMode.VISIT)
         val connection = RaidVisitConnection(core, this)
         core.scope.launch(core.ioDispatcher) { connection.collectConnectionEvents() }
@@ -169,11 +162,7 @@ class RaidVisitSetup(
     /** Raid budget for the current window, rolling the bucket when it changes. */
     suspend fun currentWindowUsage(): Pair<String, Int> {
         val bucket = core.gameEngine.raidWindowBucket()
-        val last =
-            core.gameRepository
-                .observeLastRaidWindow()
-                .firstData()
-                .orEmpty()
+        val last = core.gameRepository.observeLastRaidWindow().firstData().orEmpty()
         return if (last == bucket) {
             bucket to (core.gameRepository.observeRaidsUsed().firstData() ?: 0)
         } else {
@@ -187,25 +176,20 @@ class RaidVisitSetup(
         val window = core.gameEngine.currentRaidWindow()
         val windowStartMs = RaidRules.windowStartMs(window.date, window.startHour)
         val (_, used) = currentWindowUsage()
-        val alreadyRaided =
-            core.gameRepository
-                .observeRaidRecords()
-                .firstData()
-                .orEmpty()
-                .any { it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs }
+        val alreadyRaided = core.gameRepository.observeRaidRecords().firstData().orEmpty()
+            .any { it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs }
         return used to alreadyRaided
     }
 
     private suspend fun findPendingRevenge(now: Long): RaidRecordEntity? =
-        core.gameRepository
-            .observeRaidRecords()
-            .firstData()
-            .orEmpty()
+        core.gameRepository.observeRaidRecords().firstData().orEmpty()
             .filter {
                 it.direction == "in" && it.otherGuestId == core.friendGuestId &&
                     !it.revengeUsed && now - it.createdAt < RaidRules.REVENGE_WINDOW_MS
-            }.maxByOrNull { it.createdAt }
+            }
+            .maxByOrNull { it.createdAt }
             .also { core.revengeRecord = it }
+
 }
 
 /** The steal flow: pre-checks, live and shadow steals, success/failure. */
@@ -221,12 +205,11 @@ class RaidStealFlow(
         val isRevenge = core.uiState.value.revengeArmed && core.revengeRecord != null
         val snapshot = core.friendSnapshot
         val live = core.liveEndpoint != null
-        val blocked: StealRejectReason? =
-            if (isRevenge) {
-                null
-            } else {
-                attackerPreCheck(slot, snapshot, live, now)
-            }
+        val blocked: StealRejectReason? = if (isRevenge) {
+            null
+        } else {
+            attackerPreCheck(slot, snapshot, live, now)
+        }
         if (blocked != null) {
             finishFailed(blocked)
         } else if (live) {
@@ -244,43 +227,30 @@ class RaidStealFlow(
     ): StealRejectReason? {
         val window = core.gameEngine.currentRaidWindow()
         val windowStartMs = RaidRules.windowStartMs(window.date, window.startHour)
-        val records =
-            core.gameRepository
-                .observeRaidRecords()
-                .firstData()
-                .orEmpty()
+        val records = core.gameRepository.observeRaidRecords().firstData().orEmpty()
         val (_, raidsUsed) = setup.currentWindowUsage()
-        val alreadyRaided =
-            records.any {
-                it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs
-            }
-        val friend =
-            core.gameRepository
-                .observeFriends()
-                .firstData()
-                ?.firstOrNull { it.guestId == core.friendGuestId }
+        val alreadyRaided = records.any {
+            it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs
+        }
+        val friend = core.gameRepository.observeFriends().firstData()
+            ?.firstOrNull { it.guestId == core.friendGuestId }
         return when (
-            val verdict =
-                RaidRules.canAttemptSteal(
-                    raidsUsed = raidsUsed,
-                    alreadyRaidedFriend = alreadyRaided,
-                    snapshotRaided = friend?.snapshotRaided == true,
-                    isShadow = !live,
-                    slotOccupied = snapshot?.slots?.any { it.slot == slot } == true,
-                    baseShielded = snapshot != null && now < snapshot.shieldUntil,
-                    buddyOnCooldown = false,
-                )
+            val verdict = RaidRules.canAttemptSteal(
+                raidsUsed = raidsUsed,
+                alreadyRaidedFriend = alreadyRaided,
+                snapshotRaided = friend?.snapshotRaided == true,
+                isShadow = !live,
+                slotOccupied = snapshot?.slots?.any { it.slot == slot } == true,
+                baseShielded = snapshot != null && now < snapshot.shieldUntil,
+                buddyOnCooldown = false,
+            )
         ) {
             is StealVerdict.Rejected -> verdict.reason
             is StealVerdict.Accepted -> null
         }
     }
 
-    private suspend fun liveSteal(
-        slot: Int,
-        isRevenge: Boolean,
-        now: Long,
-    ) {
+    private suspend fun liveSteal(slot: Int, isRevenge: Boolean, now: Long) {
         val endpoint = core.liveEndpoint
         if (endpoint == null) {
             finishFailed(StealRejectReason.EMPTY)
@@ -304,12 +274,7 @@ class RaidStealFlow(
         handleRaidResult(result, raidId, isRevenge, now)
     }
 
-    private suspend fun handleRaidResult(
-        result: RaidResult?,
-        raidId: String,
-        isRevenge: Boolean,
-        now: Long,
-    ) {
+    private suspend fun handleRaidResult(result: RaidResult?, raidId: String, isRevenge: Boolean, now: Long) {
         val buddyId = result?.takeIf { it.accepted }?.buddyId
         if (result != null && result.accepted && buddyId != null) {
             onStealSuccess(
@@ -327,17 +292,11 @@ class RaidStealFlow(
         }
     }
 
-    private suspend fun shadowSteal(
-        slot: Int,
-        snapshot: BaseSnapshot?,
-        isRevenge: Boolean,
-        now: Long,
-    ) {
+    private suspend fun shadowSteal(slot: Int, snapshot: BaseSnapshot?, isRevenge: Boolean, now: Long) {
         val helpers = helpers
-        val verdict =
-            snapshot?.let {
-                RaidRules.validateShadowSteal(it, slot, helpers.snapshotRaidedNow(), now)
-            }
+        val verdict = snapshot?.let {
+            RaidRules.validateShadowSteal(it, slot, helpers.snapshotRaidedNow(), now)
+        }
         val target = snapshot?.let { SnapshotCodec.slotOf(it, slot) }
         if (verdict is StealVerdict.Accepted && target != null) {
             onStealSuccess(
@@ -416,29 +375,20 @@ class RaidStealFlow(
         return true
     }
 
-    private suspend fun addStolenBuddy(
-        buddyId: String,
-        level: Int,
-        now: Long,
-    ): Boolean {
-        val free =
-            core.gameRepository
-                .observeSlots()
-                .firstData()
-                .orEmpty()
-                .firstOrNull { it.unlocked && it.ownedBuddyUid == null } ?: return false
+    private suspend fun addStolenBuddy(buddyId: String, level: Int, now: Long): Boolean {
+        val free = core.gameRepository.observeSlots().firstData().orEmpty()
+            .firstOrNull { it.unlocked && it.ownedBuddyUid == null } ?: return false
         val uid = UUID.randomUUID().toString()
-        val upserted =
-            core.gameRepository.upsertOwnedBuddy(
-                OwnedBuddyEntity(
-                    uid = uid,
-                    buddyId = buddyId,
-                    level = level,
-                    hatId = null,
-                    acquiredAt = now,
-                    stealCooldownUntil = now + RaidRules.STEAL_COOLDOWN_MS,
-                ),
-            ) !is Result.Error
+        val upserted = core.gameRepository.upsertOwnedBuddy(
+            OwnedBuddyEntity(
+                uid = uid,
+                buddyId = buddyId,
+                level = level,
+                hatId = null,
+                acquiredAt = now,
+                stealCooldownUntil = now + RaidRules.STEAL_COOLDOWN_MS,
+            ),
+        ) !is Result.Error
         if (upserted) {
             core.gameRepository.setSlotBuddy(free.slotIndex, uid)
         }
@@ -446,11 +396,8 @@ class RaidStealFlow(
     }
 
     private suspend fun markSnapshotRaided() {
-        val friend =
-            core.gameRepository
-                .observeFriends()
-                .firstData()
-                ?.firstOrNull { it.guestId == core.friendGuestId } ?: return
+        val friend = core.gameRepository.observeFriends().firstData()
+            ?.firstOrNull { it.guestId == core.friendGuestId } ?: return
         core.gameRepository.upsertFriend(friend.copy(snapshotRaided = true))
     }
 
@@ -459,12 +406,12 @@ class RaidStealFlow(
         core.updateState { it.copy(stealState = StealOutcome.FAILED, stealMessageRes = resId) }
         core.sendEvent(RaidVisitEvent.PlayStealFail)
     }
+
 }
 
 /** Chat intents for the raid visit screen. */
-class RaidVisitChat(
-    private val core: RaidVisitCore,
-) {
+class RaidVisitChat(private val core: RaidVisitCore) {
+
     fun onPhraseSelected(index: Int) {
         val text = RaidChatContent.phraseText(index) ?: return
         val refId = index.toString()
@@ -479,26 +426,21 @@ class RaidVisitChat(
     }
 
     fun onChatReceived(chat: P2PChat) {
-        val valid =
-            when (chat.kind) {
-                RaidChatContent.KIND_PHRASE -> RaidChatContent.isValidPhraseRef(chat.refId)
-                RaidChatContent.KIND_EMOTE -> RaidChatContent.isValidEmoteRef(chat.refId)
-                else -> false
-            }
+        val valid = when (chat.kind) {
+            RaidChatContent.KIND_PHRASE -> RaidChatContent.isValidPhraseRef(chat.refId)
+            RaidChatContent.KIND_EMOTE -> RaidChatContent.isValidEmoteRef(chat.refId)
+            else -> false
+        }
         if (!valid) return
-        val text =
-            if (chat.kind == RaidChatContent.KIND_PHRASE) {
-                RaidChatContent.phraseText(chat.refId.toInt()) ?: return
-            } else {
-                chat.refId
-            }
+        val text = if (chat.kind == RaidChatContent.KIND_PHRASE) {
+            RaidChatContent.phraseText(chat.refId.toInt()) ?: return
+        } else {
+            chat.refId
+        }
         appendChat(ChatUi(mine = false, kind = chat.kind, refId = chat.refId, text = text))
     }
 
-    private fun sendChat(
-        kind: String,
-        refId: String,
-    ) {
+    private fun sendChat(kind: String, refId: String) {
         val endpoint = core.liveEndpoint ?: return
         core.scope.launch(core.ioDispatcher) {
             core.nearbyManager.sendPayload(endpoint, P2PChat(v = 1, kind = kind, refId = refId))
@@ -518,6 +460,7 @@ class RaidVisitConnection(
     private val core: RaidVisitCore,
     private val setup: RaidVisitSetup,
 ) {
+
     suspend fun collectConnectionEvents() {
         core.nearbyManager.connectionEvents.collect { event ->
             when (event) {
@@ -533,12 +476,11 @@ class RaidVisitConnection(
             core.liveEndpoint = null
             core.updateState {
                 it.copy(
-                    connection =
-                        if (core.friendSnapshot != null) {
-                            VisitConnection.SNAPSHOT
-                        } else {
-                            VisitConnection.SEARCHING
-                        },
+                    connection = if (core.friendSnapshot != null) {
+                        VisitConnection.SNAPSHOT
+                    } else {
+                        VisitConnection.SEARCHING
+                    },
                 )
             }
         }
@@ -556,10 +498,7 @@ class RaidVisitConnection(
         }
     }
 
-    private suspend fun onHelloReceived(
-        endpointId: String,
-        hello: Hello,
-    ) {
+    private suspend fun onHelloReceived(endpointId: String, hello: Hello) {
         if (hello.guestId != core.friendGuestId) {
             core.nearbyManager.disconnect(endpointId)
             return
@@ -577,11 +516,8 @@ class RaidVisitConnection(
     private suspend fun onSnapshotReceived(snapshot: BaseSnapshot) {
         if (snapshot.guestId != core.friendGuestId) return
         core.friendSnapshot = snapshot
-        val friend =
-            core.gameRepository
-                .observeFriends()
-                .firstData()
-                ?.firstOrNull { it.guestId == core.friendGuestId }
+        val friend = core.gameRepository.observeFriends().firstData()
+            ?.firstOrNull { it.guestId == core.friendGuestId }
         if (friend != null) {
             val now = System.currentTimeMillis()
             core.gameRepository.upsertFriend(
@@ -600,13 +536,12 @@ class RaidVisitConnection(
     }
 
     private suspend fun sendMySnapshot(endpointId: String) {
-        val snapshot =
-            core.gameRepository.exportSnapshot(
-                gameEngine = core.gameEngine,
-                guestId = core.myGuestId,
-                baseName = core.myBaseName,
-                nowMs = System.currentTimeMillis(),
-            ) ?: return
+        val snapshot = core.gameRepository.exportSnapshot(
+            gameEngine = core.gameEngine,
+            guestId = core.myGuestId,
+            baseName = core.myBaseName,
+            nowMs = System.currentTimeMillis(),
+        ) ?: return
         core.nearbyManager.sendPayload(endpointId, snapshot)
     }
 
@@ -615,13 +550,9 @@ class RaidVisitConnection(
      * on the next P2P connection, exactly once each.
      */
     private suspend fun syncPendingShadowNotices(endpointId: String) {
-        val pending =
-            core.gameRepository
-                .observeRaidRecords()
-                .firstData()
-                .orEmpty()
-                .filter { it.direction == "out" && it.isShadow && it.otherGuestId == core.friendGuestId }
-                .filter { !core.p2pPrefs.isShadowSynced(it.raidId) }
+        val pending = core.gameRepository.observeRaidRecords().firstData().orEmpty()
+            .filter { it.direction == "out" && it.isShadow && it.otherGuestId == core.friendGuestId }
+            .filter { !core.p2pPrefs.isShadowSynced(it.raidId) }
         pending.forEach { record ->
             core.nearbyManager.sendPayload(
                 endpointId,
@@ -645,50 +576,41 @@ class RaidVisitHelpers(
     private val core: RaidVisitCore,
     private val setup: RaidVisitSetup,
 ) {
+
     suspend fun rebuildSlots() {
         val now = System.currentTimeMillis()
         val snapshot = core.friendSnapshot
         val window = core.gameEngine.currentRaidWindow()
         val windowStartMs = RaidRules.windowStartMs(window.date, window.startHour)
         val (_, raidsUsed) = setup.currentWindowUsage()
-        val alreadyRaided =
-            core.gameRepository
-                .observeRaidRecords()
-                .firstData()
-                .orEmpty()
-                .any { it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs }
+        val alreadyRaided = core.gameRepository.observeRaidRecords().firstData().orEmpty()
+            .any { it.direction == "out" && it.otherGuestId == core.friendGuestId && it.createdAt >= windowStartMs }
         val snapshotRaided = snapshotRaidedNow()
-        val slots =
-            (0 until RaidVisitCore.BASE_SLOT_COUNT)
-                .map { slot ->
-                    val target = snapshot?.let { SnapshotCodec.slotOf(it, slot) }
-                    val blockedBy =
-                        when {
-                            target == null -> StealRejectReason.EMPTY
-                            alreadyRaided -> StealRejectReason.ALREADY_RAIDED
-                            !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
-                            isSnapshotSpent(snapshotRaided, core.liveEndpoint) -> StealRejectReason.SNAPSHOT_SPENT
-                            now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
-                            else -> null
-                        }
-                    RaidSlotUi(
-                        slot = slot,
-                        buddyId = target?.buddyId.orEmpty(),
-                        buddyName = target?.let { buddyDisplayName(it.buddyId) }.orEmpty(),
-                        level = target?.level ?: 1,
-                        stealable = blockedBy == null,
-                        blockedBy = blockedBy,
-                    )
-                }.toImmutableList()
+        val slots = (0 until RaidVisitCore.BASE_SLOT_COUNT).map { slot ->
+            val target = snapshot?.let { SnapshotCodec.slotOf(it, slot) }
+            val blockedBy = when {
+                target == null -> StealRejectReason.EMPTY
+                alreadyRaided -> StealRejectReason.ALREADY_RAIDED
+                !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
+                isSnapshotSpent(snapshotRaided, core.liveEndpoint) -> StealRejectReason.SNAPSHOT_SPENT
+                snapshot != null && now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
+                else -> null
+            }
+            RaidSlotUi(
+                slot = slot,
+                buddyId = target?.buddyId.orEmpty(),
+                buddyName = target?.let { buddyDisplayName(it.buddyId) }.orEmpty(),
+                level = target?.level ?: 1,
+                stealable = blockedBy == null,
+                blockedBy = blockedBy,
+            )
+        }.toImmutableList()
         core.updateState { it.copy(slots = slots) }
     }
 
     suspend fun snapshotRaidedNow(): Boolean =
-        core.gameRepository
-            .observeFriends()
-            .firstData()
-            ?.firstOrNull { it.guestId == core.friendGuestId }
-            ?.snapshotRaided == true
+        core.gameRepository.observeFriends().firstData()
+            ?.firstOrNull { it.guestId == core.friendGuestId }?.snapshotRaided == true
 
     suspend fun buddyDisplayName(buddyId: String): String =
         core.buddyNames.getOrPut(buddyId) {
@@ -702,18 +624,18 @@ class RaidVisitHelpers(
         core.sendEvent(RaidVisitEvent.ShowCeremony(core.friendBaseName))
     }
 
-    fun wireToReason(wire: String): StealRejectReason? = StealRejectReason.entries.firstOrNull { it.wire == wire }
+    fun wireToReason(wire: String): StealRejectReason? =
+        StealRejectReason.entries.firstOrNull { it.wire == wire }
 
     @StringRes
-    fun failedMessageRes(reason: StealRejectReason?): Int =
-        when (reason) {
-            StealRejectReason.SHIELDED -> R.string.raid_failed_shielded
-            StealRejectReason.COOLDOWN -> R.string.raid_failed_cooldown
-            StealRejectReason.EMPTY -> R.string.raid_failed_empty
-            StealRejectReason.ALREADY_RAIDED -> R.string.raid_failed_already
-            StealRejectReason.WINDOW_EXHAUSTED -> R.string.raid_no_raids_left
-            StealRejectReason.SNAPSHOT_SPENT -> R.string.friend_snapshot_raided
-            StealRejectReason.BASE_FULL -> R.string.raid_base_full
-            null -> R.string.raid_timeout
-        }
+    fun failedMessageRes(reason: StealRejectReason?): Int = when (reason) {
+        StealRejectReason.SHIELDED -> R.string.raid_failed_shielded
+        StealRejectReason.COOLDOWN -> R.string.raid_failed_cooldown
+        StealRejectReason.EMPTY -> R.string.raid_failed_empty
+        StealRejectReason.ALREADY_RAIDED -> R.string.raid_failed_already
+        StealRejectReason.WINDOW_EXHAUSTED -> R.string.raid_no_raids_left
+        StealRejectReason.SNAPSHOT_SPENT -> R.string.friend_snapshot_raided
+        StealRejectReason.BASE_FULL -> R.string.raid_base_full
+        null -> R.string.raid_timeout
+    }
 }

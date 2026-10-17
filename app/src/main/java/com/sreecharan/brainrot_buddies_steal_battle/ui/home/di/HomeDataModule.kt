@@ -15,6 +15,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class HomeDataModule {
+
     @Binds
     @Singleton
     abstract fun bindBaseGameData(impl: GameRepositoryAdapter): BaseGameData

@@ -16,15 +16,14 @@ fun GuidedClaimsCoachMark(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val tip =
-        when (step) {
-            GuidedStep.CLAIM_FROGBOOT -> stringResource(R.string.guided_tip_frogboot)
-            GuidedStep.CLAIM_PIP -> stringResource(R.string.guided_tip_pip)
-            GuidedStep.BUY_SLOT -> stringResource(R.string.guided_tip_slot)
-            GuidedStep.CLAIM_SPLORCH -> stringResource(R.string.guided_tip_splorch)
-            GuidedStep.COLLECT_VAULT -> stringResource(R.string.guided_tip_vault)
-            GuidedStep.OPEN_GIFT -> stringResource(R.string.guided_tip_gift)
-        }
+    val tip = when (step) {
+        GuidedStep.CLAIM_FROGBOOT -> stringResource(R.string.guided_tip_frogboot)
+        GuidedStep.CLAIM_PIP -> stringResource(R.string.guided_tip_pip)
+        GuidedStep.BUY_SLOT -> stringResource(R.string.guided_tip_slot)
+        GuidedStep.CLAIM_SPLORCH -> stringResource(R.string.guided_tip_splorch)
+        GuidedStep.COLLECT_VAULT -> stringResource(R.string.guided_tip_vault)
+        GuidedStep.OPEN_GIFT -> stringResource(R.string.guided_tip_gift)
+    }
     BennyTip(
         tip = tip,
         onDismiss = onDismiss,

@@ -26,149 +26,128 @@ import javax.inject.Singleton
  * the attacker, the victim keeps theirs.
  */
 @Singleton
-class LiveRaidResponder
-    @Inject
-    constructor(
-        private val gameRepository: GameRepository,
-        private val gameEngine: GameEngine,
-        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    ) {
-        suspend fun onRaidRequest(request: RaidRequest): RaidResult =
-            withContext(ioDispatcher) {
-                val now = System.currentTimeMillis()
-                val friends = gameRepository.observeFriends().firstData().orEmpty()
-                val slots = gameRepository.observeSlots().firstData().orEmpty()
-                val buddies = gameRepository.observeOwnedBuddies().firstData().orEmpty()
-                val slotEntity = slots.firstOrNull { it.slotIndex == request.slot }
-                val buddy = slotEntity?.ownedBuddyUid?.let { uid -> buddies.firstOrNull { it.uid == uid } }
-                val baseShieldUntil = gameRepository.observeShield().firstData()?.baseShieldUntil ?: 0L
-                val window = gameEngine.currentRaidWindow()
-                val windowStartMs = RaidRules.windowStartMs(window.date, window.startHour)
-                val records = gameRepository.observeRaidRecords().firstData().orEmpty()
-                // Only inbound steals count: the original theft leaves an "out" record
-                // here, and that must not block the victim's revenge (§8, §1).
-                val alreadyRaided =
-                    records.any {
-                        it.direction == "in" &&
-                            it.otherGuestId == request.attackerGuestId &&
-                            it.createdAt >= windowStartMs
-                    }
-                val onboardingDay = gameRepository.observeOnboardingDay().firstData() ?: 1
+class LiveRaidResponder @Inject constructor(
+    private val gameRepository: GameRepository,
+    private val gameEngine: GameEngine,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+) {
 
-                val verdict: StealVerdict =
-                    when {
-                        friends.none { it.guestId == request.attackerGuestId } -> {
-                            StealVerdict.Rejected(StealRejectReason.EMPTY)
-                        }
+    suspend fun onRaidRequest(request: RaidRequest): RaidResult = withContext(ioDispatcher) {
+        val now = System.currentTimeMillis()
+        val friends = gameRepository.observeFriends().firstData().orEmpty()
+        val slots = gameRepository.observeSlots().firstData().orEmpty()
+        val buddies = gameRepository.observeOwnedBuddies().firstData().orEmpty()
+        val slotEntity = slots.firstOrNull { it.slotIndex == request.slot }
+        val buddy = slotEntity?.ownedBuddyUid?.let { uid -> buddies.firstOrNull { it.uid == uid } }
+        val baseShieldUntil = gameRepository.observeShield().firstData()?.baseShieldUntil ?: 0L
+        val window = gameEngine.currentRaidWindow()
+        val windowStartMs = RaidRules.windowStartMs(window.date, window.startHour)
+        val records = gameRepository.observeRaidRecords().firstData().orEmpty()
+        // Only inbound steals count: the original theft leaves an "out" record
+        // here, and that must not block the victim's revenge (§8, §1).
+        val alreadyRaided = records.any {
+            it.direction == "in" &&
+                it.otherGuestId == request.attackerGuestId &&
+                it.createdAt >= windowStartMs
+        }
+        val onboardingDay = gameRepository.observeOnboardingDay().firstData() ?: 1
 
-                        else -> {
-                            RaidRules.validateLiveSteal(
-                                slotOccupied = buddy != null,
-                                alreadyRaidedThisWindow = alreadyRaided,
-                                baseShieldUntilMs = baseShieldUntil,
-                                slotShieldUntilMs = slotEntity?.shieldUntil ?: 0L,
-                                buddyCooldownUntilMs = buddy?.stealCooldownUntil ?: 0L,
-                                victimRookieShielded = RaidRules.isRookieShielded(onboardingDay),
-                                nowMs = now,
-                            )
-                        }
-                    }
-                val stolen = (verdict as? StealVerdict.Accepted)?.let { buddy }
-                if (stolen != null) {
-                    acceptRaid(
-                        request = request,
-                        stolen =
-                            StolenBuddy(
-                                buddyId = stolen.buddyId,
-                                buddyLevel = stolen.level,
-                                buddyUid = stolen.uid,
-                            ),
-                        slotIndex = slotEntity?.slotIndex,
-                        now = now,
-                    )
-                } else {
-                    val reason = (verdict as? StealVerdict.Rejected)?.reason ?: StealRejectReason.EMPTY
-                    reject(request.raidId, reason)
-                }
-            }
-
-        suspend fun onShadowNotice(notice: ShadowNotice) =
-            withContext(ioDispatcher) {
-                gameRepository.upsertRaidRecord(
-                    RaidRecordEntity(
-                        raidId = notice.raidId,
-                        direction = "in",
-                        otherGuestId = notice.attackerGuestId,
-                        otherBaseName = notice.attackerBaseName,
-                        buddyId = notice.buddyId,
-                        buddyLevel = notice.buddyLevel,
-                        createdAt = notice.createdAt,
-                        revengeUsed = false,
-                        revengeDeadline = notice.createdAt + RaidRules.REVENGE_WINDOW_MS,
-                        isShadow = true,
-                    ),
-                )
-                gameRepository.grantCoins(consolationFor(notice.buddyId, notice.buddyLevel))
-            }
-
-        /** The buddy being stolen, bundled so the accept path takes 4 params. */
-        private data class StolenBuddy(
-            val buddyId: String,
-            val buddyLevel: Int,
-            val buddyUid: String,
-        )
-
-        private suspend fun acceptRaid(
-            request: RaidRequest,
-            stolen: StolenBuddy,
-            slotIndex: Int?,
-            now: Long,
-        ): RaidResult {
-            gameRepository.removeOwnedBuddy(stolen.buddyUid)
-            if (slotIndex != null) {
-                gameRepository.setSlotBuddy(slotIndex, null)
-            }
-            gameRepository.grantCoins(consolationFor(stolen.buddyId, stolen.buddyLevel))
-            gameRepository.upsertRaidRecord(
-                RaidRecordEntity(
-                    raidId = request.raidId,
-                    direction = "in",
-                    otherGuestId = request.attackerGuestId,
-                    otherBaseName = request.attackerBaseName,
-                    buddyId = stolen.buddyId,
-                    buddyLevel = stolen.buddyLevel,
-                    createdAt = now,
-                    revengeUsed = false,
-                    revengeDeadline = now + RaidRules.REVENGE_WINDOW_MS,
-                    isShadow = false,
-                ),
-            )
-            return RaidResult(
-                v = 1,
-                raidId = request.raidId,
-                accepted = true,
-                buddyId = stolen.buddyId,
-                buddyLevel = stolen.buddyLevel,
+        val verdict: StealVerdict = when {
+            friends.none { it.guestId == request.attackerGuestId } ->
+                StealVerdict.Rejected(StealRejectReason.EMPTY)
+            else -> RaidRules.validateLiveSteal(
+                slotOccupied = buddy != null,
+                alreadyRaidedThisWindow = alreadyRaided,
+                baseShieldUntilMs = baseShieldUntil,
+                slotShieldUntilMs = slotEntity?.shieldUntil ?: 0L,
+                buddyCooldownUntilMs = buddy?.stealCooldownUntil ?: 0L,
+                victimRookieShielded = RaidRules.isRookieShielded(onboardingDay),
+                nowMs = now,
             )
         }
-
-        private fun reject(
-            raidId: String,
-            reason: StealRejectReason,
-        ): RaidResult =
-            RaidResult(
-                v = 1,
-                raidId = raidId,
-                accepted = false,
-                reason = reason.wire,
+        val stolen = (verdict as? StealVerdict.Accepted)?.let { buddy }
+        if (stolen != null) {
+            acceptRaid(
+                request = request,
+                stolen = StolenBuddy(buddyId = stolen.buddyId, buddyLevel = stolen.level, buddyUid = stolen.uid),
+                slotIndex = slotEntity?.slotIndex,
+                now = now,
             )
-
-        private fun consolationFor(
-            buddyId: String,
-            buddyLevel: Int,
-        ): Long {
-            val def = BuddyCatalog.find(BuddyId(buddyId)) ?: return 0L
-            val coinsPerSec = gameEngine.buddyCoinsPerSec(def.baseCoinsPerSec, buddyLevel)
-            return gameEngine.consolationCoins(coinsPerSec)
+        } else {
+            val reason = (verdict as? StealVerdict.Rejected)?.reason ?: StealRejectReason.EMPTY
+            reject(request.raidId, reason)
         }
     }
+
+    suspend fun onShadowNotice(notice: ShadowNotice) = withContext(ioDispatcher) {
+        gameRepository.upsertRaidRecord(
+            RaidRecordEntity(
+                raidId = notice.raidId,
+                direction = "in",
+                otherGuestId = notice.attackerGuestId,
+                otherBaseName = notice.attackerBaseName,
+                buddyId = notice.buddyId,
+                buddyLevel = notice.buddyLevel,
+                createdAt = notice.createdAt,
+                revengeUsed = false,
+                revengeDeadline = notice.createdAt + RaidRules.REVENGE_WINDOW_MS,
+                isShadow = true,
+            ),
+        )
+        gameRepository.grantCoins(consolationFor(notice.buddyId, notice.buddyLevel))
+    }
+
+    /** The buddy being stolen, bundled so the accept path takes 4 params. */
+    private data class StolenBuddy(
+        val buddyId: String,
+        val buddyLevel: Int,
+        val buddyUid: String,
+    )
+
+    private suspend fun acceptRaid(
+        request: RaidRequest,
+        stolen: StolenBuddy,
+        slotIndex: Int?,
+        now: Long,
+    ): RaidResult {
+        gameRepository.removeOwnedBuddy(stolen.buddyUid)
+        if (slotIndex != null) {
+            gameRepository.setSlotBuddy(slotIndex, null)
+        }
+        gameRepository.grantCoins(consolationFor(stolen.buddyId, stolen.buddyLevel))
+        gameRepository.upsertRaidRecord(
+            RaidRecordEntity(
+                raidId = request.raidId,
+                direction = "in",
+                otherGuestId = request.attackerGuestId,
+                otherBaseName = request.attackerBaseName,
+                buddyId = stolen.buddyId,
+                buddyLevel = stolen.buddyLevel,
+                createdAt = now,
+                revengeUsed = false,
+                revengeDeadline = now + RaidRules.REVENGE_WINDOW_MS,
+                isShadow = false,
+            ),
+        )
+        return RaidResult(
+            v = 1,
+            raidId = request.raidId,
+            accepted = true,
+            buddyId = stolen.buddyId,
+            buddyLevel = stolen.buddyLevel,
+        )
+    }
+
+    private fun reject(raidId: String, reason: StealRejectReason): RaidResult = RaidResult(
+        v = 1,
+        raidId = raidId,
+        accepted = false,
+        reason = reason.wire,
+    )
+
+    private fun consolationFor(buddyId: String, buddyLevel: Int): Long {
+        val def = BuddyCatalog.find(BuddyId(buddyId)) ?: return 0L
+        val coinsPerSec = gameEngine.buddyCoinsPerSec(def.baseCoinsPerSec, buddyLevel)
+        return gameEngine.consolationCoins(coinsPerSec)
+    }
+}

@@ -24,49 +24,48 @@ import kotlin.math.pow
  * interface delegation.
  */
 @Singleton
-class SoundManager
-    @Inject
-    constructor(
-        engine: AudioEngine,
-        gamePrefs: GamePrefs,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher,
-        core: SoundPlaybackCore = SoundPlaybackCore(engine, gamePrefs, ioDispatcher),
-    ) : SfxPlayer by SfxPlayerImpl(core),
-        VoicePlayer by VoicePlayerImpl(core),
-        MusicController by MusicControllerImpl(core),
-        AudioLifecycle by SoundLifecycleImpl(core) {
-        companion object {
-            const val MAX_SIMULTANEOUS = 8
+class SoundManager @Inject constructor(
+    engine: AudioEngine,
+    gamePrefs: GamePrefs,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    core: SoundPlaybackCore = SoundPlaybackCore(engine, gamePrefs, ioDispatcher),
+) : SfxPlayer by SfxPlayerImpl(core),
+    VoicePlayer by VoicePlayerImpl(core),
+    MusicController by MusicControllerImpl(core),
+    AudioLifecycle by SoundLifecycleImpl(core) {
 
-            /** -6 dB as an amplitude multiplier. */
-            val DUCK_FACTOR: Float = 10.0.pow(-6.0 / 20.0).toFloat()
+    companion object {
+        const val MAX_SIMULTANEOUS = 8
 
-            const val RAMP_MS_STING = 120
-            const val DUCK_ATTACK_MS = 120L
-            const val DUCK_RELEASE_MS = 800L
-            internal const val DUCK_STEP_MS = 50L
+        /** -6 dB as an amplitude multiplier. */
+        val DUCK_FACTOR: Float = 10.0.pow(-6.0 / 20.0).toFloat()
 
-            /** Voices hold the duck exactly until they end (with a backstop). */
-            const val DUCK_WINDOW_VOICE_EXACT = -1L
-            internal const val VOICE_DUCK_BACKSTOP_MS = 15_000L
+        const val RAMP_MS_STING = 120
+        const val DUCK_ATTACK_MS = 120L
+        const val DUCK_RELEASE_MS = 800L
+        internal const val DUCK_STEP_MS = 50L
 
-            /** Stings/rewards hold the duck for a fixed window (no completion callback). */
-            const val DUCK_WINDOW_STING_MS = 3_000L
-            const val DUCK_WINDOW_REWARD_MS = 1_500L
-            internal const val AMBIENT_CAP_MS = 500L
+        /** Voices hold the duck exactly until they end (with a backstop). */
+        const val DUCK_WINDOW_VOICE_EXACT = -1L
+        internal const val VOICE_DUCK_BACKSTOP_MS = 15_000L
 
-            internal const val JITTER_MIN = 0.05f
-            internal const val JITTER_MAX = 0.08f
-            internal const val MIN_PLAYABLE_VOLUME = 0.001f
-            internal const val VOLUME_SCALE = 100f
-            internal const val COIN_TICK_RATE_PITCH = 0.02f
-            internal const val UPGRADE_PITCH_PER_LEVEL = 0.12f
+        /** Stings/rewards hold the duck for a fixed window (no completion callback). */
+        const val DUCK_WINDOW_STING_MS = 3_000L
+        const val DUCK_WINDOW_REWARD_MS = 1_500L
+        internal const val AMBIENT_CAP_MS = 500L
 
-            /** Calm-layer stem mix (contract §9: strip to ukulele + shaker). */
-            internal const val CALM_BASS = 0.2f
-            internal const val CALM_MELODY = 0.9f
-            internal const val CALM_SPARKLE = 0.5f
+        internal const val JITTER_MIN = 0.05f
+        internal const val JITTER_MAX = 0.08f
+        internal const val MIN_PLAYABLE_VOLUME = 0.001f
+        internal const val VOLUME_SCALE = 100f
+        internal const val COIN_TICK_RATE_PITCH = 0.02f
+        internal const val UPGRADE_PITCH_PER_LEVEL = 0.12f
 
-            internal const val WIND_DOWN_MS = 20 * 60 * 1000L
-        }
+        /** Calm-layer stem mix (contract §9: strip to ukulele + shaker). */
+        internal const val CALM_BASS = 0.2f
+        internal const val CALM_MELODY = 0.9f
+        internal const val CALM_SPARKLE = 0.5f
+
+        internal const val WIND_DOWN_MS = 20 * 60 * 1000L
     }
+}

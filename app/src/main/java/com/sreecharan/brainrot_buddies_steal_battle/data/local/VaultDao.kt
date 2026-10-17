@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VaultDao {
+
     @Query("SELECT * FROM vault WHERE id = 1")
     fun observe(): Flow<VaultEntity?>
 

@@ -19,6 +19,7 @@ annotation class DefaultDispatcher
 @Module
 @InstallIn(SingletonComponent::class)
 object DispatchersModule {
+
     @Provides
     @IoDispatcher
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO

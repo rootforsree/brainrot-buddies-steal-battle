@@ -17,6 +17,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object DataStoreModule {
+
     private val Context.settingsDataStore by dataStore(
         fileName = "settings.pb",
         serializer = SettingsSerializer,
@@ -28,13 +29,11 @@ object DataStoreModule {
 
     @Provides
     @Singleton
-    fun provideSettingsDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<SettingsProto> = context.settingsDataStore
+    fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<SettingsProto> =
+        context.settingsDataStore
 
     @Provides
     @Singleton
-    fun provideGamePrefsDataStore(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> = context.gamePrefsDataStore
+    fun provideGamePrefsDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.gamePrefsDataStore
 }

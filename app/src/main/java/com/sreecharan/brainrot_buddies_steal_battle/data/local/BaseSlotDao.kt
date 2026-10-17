@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BaseSlotDao {
+
     @Query("SELECT * FROM base_slots ORDER BY slotIndex ASC")
     fun observeAll(): Flow<List<BaseSlotEntity>>
 

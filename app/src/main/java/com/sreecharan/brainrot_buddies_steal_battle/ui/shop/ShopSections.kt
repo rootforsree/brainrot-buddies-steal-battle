@@ -21,8 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.sreecharan.brainrot_buddies_steal_battle.R
 import com.sreecharan.brainrot_buddies_steal_battle.billing.BillingProducts
+import com.sreecharan.brainrot_buddies_steal_battle.R
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.BuddyImage
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.GroupCard
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.HoldToConfirmButton
@@ -36,17 +36,13 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import kotlinx.collections.immutable.ImmutableList
 
 /** Hat product id -> display name resource. */
-private val HatNameRes =
-    mapOf(
-        BillingProducts.HAT_PARTY_CONE to R.string.billing_hat_party_cone,
-        BillingProducts.HAT_TINY_CROWN to R.string.billing_hat_tiny_crown,
-    )
+private val HatNameRes = mapOf(
+    BillingProducts.HAT_PARTY_CONE to R.string.billing_hat_party_cone,
+    BillingProducts.HAT_TINY_CROWN to R.string.billing_hat_tiny_crown,
+)
 
 /** All shop list sections, in order. Day-gated sections hide until their §1 day. */
-fun LazyListScope.shopSections(
-    state: ShopUiState,
-    actions: ShopActions,
-) {
+fun LazyListScope.shopSections(state: ShopUiState, actions: ShopActions) {
     item(key = "slots-header", contentType = "header") {
         SectionHeader(title = stringResource(R.string.shop_section_slots))
     }
@@ -124,11 +120,7 @@ private fun LazyListScope.dayGatedSections(
 }
 
 @Composable
-fun SlotSection(
-    unlocked: Int,
-    nextCost: Long?,
-    onBuySlot: () -> Unit,
-) {
+fun SlotSection(unlocked: Int, nextCost: Long?, onBuySlot: () -> Unit) {
     GroupCard {
         SettingsRow(
             title = stringResource(R.string.shop_slot_next),
@@ -144,10 +136,9 @@ fun SlotSection(
         if (nextCost != null) {
             RowDivider()
             Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(AppDimens.spacing16),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.spacing16),
                 verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
             ) {
                 Text(
@@ -174,24 +165,18 @@ fun SlotSection(
 }
 
 @Composable
-fun TicketSection(
-    lucky: Int,
-    mega: Int,
-    onBuyMegaTicket: () -> Unit,
-) {
+fun TicketSection(lucky: Int, mega: Int, onBuyMegaTicket: () -> Unit) {
     GroupCard {
         SettingsRow(
             title = stringResource(R.string.shop_lucky_title),
-            subtitle =
-                stringResource(R.string.shop_lucky_sub, lucky) + "\n" +
-                    stringResource(R.string.shop_lucky_earn),
+            subtitle = stringResource(R.string.shop_lucky_sub, lucky) + "\n" +
+                stringResource(R.string.shop_lucky_earn),
         )
         RowDivider()
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
             Row(
@@ -232,10 +217,7 @@ fun TicketSection(
 }
 
 @Composable
-fun UpgradeSection(
-    upgrades: ImmutableList<UpgradeRow>,
-    onUpgrade: (String) -> Unit,
-) {
+fun UpgradeSection(upgrades: ImmutableList<UpgradeRow>, onUpgrade: (String) -> Unit) {
     GroupCard {
         upgrades.forEachIndexed { index, row ->
             if (index > 0) RowDivider()
@@ -245,27 +227,22 @@ fun UpgradeSection(
 }
 
 @Composable
-private fun UpgradeRowCard(
-    row: UpgradeRow,
-    onUpgrade: (String) -> Unit,
-) {
+private fun UpgradeRowCard(row: UpgradeRow, onUpgrade: (String) -> Unit) {
     val colors = LocalAppColors.current
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing16),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(AppDimens.spacing16),
         verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
     ) {
         UpgradeRowHeader(row = row)
         if (!row.isMaxed) {
             Text(
-                text =
-                    stringResource(
-                        R.string.shop_upgrade_cost,
-                        row.coinCost,
-                        row.biteCost,
-                    ),
+                text = stringResource(
+                    R.string.shop_upgrade_cost,
+                    row.coinCost,
+                    row.biteCost,
+                ),
                 style = AppTypography.body,
                 color = colors.accent,
             )
@@ -282,12 +259,11 @@ private fun UpgradeRowCard(
 @Composable
 private fun UpgradeRowHeader(row: UpgradeRow) {
     val colors = LocalAppColors.current
-    val incomeText =
-        if (row.incomePerSec == row.incomePerSec.toLong().toDouble()) {
-            row.incomePerSec.toLong().toString()
-        } else {
-            "%.1f".format(row.incomePerSec)
-        }
+    val incomeText = if (row.incomePerSec == row.incomePerSec.toLong().toDouble()) {
+        row.incomePerSec.toLong().toString()
+    } else {
+        "%.1f".format(row.incomePerSec)
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -310,11 +286,10 @@ private fun UpgradeRowHeader(row: UpgradeRow) {
                 color = colors.secondaryLabel,
             )
             Text(
-                text =
-                    stringResource(
-                        R.string.shop_per_sec,
-                        incomeText,
-                    ),
+                text = stringResource(
+                    R.string.shop_per_sec,
+                    incomeText,
+                ),
                 style = AppTypography.footnote,
                 color = colors.secondaryLabel,
             )
@@ -339,10 +314,9 @@ fun ShieldSection(
     val baseActive = baseShieldUntil > now
     GroupCard {
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
             Text(
@@ -357,9 +331,8 @@ fun ShieldSection(
             )
             if (baseActive) {
                 Text(
-                    text =
-                        stringResource(R.string.shop_shield_active) + " " +
-                            formatDuration(baseShieldUntil - now),
+                    text = stringResource(R.string.shop_shield_active) + " " +
+                        formatDuration(baseShieldUntil - now),
                     style = AppTypography.body,
                     color = LocalAppColors.current.success,
                 )
@@ -404,7 +377,6 @@ fun HatSection(
 }
 
 @Composable
-@Suppress("LongMethod")
 private fun HatRowContent(
     hat: HatRow,
     onBuyHat: (String) -> Unit,
@@ -413,10 +385,9 @@ private fun HatRowContent(
     val colors = LocalAppColors.current
     val nameRes = HatNameRes[hat.hatId] ?: R.string.billing_hat_propeller_cap
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing16),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(AppDimens.spacing16),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
     ) {
@@ -433,20 +404,12 @@ private fun HatRowContent(
             )
             val equippedName = hat.equippedOnName
             Text(
-                text =
-                    when {
-                        equippedName != null -> {
-                            stringResource(R.string.shop_hat_equipped, equippedName)
-                        }
-
-                        hat.owned -> {
-                            stringResource(R.string.shop_hat_owned)
-                        }
-
-                        else -> {
-                            stringResource(R.string.shop_hat_buy)
-                        }
-                    },
+                text = when {
+                    equippedName != null ->
+                        stringResource(R.string.shop_hat_equipped, equippedName)
+                    hat.owned -> stringResource(R.string.shop_hat_owned)
+                    else -> stringResource(R.string.shop_hat_buy)
+                },
                 style = AppTypography.footnote,
                 color = colors.secondaryLabel,
             )
@@ -464,11 +427,10 @@ private fun HatRowContent(
                 onClick = { onEquipHat(hat.hatId) },
                 modifier = Modifier.heightIn(min = 48.dp),
                 shape = AppShapes.capsule,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = colors.accent.copy(alpha = 0.15f),
-                        contentColor = colors.accent,
-                    ),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.accent.copy(alpha = 0.15f),
+                    contentColor = colors.accent,
+                ),
             ) {
                 Text(text = stringResource(R.string.shop_hat_equip))
             }

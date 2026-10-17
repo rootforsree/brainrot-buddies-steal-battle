@@ -35,10 +35,10 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -78,18 +78,9 @@ data class FriendsUiState(
 )
 
 sealed interface FriendsEvent {
-    data class NavigateToRaidVisit(
-        val friendGuestId: String,
-    ) : FriendsEvent
-
-    data class ShowMessage(
-        @StringRes val resId: Int,
-        val arg: String = "",
-    ) : FriendsEvent
-
-    data class ShowCeremony(
-        val friendBaseName: String,
-    ) : FriendsEvent
+    data class NavigateToRaidVisit(val friendGuestId: String) : FriendsEvent
+    data class ShowMessage(@StringRes val resId: Int, val arg: String = "") : FriendsEvent
+    data class ShowCeremony(val friendBaseName: String) : FriendsEvent
 }
 
 /**
@@ -105,54 +96,52 @@ sealed interface FriendsEvent {
  * namespaces.
  */
 @HiltViewModel
-class FriendsViewModel
-    @Inject
-    constructor(
-        private val nearbyManager: NearbyManager,
-        gameRepository: GameRepository,
-        gameEngine: GameEngine,
-        p2pPrefs: P2pPrefs,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ) : ViewModel() {
-        private val core =
-            FriendsVmCore(
-                nearbyManager = nearbyManager,
-                gameRepository = gameRepository,
-                gameEngine = gameEngine,
-                p2pPrefs = p2pPrefs,
-                ioDispatcher = ioDispatcher,
-                scope = viewModelScope,
-            )
+class FriendsViewModel @Inject constructor(
+    private val nearbyManager: NearbyManager,
+    gameRepository: GameRepository,
+    gameEngine: GameEngine,
+    p2pPrefs: P2pPrefs,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+) : ViewModel() {
 
-        /** Pairing ceremony intents (§8). */
-        val pairing = PairingIntents(core)
+    private val core = FriendsVmCore(
+        nearbyManager = nearbyManager,
+        gameRepository = gameRepository,
+        gameEngine = gameEngine,
+        p2pPrefs = p2pPrefs,
+        ioDispatcher = ioDispatcher,
+        scope = viewModelScope,
+    )
 
-        /** Friend-list and raid-inbox intents. */
-        val roster = RosterIntents(core)
+    /** Pairing ceremony intents (§8). */
+    val pairing = PairingIntents(core)
 
-        private val connection = FriendsConnection(core)
-        private val directory = FriendsDirectory(core)
+    /** Friend-list and raid-inbox intents. */
+    val roster = RosterIntents(core)
 
-        val uiState: StateFlow<FriendsUiState> = core.uiState
-        val events: Flow<FriendsEvent> = core.events
+    private val connection = FriendsConnection(core)
+    private val directory = FriendsDirectory(core)
 
-        init {
-            core.uiState.update { it.copy(p2pAvailable = nearbyManager.p2pAvailable) }
-            viewModelScope.launch(ioDispatcher) { core.loadIdentity() }
-            viewModelScope.launch(ioDispatcher) { directory.collectDirectory() }
-            viewModelScope.launch(ioDispatcher) { connection.collectConnectionEvents() }
-            viewModelScope.launch(ioDispatcher) { connection.collectInbound() }
-        }
+    val uiState: StateFlow<FriendsUiState> = core.uiState
+    val events: Flow<FriendsEvent> = core.events
 
-        override fun onCleared() {
-            nearbyManager.stopHosting()
-        }
-
-        companion object {
-            /** Pairing ritual gift, each side grants its own. */
-            const val PAIRING_GIFT_COINS = 200L
-
-            /** First-heist ceremony gift. */
-            const val FIRST_HEIST_GIFT_COINS = 200L
-        }
+    init {
+        core.uiState.update { it.copy(p2pAvailable = nearbyManager.p2pAvailable) }
+        viewModelScope.launch(ioDispatcher) { core.loadIdentity() }
+        viewModelScope.launch(ioDispatcher) { directory.collectDirectory() }
+        viewModelScope.launch(ioDispatcher) { connection.collectConnectionEvents() }
+        viewModelScope.launch(ioDispatcher) { connection.collectInbound() }
     }
+
+    override fun onCleared() {
+        nearbyManager.stopHosting()
+    }
+
+    companion object {
+        /** Pairing ritual gift, each side grants its own. */
+        const val PAIRING_GIFT_COINS = 200L
+
+        /** First-heist ceremony gift. */
+        const val FIRST_HEIST_GIFT_COINS = 200L
+    }
+}

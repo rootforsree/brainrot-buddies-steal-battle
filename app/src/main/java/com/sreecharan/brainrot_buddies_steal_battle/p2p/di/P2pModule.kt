@@ -23,12 +23,12 @@ annotation class P2pPreferences
 @Module
 @InstallIn(SingletonComponent::class)
 object P2pModule {
+
     private val Context.p2pPreferences by preferencesDataStore(name = "p2p_prefs")
 
     @Provides
     @Singleton
     @P2pPreferences
-    fun provideP2pPreferences(
-        @ApplicationContext context: Context,
-    ): DataStore<Preferences> = context.p2pPreferences
+    fun provideP2pPreferences(@ApplicationContext context: Context): DataStore<Preferences> =
+        context.p2pPreferences
 }

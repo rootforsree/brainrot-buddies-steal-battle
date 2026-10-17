@@ -66,7 +66,6 @@ sealed interface RedeemResult {
     ) : RedeemResult
 
     data object AlreadyUsed : RedeemResult
-
     data object Invalid : RedeemResult
 }
 
@@ -81,51 +80,42 @@ sealed interface RedeemResult {
  * type the UI injects.
  */
 @Singleton
-class GameEngine
-    @Inject
-    constructor() :
+class GameEngine @Inject constructor() :
     PullRules by PullEngine,
-        EconomyRules by EconomyEngine,
-        RaidWindowRules by RaidWindowEngine,
-        CalendarRules by CalendarEngine,
-        RedeemRules by RedeemEngine,
-        EventRules by EventEngine
+    EconomyRules by EconomyEngine,
+    RaidWindowRules by RaidWindowEngine,
+    CalendarRules by CalendarEngine,
+    RedeemRules by RedeemEngine,
+    EventRules by EventEngine
 
 /** Conveyor pull resolution. */
 interface PullRules {
+
     /**
      * Resolves one conveyor pull. Precedence: Mega Ticket, then Epic pity,
      * then Lucky Ticket, then Common pity, then the weighted roll (with an
      * optional bite re-roll lifting the rolled rarity one tier).
      */
-    fun resolvePull(
-        input: PullInput,
-        random: Random = Random.Default,
-    ): PullOutput
+    fun resolvePull(input: PullInput, random: Random = Random.Default): PullOutput
 }
 
 /** Upgrade, slot, album, vault and offline-earnings math. */
 interface EconomyRules {
+
     /**
      * Upgrade coin cost. Follows the §4 worked examples exactly:
      * 100 x baseCps x (targetLevel - 1), so Common->L2 = 100, Rare->L3 = 1600,
      * Epic->L3 = 8000. (The §4 formula text says "targetLevel"; the three
      * worked examples all use targetLevel - 1. Coordinator to confirm.)
      */
-    fun upgradeCostCoins(
-        baseCoinsPerSec: Int,
-        targetLevel: Int,
-    ): Long
+    fun upgradeCostCoins(baseCoinsPerSec: Int, targetLevel: Int): Long
 
     /** Upgrade bite cost: 5 x (targetLevel - 1), matching the §4 examples. */
     fun upgradeCostBites(targetLevel: Int): Int
 
     fun upgradeMultiplier(level: Int): Double
 
-    fun buddyCoinsPerSec(
-        baseCoinsPerSec: Int,
-        level: Int,
-    ): Double
+    fun buddyCoinsPerSec(baseCoinsPerSec: Int, level: Int): Double
 
     /**
      * Cost to unlock the [unlockNumber]-th extra slot (1..20, covering base
@@ -154,14 +144,12 @@ interface EconomyRules {
     ): Long
 
     /** Offline earnings: income for time away, capped at 4 hours. */
-    fun offlineEarningsCoins(
-        totalCoinsPerSec: Double,
-        awayMs: Long,
-    ): Long
+    fun offlineEarningsCoins(totalCoinsPerSec: Double, awayMs: Long): Long
 }
 
 /** Raid window math. */
 interface RaidWindowRules {
+
     /**
      * The 6-hour raid window containing [now]. Windows start at 2, 8, 14 and
      * 20 local time; times before 2 AM belong to the previous day's 8 PM
@@ -179,15 +167,10 @@ interface RaidWindowRules {
 
 /** Login calendar math. */
 interface CalendarRules {
-    fun todayKey(
-        zone: ZoneId = ZoneId.systemDefault(),
-        now: Instant = Instant.now(),
-    ): String
 
-    fun yesterdayKey(
-        zone: ZoneId = ZoneId.systemDefault(),
-        now: Instant = Instant.now(),
-    ): String
+    fun todayKey(zone: ZoneId = ZoneId.systemDefault(), now: Instant = Instant.now()): String
+
+    fun yesterdayKey(zone: ZoneId = ZoneId.systemDefault(), now: Instant = Instant.now()): String
 
     /**
      * Advances the calendar for a claim today. A missed day PAUSES: the day
@@ -207,20 +190,19 @@ interface CalendarRules {
 
 /** Redeem code validation. */
 interface RedeemRules {
+
     fun normalizeRedeemCode(raw: String): String
 
     /**
      * Validates a redeem code against already-used codes. STEALFUN26 grants
      * 500 coins + the party emote; BUDDYUP26 grants 1 Lucky Ticket.
      */
-    fun validateRedeemCode(
-        rawCode: String,
-        usedCodes: Set<String>,
-    ): RedeemResult
+    fun validateRedeemCode(rawCode: String, usedCodes: Set<String>): RedeemResult
 }
 
 /** Saturday event math. */
 interface EventRules {
+
     /** Zara's Zoom Race: Saturdays 11:00-11:20 local, 20-minute sprint. */
     fun isZoomRaceActive(now: ZonedDateTime = ZonedDateTime.now()): Boolean
 
@@ -228,18 +210,15 @@ interface EventRules {
 }
 
 internal object PullEngine : PullRules {
-    override fun resolvePull(
-        input: PullInput,
-        random: Random,
-    ): PullOutput {
+
+    override fun resolvePull(input: PullInput, random: Random): PullOutput {
         val rolled = rollRarity(input, random)
         val newPullsSinceEpic =
             if (rolled.rarity == Rarity.EPIC) 0 else input.pullsSinceEpic + 1
-        val newCommonsSinceRare =
-            when (rolled.rarity) {
-                Rarity.COMMON -> input.commonsSinceRare + 1
-                Rarity.RARE, Rarity.EPIC -> 0
-            }
+        val newCommonsSinceRare = when (rolled.rarity) {
+            Rarity.COMMON -> input.commonsSinceRare + 1
+            Rarity.RARE, Rarity.EPIC -> 0
+        }
         return PullOutput(
             rarity = rolled.rarity,
             consumedLuckyTicket = rolled.consumedLucky,
@@ -259,77 +238,55 @@ internal object PullEngine : PullRules {
         val pity: Boolean,
     )
 
-    private fun rollRarity(
-        input: PullInput,
-        random: Random,
-    ): RolledPull =
-        when {
-            input.hasMegaTicket -> {
-                RolledPull(
-                    rarity = Rarity.EPIC,
-                    consumedLucky = false,
-                    consumedMega = true,
-                    consumedReroll = false,
-                    pity = false,
-                )
-            }
-
-            input.pullsSinceEpic >= PULLS_WITHOUT_EPIC_PITY -> {
-                RolledPull(
-                    rarity = Rarity.EPIC,
-                    consumedLucky = false,
-                    consumedMega = false,
-                    consumedReroll = false,
-                    pity = true,
-                )
-            }
-
-            input.hasLuckyTicket -> {
-                RolledPull(
-                    rarity = luckyTicketRarity(random),
-                    consumedLucky = true,
-                    consumedMega = false,
-                    consumedReroll = false,
-                    pity = false,
-                )
-            }
-
-            input.commonsSinceRare >= COMMONS_WITHOUT_RARE_PITY -> {
-                RolledPull(
-                    rarity = Rarity.RARE,
-                    consumedLucky = false,
-                    consumedMega = false,
-                    consumedReroll = false,
-                    pity = true,
-                )
-            }
-
-            input.hasBiteReroll -> {
-                val rolled = weightedRarity(random, input.saturdayEvent).promoteOneTier()
-                RolledPull(
-                    rarity = rolled,
-                    consumedLucky = false,
-                    consumedMega = false,
-                    consumedReroll = true,
-                    pity = false,
-                )
-            }
-
-            else -> {
-                RolledPull(
-                    rarity = weightedRarity(random, input.saturdayEvent),
-                    consumedLucky = false,
-                    consumedMega = false,
-                    consumedReroll = false,
-                    pity = false,
-                )
-            }
+    private fun rollRarity(input: PullInput, random: Random): RolledPull = when {
+        input.hasMegaTicket -> RolledPull(
+            rarity = Rarity.EPIC,
+            consumedLucky = false,
+            consumedMega = true,
+            consumedReroll = false,
+            pity = false,
+        )
+        input.pullsSinceEpic >= PULLS_WITHOUT_EPIC_PITY -> RolledPull(
+            rarity = Rarity.EPIC,
+            consumedLucky = false,
+            consumedMega = false,
+            consumedReroll = false,
+            pity = true,
+        )
+        input.hasLuckyTicket -> RolledPull(
+            rarity = luckyTicketRarity(random),
+            consumedLucky = true,
+            consumedMega = false,
+            consumedReroll = false,
+            pity = false,
+        )
+        input.commonsSinceRare >= COMMONS_WITHOUT_RARE_PITY -> RolledPull(
+            rarity = Rarity.RARE,
+            consumedLucky = false,
+            consumedMega = false,
+            consumedReroll = false,
+            pity = true,
+        )
+        input.hasBiteReroll -> {
+            val rolled = weightedRarity(random, input.saturdayEvent).promoteOneTier()
+            RolledPull(
+                rarity = rolled,
+                consumedLucky = false,
+                consumedMega = false,
+                consumedReroll = true,
+                pity = false,
+            )
         }
+        else -> RolledPull(
+            rarity = weightedRarity(random, input.saturdayEvent),
+            consumedLucky = false,
+            consumedMega = false,
+            consumedReroll = false,
+            pity = false,
+        )
+    }
 
-    private fun weightedRarity(
-        random: Random,
-        saturdayEvent: Boolean,
-    ): Rarity {
+    private fun weightedRarity(random: Random, saturdayEvent: Boolean): Rarity {
         val commonWeight = if (saturdayEvent) EVENT_COMMON_WEIGHT else PULL_COMMON_WEIGHT
         val rareWeight = if (saturdayEvent) EVENT_RARE_WEIGHT else PULL_RARE_WEIGHT
         val epicWeight = if (saturdayEvent) EVENT_EPIC_WEIGHT else PULL_EPIC_WEIGHT
@@ -346,12 +303,11 @@ internal object PullEngine : PullRules {
         return if (roll < PULL_RARE_WEIGHT) Rarity.RARE else Rarity.EPIC
     }
 
-    private fun Rarity.promoteOneTier(): Rarity =
-        when (this) {
-            Rarity.COMMON -> Rarity.RARE
-            Rarity.RARE -> Rarity.EPIC
-            Rarity.EPIC -> Rarity.EPIC
-        }
+    private fun Rarity.promoteOneTier(): Rarity = when (this) {
+        Rarity.COMMON -> Rarity.RARE
+        Rarity.RARE -> Rarity.EPIC
+        Rarity.EPIC -> Rarity.EPIC
+    }
 
     // Pull weights (§4): Common 70 / Rare 22 / Epic 8. Saturday event
     // doubles Epic chance to 16, taken from the Common share.
@@ -368,10 +324,8 @@ internal object PullEngine : PullRules {
 }
 
 internal object EconomyEngine : EconomyRules {
-    override fun upgradeCostCoins(
-        baseCoinsPerSec: Int,
-        targetLevel: Int,
-    ): Long {
+
+    override fun upgradeCostCoins(baseCoinsPerSec: Int, targetLevel: Int): Long {
         require(targetLevel in LEVEL_TWO..MAX_BUDDY_LEVEL) { "targetLevel must be 2..3" }
         return UPGRADE_COIN_FACTOR * baseCoinsPerSec * (targetLevel - 1)
     }
@@ -381,30 +335,26 @@ internal object EconomyEngine : EconomyRules {
         return UPGRADE_BITE_FACTOR * (targetLevel - 1)
     }
 
-    override fun upgradeMultiplier(level: Int): Double =
-        when (level) {
-            1 -> UPGRADE_L1_MULTIPLIER
-            LEVEL_TWO -> UPGRADE_L2_MULTIPLIER
-            MAX_BUDDY_LEVEL -> UPGRADE_L3_MULTIPLIER
-            else -> throw IllegalArgumentException("level must be 1..3")
-        }
+    override fun upgradeMultiplier(level: Int): Double = when (level) {
+        1 -> UPGRADE_L1_MULTIPLIER
+        LEVEL_TWO -> UPGRADE_L2_MULTIPLIER
+        MAX_BUDDY_LEVEL -> UPGRADE_L3_MULTIPLIER
+        else -> throw IllegalArgumentException("level must be 1..3")
+    }
 
-    override fun buddyCoinsPerSec(
-        baseCoinsPerSec: Int,
-        level: Int,
-    ): Double = baseCoinsPerSec * upgradeMultiplier(level)
+    override fun buddyCoinsPerSec(baseCoinsPerSec: Int, level: Int): Double =
+        baseCoinsPerSec * upgradeMultiplier(level)
 
     override fun slotUnlockCost(unlockNumber: Int): Long {
         require(unlockNumber in 1..MAX_SLOT_UNLOCKS) { "unlockNumber must be 1..20" }
         return SLOT_UNLOCK_COSTS[unlockNumber - 1]
     }
 
-    override fun albumTierReward(rarity: Rarity): Long =
-        when (rarity) {
-            Rarity.COMMON -> ALBUM_COMMON_REWARD
-            Rarity.RARE -> ALBUM_RARE_REWARD
-            Rarity.EPIC -> ALBUM_EPIC_REWARD
-        }
+    override fun albumTierReward(rarity: Rarity): Long = when (rarity) {
+        Rarity.COMMON -> ALBUM_COMMON_REWARD
+        Rarity.RARE -> ALBUM_RARE_REWARD
+        Rarity.EPIC -> ALBUM_EPIC_REWARD
+    }
 
     override fun consolationCoins(stolenBuddyCoinsPerSec: Double): Long =
         (stolenBuddyCoinsPerSec * SECONDS_PER_HOUR * CONSOLATION_FRACTION).toLong()
@@ -427,10 +377,7 @@ internal object EconomyEngine : EconomyRules {
         return min(currentCoins + earned, cap)
     }
 
-    override fun offlineEarningsCoins(
-        totalCoinsPerSec: Double,
-        awayMs: Long,
-    ): Long {
+    override fun offlineEarningsCoins(totalCoinsPerSec: Double, awayMs: Long): Long {
         val cappedAwayMs = awayMs.coerceIn(0L, OFFLINE_CAP_MS)
         return (totalCoinsPerSec * cappedAwayMs / MILLIS_PER_SECOND).toLong()
     }
@@ -446,29 +393,10 @@ internal object EconomyEngine : EconomyRules {
 
     // Slots (§4): 20 unlocks; 50..100000 then 150000 x9.
     private const val MAX_SLOT_UNLOCKS = 20
-    private val SLOT_UNLOCK_COSTS: List<Long> =
-        listOf(
-            50L,
-            100L,
-            250L,
-            500L,
-            1000L,
-            2500L,
-            5000L,
-            10000L,
-            25000L,
-            50000L,
-            100000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-            150000L,
-        )
+    private val SLOT_UNLOCK_COSTS: List<Long> = listOf(
+        50L, 100L, 250L, 500L, 1000L, 2500L, 5000L, 10000L, 25000L, 50000L, 100000L,
+        150000L, 150000L, 150000L, 150000L, 150000L, 150000L, 150000L, 150000L, 150000L,
+    )
 
     // Vault / offline (§4): 4-hour caps.
     private const val VAULT_CAP_HOURS = 4L
@@ -483,6 +411,7 @@ internal object EconomyEngine : EconomyRules {
 }
 
 internal object RaidWindowEngine : RaidWindowRules {
+
     override fun currentRaidWindow(now: ZonedDateTime): RaidWindow {
         val startHour = RAID_WINDOW_START_HOURS.filter { it <= now.hour }.maxOrNull()
         return if (startHour != null) {
@@ -495,15 +424,15 @@ internal object RaidWindowEngine : RaidWindowRules {
     override fun raidWindowBucket(window: RaidWindow): String =
         window.date.toString() + "-" + window.startHour.toString().padStart(2, '0')
 
-    override fun raidWindowBucket(now: ZonedDateTime): String = raidWindowBucket(currentRaidWindow(now))
+    override fun raidWindowBucket(now: ZonedDateTime): String =
+        raidWindowBucket(currentRaidWindow(now))
 
     override fun millisUntilNextRaidWindow(now: ZonedDateTime): Long {
         val current = currentRaidWindow(now)
-        val nextStart =
-            current.date
-                .atTime(current.startHour, 0)
-                .atZone(now.zone)
-                .plusHours(RAID_WINDOW_HOURS)
+        val nextStart = current.date
+            .atTime(current.startHour, 0)
+            .atZone(now.zone)
+            .plusHours(RAID_WINDOW_HOURS)
         return Duration.between(now, nextStart).toMillis().coerceAtLeast(0L)
     }
 
@@ -513,15 +442,12 @@ internal object RaidWindowEngine : RaidWindowRules {
 }
 
 internal object CalendarEngine : CalendarRules {
-    override fun todayKey(
-        zone: ZoneId,
-        now: Instant,
-    ): String = now.atZone(zone).format(DATE_KEY_FORMAT)
 
-    override fun yesterdayKey(
-        zone: ZoneId,
-        now: Instant,
-    ): String = now.atZone(zone).minusDays(1).format(DATE_KEY_FORMAT)
+    override fun todayKey(zone: ZoneId, now: Instant): String =
+        now.atZone(zone).format(DATE_KEY_FORMAT)
+
+    override fun yesterdayKey(zone: ZoneId, now: Instant): String =
+        now.atZone(zone).minusDays(1).format(DATE_KEY_FORMAT)
 
     override fun advanceCalendarDay(
         currentDay: Int,
@@ -543,15 +469,14 @@ internal object CalendarEngine : CalendarRules {
         )
     }
 
-    override fun dayReward(day: Int): DayReward =
-        when (day) {
-            1 -> DayReward(coins = DAY_1_COINS)
-            DAY_7 -> DayReward(megaTickets = 1)
-            DAY_14 -> DayReward(guaranteedRarity = Rarity.RARE)
-            DAY_21 -> DayReward(coins = DAY_21_COINS)
-            MAX_CALENDAR_DAY -> DayReward(guaranteedRarity = Rarity.EPIC)
-            else -> DayReward()
-        }
+    override fun dayReward(day: Int): DayReward = when (day) {
+        1 -> DayReward(coins = DAY_1_COINS)
+        DAY_7 -> DayReward(megaTickets = 1)
+        DAY_14 -> DayReward(guaranteedRarity = Rarity.RARE)
+        DAY_21 -> DayReward(coins = DAY_21_COINS)
+        MAX_CALENDAR_DAY -> DayReward(guaranteedRarity = Rarity.EPIC)
+        else -> DayReward()
+    }
 
     // Calendar (§1): 30 days; day 1 = 200 coins, day 21 = 5000 coins.
     private const val MAX_CALENDAR_DAY = 30
@@ -564,39 +489,26 @@ internal object CalendarEngine : CalendarRules {
 }
 
 internal object RedeemEngine : RedeemRules {
+
     override fun normalizeRedeemCode(raw: String): String = raw.trim().uppercase()
 
-    override fun validateRedeemCode(
-        rawCode: String,
-        usedCodes: Set<String>,
-    ): RedeemResult {
+    override fun validateRedeemCode(rawCode: String, usedCodes: Set<String>): RedeemResult {
         val code = normalizeRedeemCode(rawCode)
         return when {
-            code in usedCodes -> {
-                RedeemResult.AlreadyUsed
-            }
-
-            code == REDEEM_STEALFUN26 -> {
-                RedeemResult.Granted(
-                    coins = STEALFUN26_COINS,
-                    luckyTickets = 0,
-                    megaTickets = 0,
-                    emoteId = PARTY_EMOTE_ID,
-                )
-            }
-
-            code == REDEEM_BUDDYUP26 -> {
-                RedeemResult.Granted(
-                    coins = 0,
-                    luckyTickets = 1,
-                    megaTickets = 0,
-                    emoteId = null,
-                )
-            }
-
-            else -> {
-                RedeemResult.Invalid
-            }
+            code in usedCodes -> RedeemResult.AlreadyUsed
+            code == REDEEM_STEALFUN26 -> RedeemResult.Granted(
+                coins = STEALFUN26_COINS,
+                luckyTickets = 0,
+                megaTickets = 0,
+                emoteId = PARTY_EMOTE_ID,
+            )
+            code == REDEEM_BUDDYUP26 -> RedeemResult.Granted(
+                coins = 0,
+                luckyTickets = 1,
+                megaTickets = 0,
+                emoteId = null,
+            )
+            else -> RedeemResult.Invalid
         }
     }
 
@@ -608,6 +520,7 @@ internal object RedeemEngine : RedeemRules {
 }
 
 internal object EventEngine : EventRules {
+
     override fun isZoomRaceActive(now: ZonedDateTime): Boolean =
         now.dayOfWeek == DayOfWeek.SATURDAY &&
             now.hour == ZOOM_RACE_HOUR &&
@@ -615,12 +528,10 @@ internal object EventEngine : EventRules {
 
     override fun millisUntilZoomRace(now: ZonedDateTime): Long {
         val daysAhead = (DayOfWeek.SATURDAY.value - now.dayOfWeek.value + DAYS_PER_WEEK) % DAYS_PER_WEEK
-        val thisSaturday =
-            now
-                .toLocalDate()
-                .plusDays(daysAhead.toLong())
-                .atTime(ZOOM_RACE_HOUR, 0)
-                .atZone(now.zone)
+        val thisSaturday = now.toLocalDate()
+            .plusDays(daysAhead.toLong())
+            .atTime(ZOOM_RACE_HOUR, 0)
+            .atZone(now.zone)
         val next = if (thisSaturday.isAfter(now)) thisSaturday else thisSaturday.plusWeeks(1)
         return Duration.between(now, next).toMillis()
     }
@@ -634,7 +545,5 @@ internal object EventEngine : EventRules {
 private const val SECONDS_PER_HOUR = 3600L
 
 /** Hourly income derived from the per-second rate. */
-fun GameEngine.buddyCoinsPerHour(
-    baseCoinsPerSec: Int,
-    level: Int,
-): Double = buddyCoinsPerSec(baseCoinsPerSec, level) * SECONDS_PER_HOUR
+fun GameEngine.buddyCoinsPerHour(baseCoinsPerSec: Int, level: Int): Double =
+    buddyCoinsPerSec(baseCoinsPerSec, level) * SECONDS_PER_HOUR

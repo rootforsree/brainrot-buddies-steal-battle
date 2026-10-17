@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TicketDao {
+
     @Query("SELECT * FROM tickets")
     fun observeAll(): Flow<List<TicketEntity>>
 

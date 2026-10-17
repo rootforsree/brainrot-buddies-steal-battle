@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * the frozen keys.
  */
 class FakeGamePrefs : GamePrefs {
+
     val guestIdState = MutableStateFlow<String?>(null)
     val baseNameState = MutableStateFlow("")
     val musicVolumeState = MutableStateFlow(100)

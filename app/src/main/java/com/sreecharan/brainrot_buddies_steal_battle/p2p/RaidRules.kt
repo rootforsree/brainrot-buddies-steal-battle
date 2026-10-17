@@ -21,6 +21,7 @@ import java.time.ZoneId
  * No Android dependencies: fully unit-testable.
  */
 object RaidRules {
+
     const val MAX_RAIDS_PER_WINDOW = 3
     const val STEAL_COOLDOWN_MS = 30L * 60L * 1000L
     const val REVENGE_WINDOW_MS = 24L * 60L * 60L * 1000L
@@ -33,12 +34,7 @@ object RaidRules {
         date: LocalDate,
         startHour: Int,
         zone: ZoneId = ZoneId.systemDefault(),
-    ): Long =
-        date
-            .atTime(startHour, 0)
-            .atZone(zone)
-            .toInstant()
-            .toEpochMilli()
+    ): Long = date.atTime(startHour, 0).atZone(zone).toInstant().toEpochMilli()
 
     /** True while the attacker still has raid slots left in this window. */
     fun canStartRaid(raidsUsed: Int): Boolean = raidsUsed < MAX_RAIDS_PER_WINDOW
@@ -47,11 +43,8 @@ object RaidRules {
     fun isRookieShielded(onboardingDay: Int): Boolean = onboardingDay < RAID_UNLOCK_DAY
 
     /** Revenge is available for 24h after the theft and only once. */
-    fun canRevenge(
-        raidCreatedAtMs: Long,
-        revengeUsed: Boolean,
-        nowMs: Long,
-    ): Boolean = !revengeUsed && nowMs - raidCreatedAtMs < REVENGE_WINDOW_MS
+    fun canRevenge(raidCreatedAtMs: Long, revengeUsed: Boolean, nowMs: Long): Boolean =
+        !revengeUsed && nowMs - raidCreatedAtMs < REVENGE_WINDOW_MS
 
     /**
      * Attacker-side pre-check before sending a RaidRequest.
@@ -69,16 +62,15 @@ object RaidRules {
         slotOccupied: Boolean,
         baseShielded: Boolean,
         buddyOnCooldown: Boolean,
-    ): StealVerdict =
-        when {
-            !canStartRaid(raidsUsed) -> StealVerdict.Rejected(StealRejectReason.WINDOW_EXHAUSTED)
-            alreadyRaidedFriend -> StealVerdict.Rejected(StealRejectReason.ALREADY_RAIDED)
-            isShadow && snapshotRaided -> StealVerdict.Rejected(StealRejectReason.SNAPSHOT_SPENT)
-            !slotOccupied -> StealVerdict.Rejected(StealRejectReason.EMPTY)
-            baseShielded -> StealVerdict.Rejected(StealRejectReason.SHIELDED)
-            buddyOnCooldown -> StealVerdict.Rejected(StealRejectReason.COOLDOWN)
-            else -> StealVerdict.Accepted
-        }
+    ): StealVerdict = when {
+        !canStartRaid(raidsUsed) -> StealVerdict.Rejected(StealRejectReason.WINDOW_EXHAUSTED)
+        alreadyRaidedFriend -> StealVerdict.Rejected(StealRejectReason.ALREADY_RAIDED)
+        isShadow && snapshotRaided -> StealVerdict.Rejected(StealRejectReason.SNAPSHOT_SPENT)
+        !slotOccupied -> StealVerdict.Rejected(StealRejectReason.EMPTY)
+        baseShielded -> StealVerdict.Rejected(StealRejectReason.SHIELDED)
+        buddyOnCooldown -> StealVerdict.Rejected(StealRejectReason.COOLDOWN)
+        else -> StealVerdict.Accepted
+    }
 
     /**
      * Victim-side validation of a live RaidRequest, per §8:
@@ -97,28 +89,14 @@ object RaidRules {
         buddyCooldownUntilMs: Long,
         victimRookieShielded: Boolean,
         nowMs: Long,
-    ): StealVerdict =
-        when {
-            !slotOccupied -> {
-                StealVerdict.Rejected(StealRejectReason.EMPTY)
-            }
-
-            alreadyRaidedThisWindow -> {
-                StealVerdict.Rejected(StealRejectReason.ALREADY_RAIDED)
-            }
-
-            victimRookieShielded || nowMs < baseShieldUntilMs || nowMs < slotShieldUntilMs -> {
-                StealVerdict.Rejected(StealRejectReason.SHIELDED)
-            }
-
-            nowMs < buddyCooldownUntilMs -> {
-                StealVerdict.Rejected(StealRejectReason.COOLDOWN)
-            }
-
-            else -> {
-                StealVerdict.Accepted
-            }
-        }
+    ): StealVerdict = when {
+        !slotOccupied -> StealVerdict.Rejected(StealRejectReason.EMPTY)
+        alreadyRaidedThisWindow -> StealVerdict.Rejected(StealRejectReason.ALREADY_RAIDED)
+        victimRookieShielded || nowMs < baseShieldUntilMs || nowMs < slotShieldUntilMs ->
+            StealVerdict.Rejected(StealRejectReason.SHIELDED)
+        nowMs < buddyCooldownUntilMs -> StealVerdict.Rejected(StealRejectReason.COOLDOWN)
+        else -> StealVerdict.Accepted
+    }
 
     /**
      * Attacker-side validation of a shadow heist against a saved snapshot.
@@ -144,19 +122,14 @@ object RaidRules {
 /** Outcome of a steal validation. */
 sealed interface StealVerdict {
     data object Accepted : StealVerdict
-
-    data class Rejected(
-        val reason: StealRejectReason,
-    ) : StealVerdict
+    data class Rejected(val reason: StealRejectReason) : StealVerdict
 }
 
 /**
  * Reject reasons. [wire] holds the frozen §8 reason strings sent in
  * RaidResult; the extra reasons are local-only and never go on the wire.
  */
-enum class StealRejectReason(
-    val wire: String?,
-) {
+enum class StealRejectReason(val wire: String?) {
     SHIELDED("shielded"),
     COOLDOWN("cooldown"),
     EMPTY("empty"),

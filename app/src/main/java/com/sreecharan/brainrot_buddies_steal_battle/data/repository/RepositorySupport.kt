@@ -30,61 +30,50 @@ import javax.inject.Inject
  * for game state; GamePrefs (Preferences DataStore) holds flat flags. Every
  * failure surfaces as [Result.Error]; nothing raw crosses the boundary.
  */
-class CoreDaos
-    @Inject
-    constructor(
-        val ownedBuddyDao: OwnedBuddyDao,
-        val slotDao: BaseSlotDao,
-        val vaultDao: VaultDao,
-        val ticketDao: TicketDao,
-    )
+class CoreDaos @Inject constructor(
+    val ownedBuddyDao: OwnedBuddyDao,
+    val slotDao: BaseSlotDao,
+    val vaultDao: VaultDao,
+    val ticketDao: TicketDao,
+)
 
-class MetaDaos
-    @Inject
-    constructor(
-        val shieldDao: ShieldDao,
-        val raidRecordDao: RaidRecordDao,
-        val friendDao: FriendDao,
-        val calendarDao: CalendarDao,
-    )
+class MetaDaos @Inject constructor(
+    val shieldDao: ShieldDao,
+    val raidRecordDao: RaidRecordDao,
+    val friendDao: FriendDao,
+    val calendarDao: CalendarDao,
+)
 
-class RepositoryHelpers
-    @Inject
-    constructor(
-        val gamePrefs: GamePrefs,
-        @IoDispatcher val ioDispatcher: CoroutineDispatcher,
-    ) {
-        fun <T> observe(source: Flow<T>): Flow<Result<T>> =
-            source
-                .map<T, Result<T>> { Result.Success(it) }
-                .onStart { emit(Result.Loading) }
-                .catch { e ->
-                    if (e is CancellationException) {
-                        throw e
-                    }
-                    emit(Result.Error(DataError.Storage(e.message ?: "Read failed")))
-                }.flowOn(ioDispatcher)
+class RepositoryHelpers @Inject constructor(
+    val gamePrefs: GamePrefs,
+    @IoDispatcher val ioDispatcher: CoroutineDispatcher,
+) {
 
-        // The generic catch is intentional: the repository boundary maps every
-        // failure to Result.Error, so no raw throwable (e.g. a RuntimeException
-        // from a DAO) may escape.
-        @Suppress("TooGenericExceptionCaught")
-        suspend fun <T> write(block: suspend () -> T): Result<T> =
-            withContext(ioDispatcher) {
-                try {
-                    Result.Success(block())
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: SQLiteException) {
-                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
-                } catch (e: IOException) {
-                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
-                } catch (e: IllegalStateException) {
-                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
-                } catch (e: IllegalArgumentException) {
-                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
-                } catch (e: Exception) {
-                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
-                }
+    fun <T> observe(source: Flow<T>): Flow<Result<T>> = source
+        .map<T, Result<T>> { Result.Success(it) }
+        .onStart { emit(Result.Loading) }
+        .catch { e ->
+            if (e is CancellationException) {
+                throw e
             }
-    }
+            emit(Result.Error(DataError.Storage(e.message ?: "Read failed")))
+        }
+        .flowOn(ioDispatcher)
+
+    suspend fun <T> write(block: suspend () -> T): Result<T> =
+        withContext(ioDispatcher) {
+            try {
+                Result.Success(block())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: SQLiteException) {
+                Result.Error(DataError.Storage(e.message ?: "Write failed"))
+            } catch (e: IOException) {
+                Result.Error(DataError.Storage(e.message ?: "Write failed"))
+            } catch (e: IllegalStateException) {
+                Result.Error(DataError.Storage(e.message ?: "Write failed"))
+            } catch (e: IllegalArgumentException) {
+                Result.Error(DataError.Storage(e.message ?: "Write failed"))
+            }
+        }
+}

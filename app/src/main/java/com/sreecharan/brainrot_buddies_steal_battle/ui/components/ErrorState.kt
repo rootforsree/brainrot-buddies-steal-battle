@@ -38,10 +38,9 @@ fun ErrorState(
     val colors = LocalAppColors.current
     val tick = rememberHapticTick()
     Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .padding(AppDimens.spacing32),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(AppDimens.spacing32),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {

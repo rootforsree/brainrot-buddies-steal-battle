@@ -18,19 +18,13 @@ import androidx.room.RoomDatabase
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
+
     abstract fun ownedBuddyDao(): OwnedBuddyDao
-
     abstract fun baseSlotDao(): BaseSlotDao
-
     abstract fun vaultDao(): VaultDao
-
     abstract fun ticketDao(): TicketDao
-
     abstract fun shieldDao(): ShieldDao
-
     abstract fun raidRecordDao(): RaidRecordDao
-
     abstract fun friendDao(): FriendDao
-
     abstract fun calendarDao(): CalendarDao
 }

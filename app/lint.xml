@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<lint>
-    <!-- targetSdk 36 is the intentional project requirement (android-app-architect
-         skill). CI's SDK is newer, but we do not chase the latest target. -->
-    <issue id="OldTargetApi" severity="informational" />
-    <!-- neverForLocation is API 31+ only by design; it is safely ignored on
-         older APIs. The Bluetooth P2P feature is gated to API 31+ in code. -->
-    <issue id="UnusedAttribute" severity="informational" />
-</lint>

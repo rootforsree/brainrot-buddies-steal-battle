@@ -9,7 +9,9 @@ import kotlin.math.sin
 /**
  * Idle life (contract §10, 3 layers) — pure math from (seed, time).
  * Zero allocation; called per buddy per frame.
- *
+ */
+
+/**
  * Breath (2.5-4 s sine), blink (2-7 s, 70 ms close / 100 ms open, 18%
  * double), gaze saccades (0.25-0.9 s), follow-through sway and a silly
  * personality act every 30-60 s.
@@ -25,9 +27,8 @@ internal fun idlePose(request: IdlePoseRequest): IdlePose {
     val scaleY = 1f - JuiceTimings.BREATH_AMPLITUDE * BREATH_Y_RATIO * breath
     val blink = idleBlink(aSeed, tMs)
     // Gaze saccades.
-    val gazePeriod =
-        JuiceTimings.GAZE_MIN_MS +
-            (aSeed * GAZE_SEED_MUL) % (JuiceTimings.GAZE_MAX_MS - JuiceTimings.GAZE_MIN_MS)
+    val gazePeriod = JuiceTimings.GAZE_MIN_MS +
+        (aSeed * GAZE_SEED_MUL) % (JuiceTimings.GAZE_MAX_MS - JuiceTimings.GAZE_MIN_MS)
     val gazeIdx = tMs / gazePeriod + aSeed
     val gazeAngle = hash01(aSeed, gazeIdx) * 2f * PI.toFloat()
     val gaze = Offset(cos(gazeAngle), sin(gazeAngle)) * GAZE_RADIUS
@@ -68,64 +69,36 @@ internal data class IdlePose(
 )
 
 /** Blink layer: 2-7 s period, 70 ms close / 100 ms open, 18% double-blink. */
-private fun idleBlink(
-    aSeed: Long,
-    tMs: Long,
-): Float {
-    val blinkPeriod =
-        JuiceTimings.BLINK_MIN_MS +
-            (aSeed * BLINK_SEED_MUL) % (JuiceTimings.BLINK_MAX_MS - JuiceTimings.BLINK_MIN_MS)
+private fun idleBlink(aSeed: Long, tMs: Long): Float {
+    val blinkPeriod = JuiceTimings.BLINK_MIN_MS +
+        (aSeed * BLINK_SEED_MUL) % (JuiceTimings.BLINK_MAX_MS - JuiceTimings.BLINK_MIN_MS)
     val cycleT = (tMs + aSeed % blinkPeriod) % blinkPeriod
-    val doubleBlink =
-        (aSeed / DOUBLE_BLINK_DIV) % PERCENT_L <
-            (JuiceTimings.DOUBLE_BLINK_CHANCE * DOUBLE_BLINK_PCT).toLong()
+    val doubleBlink = (aSeed / DOUBLE_BLINK_DIV) % PERCENT_L <
+        (JuiceTimings.DOUBLE_BLINK_CHANCE * DOUBLE_BLINK_PCT).toLong()
     return when {
-        cycleT < JuiceTimings.BLINK_CLOSE_MS -> {
-            cycleT / JuiceTimings.BLINK_CLOSE_MS.toFloat()
-        }
-
-        cycleT < JuiceTimings.BLINK_CLOSE_MS + JuiceTimings.BLINK_OPEN_MS -> {
+        cycleT < JuiceTimings.BLINK_CLOSE_MS -> cycleT / JuiceTimings.BLINK_CLOSE_MS.toFloat()
+        cycleT < JuiceTimings.BLINK_CLOSE_MS + JuiceTimings.BLINK_OPEN_MS ->
             1f - (cycleT - JuiceTimings.BLINK_CLOSE_MS) / JuiceTimings.BLINK_OPEN_MS.toFloat()
-        }
-
-        doubleBlink && cycleT < DOUBLE_BLINK_MID_MS -> {
-            (cycleT - DOUBLE_BLINK_GAP_MS) / DOUBLE_BLINK_CLOSE_MS_F
-        }
-
-        doubleBlink && cycleT < DOUBLE_BLINK_END_MS -> {
-            1f - (cycleT - DOUBLE_BLINK_MID_MS) / DOUBLE_BLINK_OPEN_MS_F
-        }
-
-        else -> {
-            0f
-        }
+        doubleBlink && cycleT < DOUBLE_BLINK_MID_MS -> (cycleT - DOUBLE_BLINK_GAP_MS) / DOUBLE_BLINK_CLOSE_MS_F
+        doubleBlink && cycleT < DOUBLE_BLINK_END_MS -> 1f - (cycleT - DOUBLE_BLINK_MID_MS) / DOUBLE_BLINK_OPEN_MS_F
+        else -> 0f
     }
 }
 
-private data class SillyAct(
-    val rotation: Float,
-    val offsetY: Float,
-)
+private data class SillyAct(val rotation: Float, val offsetY: Float)
 
 /** One silly personality act: spin, hop, or wiggle. Inactive most of the time. */
-private fun idleSillyAct(
-    aSeed: Long,
-    tMs: Long,
-    sizePx: Float,
-    forceAct: Boolean,
-): SillyAct {
-    val actPeriod =
-        JuiceTimings.SILLY_ACT_MIN_MS +
-            (aSeed * ACT_SEED_MUL) % (JuiceTimings.SILLY_ACT_MAX_MS - JuiceTimings.SILLY_ACT_MIN_MS)
+private fun idleSillyAct(aSeed: Long, tMs: Long, sizePx: Float, forceAct: Boolean): SillyAct {
+    val actPeriod = JuiceTimings.SILLY_ACT_MIN_MS +
+        (aSeed * ACT_SEED_MUL) % (JuiceTimings.SILLY_ACT_MAX_MS - JuiceTimings.SILLY_ACT_MIN_MS)
     val actT = (tMs + aSeed % actPeriod) % actPeriod
     val actKind = ((aSeed / ACT_KIND_DIV) % ACT_KIND_MOD).toInt()
     val active = actT < SILLY_ACT_MS || forceAct
-    val p =
-        if (forceAct) {
-            (tMs % SILLY_ACT_MS) / SILLY_ACT_MS
-        } else {
-            actT / SILLY_ACT_MS
-        }
+    val p = if (forceAct) {
+        (tMs % SILLY_ACT_MS) / SILLY_ACT_MS
+    } else {
+        actT / SILLY_ACT_MS
+    }
     return when {
         !active -> SillyAct(0f, 0f)
         actKind == 0 -> SillyAct(SPIN_DEGREES * p, 0f)
@@ -135,10 +108,7 @@ private fun idleSillyAct(
 }
 
 /** Deterministic pseudo-random in [0, 1] from (seed, index). */
-private fun hash01(
-    seed: Long,
-    idx: Long,
-): Float {
+private fun hash01(seed: Long, idx: Long): Float {
     var h = seed * HASH_A + idx * HASH_B
     h = (h xor (h ushr HASH_SHIFT_A)) * HASH_B
     h = (h xor (h ushr HASH_SHIFT_B)) * HASH_C

@@ -62,26 +62,11 @@ data class RaidVisitUiState(
 )
 
 sealed interface RaidVisitEvent {
-    data class PlayStealReplay(
-        val buddyName: String,
-        val attackerName: String,
-    ) : RaidVisitEvent
-
-    data class PlayRevengeReplay(
-        val buddyName: String,
-        val attackerName: String,
-    ) : RaidVisitEvent
-
+    data class PlayStealReplay(val buddyName: String, val attackerName: String) : RaidVisitEvent
+    data class PlayRevengeReplay(val buddyName: String, val attackerName: String) : RaidVisitEvent
     data object PlayStealFail : RaidVisitEvent
-
-    data class ShowMessage(
-        @StringRes val resId: Int,
-    ) : RaidVisitEvent
-
-    data class ShowCeremony(
-        val friendBaseName: String,
-    ) : RaidVisitEvent
-
+    data class ShowMessage(@StringRes val resId: Int) : RaidVisitEvent
+    data class ShowCeremony(val friendBaseName: String) : RaidVisitEvent
     data object NavigateBack : RaidVisitEvent
 }
 
@@ -107,61 +92,58 @@ sealed interface RaidVisitEvent {
  * handlers together behind the five public intents.
  */
 @HiltViewModel
-class RaidVisitViewModel
-    @Inject
-    constructor(
-        nearbyManager: NearbyManager,
-        gameRepository: GameRepository,
-        gameEngine: GameEngine,
-        p2pPrefs: P2pPrefs,
-        @IoDispatcher ioDispatcher: CoroutineDispatcher,
-        savedStateHandle: SavedStateHandle,
-    ) : ViewModel() {
-        private val core =
-            RaidVisitCore(
-                deps =
-                    RaidVisitDepsImpl(
-                        nearbyManager = nearbyManager,
-                        gameRepository = gameRepository,
-                        gameEngine = gameEngine,
-                        p2pPrefs = p2pPrefs,
-                        ioDispatcher = ioDispatcher,
-                    ),
-                scope = viewModelScope,
-                friendGuestId = savedStateHandle.get<String>("friendGuestId").orEmpty(),
-            )
-        private val setup = RaidVisitSetup(core)
-        private val stealFlow = RaidStealFlow(core, setup)
-        private val chat = RaidVisitChat(core)
+class RaidVisitViewModel @Inject constructor(
+    nearbyManager: NearbyManager,
+    gameRepository: GameRepository,
+    gameEngine: GameEngine,
+    p2pPrefs: P2pPrefs,
+    @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    savedStateHandle: SavedStateHandle,
+) : ViewModel() {
 
-        val uiState: StateFlow<RaidVisitUiState> = core.uiState
-        val events: Flow<RaidVisitEvent> = core.events
+    private val core = RaidVisitCore(
+        deps = RaidVisitDepsImpl(
+            nearbyManager = nearbyManager,
+            gameRepository = gameRepository,
+            gameEngine = gameEngine,
+            p2pPrefs = p2pPrefs,
+            ioDispatcher = ioDispatcher,
+        ),
+        scope = viewModelScope,
+        friendGuestId = savedStateHandle.get<String>("friendGuestId").orEmpty(),
+    )
+    private val setup = RaidVisitSetup(core)
+    private val stealFlow = RaidStealFlow(core, setup)
+    private val chat = RaidVisitChat(core)
 
-        init {
-            viewModelScope.launch(ioDispatcher) { setup.enterVisit() }
-        }
+    val uiState: StateFlow<RaidVisitUiState> = core.uiState
+    val events: Flow<RaidVisitEvent> = core.events
 
-        // ---- intents ----
-
-        fun onSlotSelected(slot: Int) {
-            core.updateState { it.copy(selectedSlot = slot, stealState = StealOutcome.IDLE, stealMessageRes = null) }
-        }
-
-        fun onRevengeClicked() {
-            core.updateState { it.copy(revengeArmed = true) }
-        }
-
-        fun onStealClicked() {
-            val slot = uiState.value.selectedSlot ?: return
-            if (uiState.value.stealState == StealOutcome.WORKING) return
-            viewModelScope.launch(core.ioDispatcher) { stealFlow.attemptSteal(slot) }
-        }
-
-        fun onPhraseSelected(index: Int) {
-            chat.onPhraseSelected(index)
-        }
-
-        fun onEmoteSelected(emoteId: String) {
-            chat.onEmoteSelected(emoteId)
-        }
+    init {
+        viewModelScope.launch(ioDispatcher) { setup.enterVisit() }
     }
+
+    // ---- intents ----
+
+    fun onSlotSelected(slot: Int) {
+        core.updateState { it.copy(selectedSlot = slot, stealState = StealOutcome.IDLE, stealMessageRes = null) }
+    }
+
+    fun onRevengeClicked() {
+        core.updateState { it.copy(revengeArmed = true) }
+    }
+
+    fun onStealClicked() {
+        val slot = uiState.value.selectedSlot ?: return
+        if (uiState.value.stealState == StealOutcome.WORKING) return
+        viewModelScope.launch(core.ioDispatcher) { stealFlow.attemptSteal(slot) }
+    }
+
+    fun onPhraseSelected(index: Int) {
+        chat.onPhraseSelected(index)
+    }
+
+    fun onEmoteSelected(emoteId: String) {
+        chat.onEmoteSelected(emoteId)
+    }
+}

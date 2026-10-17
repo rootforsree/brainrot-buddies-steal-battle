@@ -31,14 +31,13 @@ internal class ShopTransactions(
     private val scope: CoroutineScope,
     private val eventsChannel: Channel<ShopEvent>,
 ) {
+
     fun buySlot() {
         scope.launch {
-            val vault =
-                repository.observeVault().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
-            val slots =
-                repository.observeSlots().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val vault = repository.observeVault().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
+            val slots = repository.observeSlots().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
             val unlocked = slots.count { it.unlocked }
             val cost = engine.nextSlotCost(unlocked) ?: return@launch fail(ShopViewModel.MAXED)
             if (vault.coins < cost) return@launch fail(ShopViewModel.COINS_SHORT)
@@ -50,9 +49,8 @@ internal class ShopTransactions(
 
     fun buyMegaTicket() {
         scope.launch {
-            val vault =
-                repository.observeVault().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val vault = repository.observeVault().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
             if (vault.coins < MEGA_TICKET_COST) return@launch fail(ShopViewModel.COINS_SHORT)
             repository.upsertVault(vault.copy(coins = vault.coins - MEGA_TICKET_COST))
             repository.addTickets(TicketType.MEGA, 1)
@@ -62,9 +60,8 @@ internal class ShopTransactions(
 
     fun buyBaseShield() {
         scope.launch {
-            val vault =
-                repository.observeVault().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val vault = repository.observeVault().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
             if (vault.coins < BASE_SHIELD_COST) return@launch fail(ShopViewModel.COINS_SHORT)
             repository.upsertVault(vault.copy(coins = vault.coins - BASE_SHIELD_COST))
             repository.setBaseShieldUntil(System.currentTimeMillis() + SHIELD_DURATION_MS)
@@ -74,9 +71,8 @@ internal class ShopTransactions(
 
     fun buySlotShield(slotIndex: Int) {
         scope.launch {
-            val vault =
-                repository.observeVault().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val vault = repository.observeVault().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
             if (vault.coins < SLOT_SHIELD_COST) return@launch fail(ShopViewModel.COINS_SHORT)
             repository.upsertVault(vault.copy(coins = vault.coins - SLOT_SHIELD_COST))
             repository.setSlotShieldUntil(slotIndex, System.currentTimeMillis() + SHIELD_DURATION_MS)
@@ -86,22 +82,18 @@ internal class ShopTransactions(
 
     fun upgrade(uid: String) {
         scope.launch {
-            val buddies =
-                repository.observeOwnedBuddies().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
-            val buddy =
-                buddies.firstOrNull { it.uid == uid }
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val buddies = repository.observeOwnedBuddies().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
+            val buddy = buddies.firstOrNull { it.uid == uid }
+                ?: return@launch fail(ShopViewModel.GENERIC)
             if (buddy.level >= MAX_BUDDY_LEVEL) return@launch fail(ShopViewModel.MAXED)
-            val def =
-                BuddyCatalog.find(BuddyId(buddy.buddyId))
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val def = BuddyCatalog.find(BuddyId(buddy.buddyId))
+                ?: return@launch fail(ShopViewModel.GENERIC)
             val targetLevel = buddy.level + 1
             val coinCost = engine.upgradeCostCoins(def.baseCoinsPerSec, targetLevel)
             val biteCost = engine.upgradeCostBites(targetLevel)
-            val vault =
-                repository.observeVault().awaitData()
-                    ?: return@launch fail(ShopViewModel.GENERIC)
+            val vault = repository.observeVault().awaitData()
+                ?: return@launch fail(ShopViewModel.GENERIC)
             val bites = gamePrefs.buddyBites.first()
             if (vault.coins < coinCost) return@launch fail(ShopViewModel.COINS_SHORT)
             if (bites < biteCost) return@launch fail(ShopViewModel.BITES_SHORT)
@@ -112,10 +104,7 @@ internal class ShopTransactions(
         }
     }
 
-    fun equipHat(
-        hatId: String,
-        buddyUid: String,
-    ) {
+    fun equipHat(hatId: String, buddyUid: String) {
         scope.launch {
             val buddies = repository.observeOwnedBuddies().awaitData() ?: return@launch
             val buddy = buddies.firstOrNull { it.uid == buddyUid } ?: return@launch
@@ -139,10 +128,7 @@ internal class ShopTransactions(
      * rewarded-ad placement in the game; the manager enforces G-rated,
      * non-personalized, max 1 show per 30 minutes.
      */
-    fun watchAd(
-        kind: AdRewardKind,
-        activity: Activity,
-    ) {
+    fun watchAd(kind: AdRewardKind, activity: Activity) {
         adsManager.showAd(activity) {
             scope.launch { grantAdReward(kind) }
         }
@@ -159,7 +145,6 @@ internal class ShopTransactions(
                     ),
                 )
             }
-
             AdRewardKind.BITES -> {
                 val bites = gamePrefs.buddyBites.first()
                 gamePrefs.setBuddyBites(bites + AD_REWARD_BITES)
@@ -195,8 +180,9 @@ internal fun OwnedBuddyEntity.toUpgradeRow(engine: GameEngine): UpgradeRow? {
     )
 }
 
-private suspend fun <T> Flow<Result<T>>.awaitData(): T? =
-    when (val result = first { it !is Result.Loading }) {
+private suspend fun <T> Flow<Result<T>>.awaitData(): T? {
+    return when (val result = first { it !is Result.Loading }) {
         is Result.Success -> result.data
         else -> null
     }
+}

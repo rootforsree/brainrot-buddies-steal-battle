@@ -54,13 +54,12 @@ fun OnboardingFlow(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     OnboardingScreenContent(
         state = state,
-        actions =
-            OnboardingActions(
-                onPlay = viewModel::onPlayClicked,
-                onNameSelected = viewModel::onBaseNameSelected,
-                onStart = viewModel::onStartClicked,
-                onFailureDismissed = viewModel::onFailureDismissed,
-            ),
+        actions = OnboardingActions(
+            onPlay = viewModel::onPlayClicked,
+            onNameSelected = viewModel::onBaseNameSelected,
+            onStart = viewModel::onStartClicked,
+            onFailureDismissed = viewModel::onFailureDismissed,
+        ),
         modifier = modifier,
     )
 }
@@ -81,28 +80,22 @@ fun OnboardingScreenContent(
 ) {
     val colors = LocalAppColors.current
     Box(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(colors.groupedBackground)
-                .padding(AppDimens.spacing24),
+        modifier = modifier
+            .fillMaxSize()
+            .background(colors.groupedBackground)
+            .padding(AppDimens.spacing24),
         contentAlignment = Alignment.Center,
     ) {
         when (state.step) {
-            OnboardingStep.PLAY -> {
-                PlayStep(
-                    isWorking = state.isWorking,
-                    onPlay = actions.onPlay,
-                )
-            }
-
-            OnboardingStep.NAMING -> {
-                NamingStep(
-                    state = state,
-                    onNameSelected = actions.onNameSelected,
-                    onStart = actions.onStart,
-                )
-            }
+            OnboardingStep.PLAY -> PlayStep(
+                isWorking = state.isWorking,
+                onPlay = actions.onPlay,
+            )
+            OnboardingStep.NAMING -> NamingStep(
+                state = state,
+                onNameSelected = actions.onNameSelected,
+                onStart = actions.onStart,
+            )
         }
         if (state.failed) {
             FailureBanner(onDismiss = actions.onFailureDismissed)
@@ -114,14 +107,12 @@ fun OnboardingScreenContent(
 private fun BoxScope.FailureBanner(onDismiss: () -> Unit) {
     val colors = LocalAppColors.current
     Card(
-        modifier =
-            Modifier
-                .align(Alignment.BottomCenter)
-                .clickable(onClick = onDismiss),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = colors.destructive.copy(alpha = 0.15f),
-            ),
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .clickable(onClick = onDismiss),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.destructive.copy(alpha = 0.15f),
+        ),
     ) {
         Text(
             text = stringResource(R.string.shop_error),
@@ -133,10 +124,7 @@ private fun BoxScope.FailureBanner(onDismiss: () -> Unit) {
 }
 
 @Composable
-private fun PlayStep(
-    isWorking: Boolean,
-    onPlay: () -> Unit,
-) {
+private fun PlayStep(isWorking: Boolean, onPlay: () -> Unit) {
     val colors = LocalAppColors.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -162,10 +150,9 @@ private fun PlayStep(
         Button(
             onClick = onPlay,
             enabled = !isWorking,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 64.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp),
             shape = RoundedCornerShape(20.dp),
             colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
             contentPadding = PaddingValues(vertical = AppDimens.spacing16),
@@ -237,39 +224,34 @@ private fun ColumnScope.NameGrid(
         items(state.baseNames, key = { it }) { name ->
             val selected = state.selectedName == name
             Card(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(role = Role.RadioButton, onClick = { onNameSelected(name) }),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .clickable(role = Role.RadioButton, onClick = { onNameSelected(name) }),
                 shape = RoundedCornerShape(16.dp),
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor =
-                            if (selected) {
-                                colors.accent
-                            } else {
-                                colors.cardSurface
-                            },
-                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (selected) {
+                        colors.accent
+                    } else {
+                        colors.cardSurface
+                    },
+                ),
             ) {
                 Text(
                     text = name,
                     style = AppTypography.headline,
-                    color =
-                        if (selected) {
-                            Color.White
-                        } else {
-                            colors.label
-                        },
+                    color = if (selected) {
+                        Color.White
+                    } else {
+                        colors.label
+                    },
                     textAlign = TextAlign.Center,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                vertical = AppDimens.spacing16,
-                                horizontal = AppDimens.spacing8,
-                            ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            vertical = AppDimens.spacing16,
+                            horizontal = AppDimens.spacing8,
+                        ),
                 )
             }
         }
@@ -285,10 +267,9 @@ private fun StartButton(
     Button(
         onClick = onStart,
         enabled = state.selectedName != null && !state.isWorking,
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
     ) {

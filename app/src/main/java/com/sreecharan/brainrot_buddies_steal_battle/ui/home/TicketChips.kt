@@ -18,11 +18,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.sreecharan.brainrot_buddies_steal_battle.R
-import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
@@ -39,14 +39,13 @@ internal fun TicketChipsRow(
 ) {
     if (luckyTickets <= 0 && megaTickets <= 0) return
     Row(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .padding(
-                    start = AppDimens.screenMargin,
-                    end = AppDimens.screenMargin,
-                    top = AppDimens.spacing8,
-                ),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = AppDimens.screenMargin,
+                end = AppDimens.screenMargin,
+                top = AppDimens.spacing8,
+            ),
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
     ) {
         if (luckyTickets > 0) {
@@ -75,17 +74,17 @@ private fun TicketChip(
 ) {
     val colors = LocalAppColors.current
     Row(
-        modifier =
-            modifier
-                .clip(CircleShape)
-                .background(colors.cardSurface)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    role = Role.Button,
-                    onClickLabel = contentDescription,
-                    onClick = onClick,
-                ).padding(horizontal = AppDimens.spacing16, vertical = AppDimens.spacing12),
+        modifier = modifier
+            .clip(CircleShape)
+            .background(colors.cardSurface)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                role = Role.Button,
+                onClickLabel = contentDescription,
+                onClick = onClick,
+            )
+            .padding(horizontal = AppDimens.spacing16, vertical = AppDimens.spacing12),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing4),
     ) {

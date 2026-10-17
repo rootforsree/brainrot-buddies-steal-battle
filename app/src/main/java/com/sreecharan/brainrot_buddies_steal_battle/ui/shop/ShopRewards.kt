@@ -36,10 +36,9 @@ fun FreeCoinsSection(
     var kind by remember { mutableStateOf(AdRewardKind.COINS) }
     GroupCard {
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
             Text(
@@ -104,36 +103,31 @@ private fun RewardKindPicker(
             val isSelected = selected == option
             Button(
                 onClick = { onSelect(option) },
-                modifier =
-                    Modifier
-                        .weight(1f)
-                        .heightIn(min = 48.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp),
                 shape = AppShapes.capsule,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor =
-                            if (isSelected) {
-                                colors.accent
-                            } else {
-                                colors.accent.copy(alpha = 0.15f)
-                            },
-                        contentColor =
-                            if (isSelected) {
-                                Color.White
-                            } else {
-                                colors.accent
-                            },
-                    ),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSelected) {
+                        colors.accent
+                    } else {
+                        colors.accent.copy(alpha = 0.15f)
+                    },
+                    contentColor = if (isSelected) {
+                        Color.White
+                    } else {
+                        colors.accent
+                    },
+                ),
             ) {
                 Text(
-                    text =
-                        stringResource(
-                            if (option == AdRewardKind.COINS) {
-                                R.string.shop_free_coins
-                            } else {
-                                R.string.shop_free_bites
-                            },
-                        ),
+                    text = stringResource(
+                        if (option == AdRewardKind.COINS) {
+                            R.string.shop_free_coins
+                        } else {
+                            R.string.shop_free_bites
+                        },
+                    ),
                 )
             }
         }

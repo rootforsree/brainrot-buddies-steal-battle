@@ -44,9 +44,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
 import kotlin.math.PI
 import kotlin.math.sin
 
-// Public API: HomeScreen calls with all 6 arguments, so the parameter list
-// cannot be regrouped without breaking that call site.
-
 /**
  * Staged 5 s steal/revenge auto-replay, contract §2 V1.1. Staged for a
  * parent to film: slow-mo grab, comedy caption word-by-word, victim
@@ -55,6 +52,8 @@ import kotlin.math.sin
  * Builder D triggers these via raid records ([BaseGameData]); this file
  * only renders. Skippable freely: tap anywhere or the X button.
  */
+// Public API: HomeScreen calls with all 6 arguments, so the parameter list
+// cannot be regrouped without breaking that call site.
 @Suppress("LongParameterList")
 @Composable
 fun ReplayCanvas(
@@ -73,14 +72,13 @@ fun ReplayCanvas(
 
     Box(modifier = modifier.fillMaxSize()) {
         Canvas(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onSkip,
-                    ),
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onSkip,
+                ),
         ) {
             val t = frameTime.value - replay.startUptimeMs
             // Scrim fades in over the first 400 ms.
@@ -88,17 +86,16 @@ fun ReplayCanvas(
             drawRect(Color.Black.copy(alpha = scrimAlpha))
 
             val center = Offset(size.width / 2f, size.height * REPLAY_BUDDY_Y_FRAC)
-            val frame =
-                ReplayFrame(
-                    replay = replay,
-                    t = t,
-                    center = center,
-                    buddySize = REPLAY_BUDDY_DP.toPx(),
-                    buddyImage = buddyImage,
-                    textMeasurer = textMeasurer,
-                    colors = colors,
-                    reduceMotion = reduceMotion,
-                )
+            val frame = ReplayFrame(
+                replay = replay,
+                t = t,
+                center = center,
+                buddySize = REPLAY_BUDDY_DP.toPx(),
+                buddyImage = buddyImage,
+                textMeasurer = textMeasurer,
+                colors = colors,
+                reduceMotion = reduceMotion,
+            )
             if (replayPhase(t) == ReplayPhase.STING && !confettiFired) {
                 confettiFired = true
                 juice.confetti(center.x, center.y)
@@ -110,11 +107,10 @@ fun ReplayCanvas(
 
         IconButton(
             onClick = onSkip,
-            modifier =
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .size(48.dp),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .size(48.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Close,
@@ -127,13 +123,12 @@ fun ReplayCanvas(
 
 private enum class ReplayPhase { GRAB, CAPTION, REACTION, STING }
 
-private fun replayPhase(t: Long): ReplayPhase =
-    when {
-        t < REPLAY_GRAB_MS -> ReplayPhase.GRAB
-        t < REPLAY_CAPTION_MS -> ReplayPhase.CAPTION
-        t < REPLAY_REACTION_MS -> ReplayPhase.REACTION
-        else -> ReplayPhase.STING
-    }
+private fun replayPhase(t: Long): ReplayPhase = when {
+    t < REPLAY_GRAB_MS -> ReplayPhase.GRAB
+    t < REPLAY_CAPTION_MS -> ReplayPhase.CAPTION
+    t < REPLAY_REACTION_MS -> ReplayPhase.REACTION
+    else -> ReplayPhase.STING
+}
 
 /** One drawn frame of the staged replay. */
 private data class ReplayFrame(
@@ -217,12 +212,11 @@ private fun DrawScope.drawCaptionPhase(frame: ReplayFrame) {
 private fun DrawScope.drawReactionPhase(frame: ReplayFrame) {
     val replay = frame.replay
     val p = (frame.t - REPLAY_CAPTION_MS) / (REPLAY_REACTION_MS - REPLAY_CAPTION_MS).toFloat()
-    val wobble =
-        if (frame.reduceMotion) {
-            0f
-        } else {
-            sin(p * PI.toFloat() * REACTION_OSCILLATIONS) * REACTION_WOBBLE_PX * (1f - p)
-        }
+    val wobble = if (frame.reduceMotion) {
+        0f
+    } else {
+        sin(p * PI.toFloat() * REACTION_OSCILLATIONS) * REACTION_WOBBLE_PX * (1f - p)
+    }
     drawBuddySprite(
         BuddySpriteSpec(
             image = frame.buddyImage,
@@ -234,12 +228,11 @@ private fun DrawScope.drawReactionPhase(frame: ReplayFrame) {
         ),
     )
     drawCaptionCard(
-        text =
-            if (replay.kind == ReplayKind.STEAL) {
-                "${replay.otherBaseName} had NO idea!"
-            } else {
-                "${replay.otherBaseName} never saw it coming!"
-            },
+        text = if (replay.kind == ReplayKind.STEAL) {
+            "${replay.otherBaseName} had NO idea!"
+        } else {
+            "${replay.otherBaseName} never saw it coming!"
+        },
         fullText = replay.caption,
         center = Offset(size.width / 2f, size.height * CAPTION_CARD_Y_FRAC),
         colors = frame.colors,
@@ -250,9 +243,8 @@ private fun DrawScope.drawReactionPhase(frame: ReplayFrame) {
 /** 3500-5000 ms: catchphrase sting + confetti. */
 private fun DrawScope.drawStingPhase(frame: ReplayFrame) {
     val replay = frame.replay
-    val p =
-        ((frame.t - REPLAY_REACTION_MS) / (JuiceTimings.REPLAY_MS - REPLAY_REACTION_MS).toFloat())
-            .coerceIn(0f, 1f)
+    val p = ((frame.t - REPLAY_REACTION_MS) / (JuiceTimings.REPLAY_MS - REPLAY_REACTION_MS).toFloat())
+        .coerceIn(0f, 1f)
     val spin = if (frame.reduceMotion) 0f else SPIN_DEGREES * p
     drawBuddySprite(
         BuddySpriteSpec(
@@ -274,10 +266,7 @@ private fun DrawScope.drawStingPhase(frame: ReplayFrame) {
 }
 
 /** Per-frame delta in seconds for particle updates; 1/60 s on the first frame. */
-private fun frameDtSeconds(
-    lastFrame: MutableLongState,
-    frameTime: State<Long>,
-): Float {
+private fun frameDtSeconds(lastFrame: MutableLongState, frameTime: State<Long>): Float {
     val last = lastFrame.longValue
     lastFrame.longValue = frameTime.value
     return if (last == 0L) {
@@ -294,11 +283,10 @@ private fun DrawScope.drawReplayCaption(
     color: Color,
     textMeasurer: TextMeasurer,
 ) {
-    val label =
-        textMeasurer.measure(
-            AnnotatedString(text),
-            style = TextStyle(fontSize = (CAPTION_FONT_SP * scale).sp, fontWeight = FontWeight.Black, color = color),
-        )
+    val label = textMeasurer.measure(
+        AnnotatedString(text),
+        style = TextStyle(fontSize = (CAPTION_FONT_SP * scale).sp, fontWeight = FontWeight.Black, color = color),
+    )
     // Soft backing so it reads over any base.
     drawRoundRect(
         color = Color.Black.copy(alpha = 0.45f),
@@ -320,11 +308,10 @@ private fun DrawScope.drawCaptionCard(
     textMeasurer: TextMeasurer,
 ) {
     // Measure the full caption once so the card does not jump as words appear.
-    val full =
-        textMeasurer.measure(
-            AnnotatedString(fullText),
-            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.label),
-        )
+    val full = textMeasurer.measure(
+        AnnotatedString(fullText),
+        style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.label),
+    )
     val pad = CAPTION_PAD_DP.toPx()
     val cardW = (full.size.width + pad * 2f).coerceAtMost(size.width - 64.dp.toPx())
     val cardH = full.size.height + pad * 2f
@@ -334,11 +321,10 @@ private fun DrawScope.drawCaptionCard(
         size = Size(cardW, cardH),
         cornerRadius = CornerRadius(18.dp.toPx()),
     )
-    val visible =
-        textMeasurer.measure(
-            AnnotatedString(text),
-            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.label),
-        )
+    val visible = textMeasurer.measure(
+        AnnotatedString(text),
+        style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colors.label),
+    )
     drawText(
         visible,
         topLeft = center - Offset(visible.size.width / 2f, visible.size.height / 2f),

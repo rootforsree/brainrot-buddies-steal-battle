@@ -2,15 +2,12 @@ package com.sreecharan.brainrot_buddies_steal_battle.ui.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ChevronRight
@@ -24,35 +21,38 @@ import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
-import androidx.compose.material3.Slider
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.sreecharan.brainrot_buddies_steal_battle.R
-import com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode
-import com.sreecharan.brainrot_buddies_steal_battle.ui.components.GroupCard
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.RowDivider
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.SectionHeader
+import kotlinx.collections.immutable.persistentListOf
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.sreecharan.brainrot_buddies_steal_battle.R
+import com.sreecharan.brainrot_buddies_steal_battle.ui.components.GroupCard
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.SettingsRow
 import com.sreecharan.brainrot_buddies_steal_battle.ui.gifts.RedeemUiState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
-import kotlinx.collections.immutable.persistentListOf
-import kotlin.math.roundToInt
+import com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode
 
 /**
  * Settings list sections, extracted from SettingsScreen.kt to keep the
@@ -152,10 +152,9 @@ internal fun ThemeOptionRow(
             RadioButton(
                 selected = selected,
                 onClick = null,
-                colors =
-                    RadioButtonDefaults.colors(
-                        selectedColor = colors.accent,
-                    ),
+                colors = RadioButtonDefaults.colors(
+                    selectedColor = colors.accent,
+                ),
             )
         },
         selectableSelected = selected,
@@ -274,17 +273,16 @@ internal fun LazyListScope.grownUpSection(
             SettingsRow(
                 title = stringResource(R.string.settings_delete_title),
                 subtitle = stringResource(R.string.settings_delete_sub),
-                trailing =
-                    if (state.isDeleting) {
-                        {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = LocalAppColors.current.destructive,
-                            )
-                        }
-                    } else {
-                        null
-                    },
+                trailing = if (state.isDeleting) {
+                    {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = LocalAppColors.current.destructive,
+                        )
+                    }
+                } else {
+                    null
+                },
                 onClick = actions.onDeleteData,
             )
         }
@@ -337,13 +335,12 @@ internal fun AudioSliderRow(
     val colors = LocalAppColors.current
     var slider by remember(value) { mutableFloatStateOf(value.toFloat()) }
     Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = AppDimens.rowHorizontalPadding,
-                    vertical = AppDimens.rowVerticalPadding,
-                ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = AppDimens.rowHorizontalPadding,
+                vertical = AppDimens.rowVerticalPadding,
+            ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -383,27 +380,26 @@ internal fun AudioSliderRow(
     }
 }
 
-private val ThemeOptions =
-    persistentListOf(
-        ThemeOption(
-            mode = ThemeMode.SYSTEM,
-            titleRes = R.string.theme_system,
-            subtitleRes = R.string.theme_system_sub,
-            icon = Icons.Filled.SettingsBrightness,
-        ),
-        ThemeOption(
-            mode = ThemeMode.LIGHT,
-            titleRes = R.string.theme_light,
-            subtitleRes = R.string.theme_light_sub,
-            icon = Icons.Filled.LightMode,
-        ),
-        ThemeOption(
-            mode = ThemeMode.DARK,
-            titleRes = R.string.theme_dark,
-            subtitleRes = R.string.theme_dark_sub,
-            icon = Icons.Filled.DarkMode,
-        ),
-    )
+private val ThemeOptions = persistentListOf(
+    ThemeOption(
+        mode = ThemeMode.SYSTEM,
+        titleRes = R.string.theme_system,
+        subtitleRes = R.string.theme_system_sub,
+        icon = Icons.Filled.SettingsBrightness,
+    ),
+    ThemeOption(
+        mode = ThemeMode.LIGHT,
+        titleRes = R.string.theme_light,
+        subtitleRes = R.string.theme_light_sub,
+        icon = Icons.Filled.LightMode,
+    ),
+    ThemeOption(
+        mode = ThemeMode.DARK,
+        titleRes = R.string.theme_dark,
+        subtitleRes = R.string.theme_dark_sub,
+        icon = Icons.Filled.DarkMode,
+    ),
+)
 
 internal data class ThemeOption(
     val mode: ThemeMode,

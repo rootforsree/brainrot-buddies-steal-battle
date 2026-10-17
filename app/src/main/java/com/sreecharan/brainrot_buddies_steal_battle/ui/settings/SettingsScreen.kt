@@ -6,10 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
@@ -64,9 +64,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.gifts.RedeemUiState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTypography
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.LocalAppColors
+import kotlin.math.roundToInt
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
-import kotlin.math.roundToInt
 
 @Composable
 fun SettingsRoute(
@@ -90,46 +90,39 @@ fun SettingsRoute(
         state = state,
         redeemState = redeemState,
         message = message,
-        actions =
-            SettingsActions(
-                audio =
-                    AudioSettingsActions(
-                        onMusicVolume = viewModel::onMusicVolumeChanged,
-                        onSfxVolume = viewModel::onSfxVolumeChanged,
-                        onVoiceVolume = viewModel::onVoiceVolumeChanged,
-                    ),
-                appearance =
-                    AppearanceSettingsActions(
-                        onThemeModeSelected = viewModel::onThemeModeSelected,
-                    ),
-                general =
-                    GeneralSettingsActions(
-                        onHapticsToggled = viewModel::onHapticsToggled,
-                        onBennyHintsToggled = viewModel::onBennyHintsToggled,
-                    ),
-                redeem =
-                    RedeemSettingsActions(
-                        onRedeem = giftsViewModel::onRedeemCode,
-                        onRedeemConsumed = giftsViewModel::onRedeemResultConsumed,
-                    ),
-                grownUp =
-                    GrownUpSettingsActions(
-                        onForParents = onForParents,
-                        onPosterImport = onPosterImport,
-                        onRemoveAds = { removeAdsGate = true },
-                        onDeleteData = { deleteGate = true },
-                    ),
+        actions = SettingsActions(
+            audio = AudioSettingsActions(
+                onMusicVolume = viewModel::onMusicVolumeChanged,
+                onSfxVolume = viewModel::onSfxVolumeChanged,
+                onVoiceVolume = viewModel::onVoiceVolumeChanged,
             ),
+            appearance = AppearanceSettingsActions(
+                onThemeModeSelected = viewModel::onThemeModeSelected,
+            ),
+            general = GeneralSettingsActions(
+                onHapticsToggled = viewModel::onHapticsToggled,
+                onBennyHintsToggled = viewModel::onBennyHintsToggled,
+            ),
+            redeem = RedeemSettingsActions(
+                onRedeem = giftsViewModel::onRedeemCode,
+                onRedeemConsumed = giftsViewModel::onRedeemResultConsumed,
+            ),
+            grownUp = GrownUpSettingsActions(
+                onForParents = onForParents,
+                onPosterImport = onPosterImport,
+                onRemoveAds = { removeAdsGate = true },
+                onDeleteData = { deleteGate = true },
+            ),
+        ),
     )
 
     SettingsRouteDialogs(
-        gates =
-            SettingsGates(
-                removeAdsGate = removeAdsGate,
-                deleteGate = deleteGate,
-                onRemoveAdsGateChange = { removeAdsGate = it },
-                onDeleteGateChange = { deleteGate = it },
-            ),
+        gates = SettingsGates(
+            removeAdsGate = removeAdsGate,
+            deleteGate = deleteGate,
+            onRemoveAdsGateChange = { removeAdsGate = it },
+            onDeleteGateChange = { deleteGate = it },
+        ),
         viewModel = viewModel,
         activity = activity,
     )
@@ -153,21 +146,14 @@ private fun SettingsEventEffect(
         viewModel.events.collect { event ->
             onMessage(
                 when (event) {
-                    SettingsEvent.RemoveAdsPurchased -> {
+                    SettingsEvent.RemoveAdsPurchased ->
                         context.getString(R.string.settings_remove_ads_done)
-                    }
-
-                    SettingsEvent.BillingFailed -> {
+                    SettingsEvent.BillingFailed ->
                         context.getString(R.string.shop_error)
-                    }
-
-                    SettingsEvent.DataDeleted -> {
+                    SettingsEvent.DataDeleted ->
                         context.getString(R.string.settings_delete_done)
-                    }
-
-                    SettingsEvent.DeleteFailed -> {
+                    SettingsEvent.DeleteFailed ->
                         context.getString(R.string.settings_delete_failed)
-                    }
                 },
             )
         }
@@ -175,10 +161,7 @@ private fun SettingsEventEffect(
 }
 
 @Composable
-private fun MessageDismissEffect(
-    message: String?,
-    onDismiss: () -> Unit,
-) {
+private fun MessageDismissEffect(message: String?, onDismiss: () -> Unit) {
     LaunchedEffect(message) {
         if (message != null) {
             delay(MESSAGE_DISMISS_MS)
@@ -282,21 +265,19 @@ fun SettingsScreenContent(
                     )
                 },
                 scrollBehavior = scrollBehavior,
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = colors.groupedBackground,
-                        scrolledContainerColor = colors.groupedBackground,
-                    ),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = colors.groupedBackground,
+                    scrolledContainerColor = colors.groupedBackground,
+                ),
             )
         },
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
-            contentPadding =
-                PaddingValues(
-                    top = padding.calculateTopPadding(),
-                    bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
-                ),
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding(),
+                bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
+            ),
         ) {
             messageItem(message)
             audioSection(state, actions.audio)
@@ -313,3 +294,4 @@ fun SettingsScreenContent(
         }
     }
 }
+

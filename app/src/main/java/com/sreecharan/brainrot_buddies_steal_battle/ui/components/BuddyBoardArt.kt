@@ -96,17 +96,15 @@ internal fun DrawScope.drawBuddyWithPose(
     drawContext.canvas.restore()
 }
 
-private fun DrawScope.drawBuddySpriteInner(spec: BuddySpriteSpec) {
-    val image = spec.image
+private fun DrawScope.drawBuddySpriteInner(spec: BuddySpriteSpec) {    val image = spec.image
     if (image != null) {
         val dstSize = IntSize(spec.sizePx.toInt(), spec.sizePx.toInt())
         drawImage(
             image = image,
-            dstOffset =
-                IntOffset(
-                    (spec.center.x - spec.sizePx / HALF).toInt(),
-                    (spec.center.y - spec.sizePx / HALF).toInt(),
-                ),
+            dstOffset = IntOffset(
+                (spec.center.x - spec.sizePx / HALF).toInt(),
+                (spec.center.y - spec.sizePx / HALF).toInt(),
+            ),
             dstSize = dstSize,
             alpha = spec.alpha,
         )
@@ -123,21 +121,19 @@ private fun DrawScope.drawBuddySpriteInner(spec: BuddySpriteSpec) {
  */
 fun DrawScope.drawProceduralBuddy(spec: BuddySpriteSpec) {
     val radius = spec.sizePx / HALF
-    val bodyColor =
-        when (spec.rarity) {
-            Rarity.COMMON -> Color(COMMON_BODY)
-            Rarity.RARE -> Color(RARE_BODY)
-            Rarity.EPIC -> Color(EPIC_BODY)
-        }.copy(alpha = spec.alpha)
+    val bodyColor = when (spec.rarity) {
+        Rarity.COMMON -> Color(COMMON_BODY)
+        Rarity.RARE -> Color(RARE_BODY)
+        Rarity.EPIC -> Color(EPIC_BODY)
+    }.copy(alpha = spec.alpha)
     // Body hue shifts slightly per buddy so 34 commons do not look identical.
     val hueShift = (abs(spec.seed % HUE_SEED_RANGE) - HUE_SEED_HALF) / HUE_DIVISOR
-    val body =
-        Color(
-            red = (bodyColor.red + hueShift).coerceIn(0f, 1f),
-            green = bodyColor.green,
-            blue = (bodyColor.blue - hueShift).coerceIn(0f, 1f),
-            alpha = spec.alpha,
-        )
+    val body = Color(
+        red = (bodyColor.red + hueShift).coerceIn(0f, 1f),
+        green = bodyColor.green,
+        blue = (bodyColor.blue - hueShift).coerceIn(0f, 1f),
+        alpha = spec.alpha,
+    )
     drawCircle(body, radius, spec.center)
 
     val eyeY = spec.center.y - radius * EYE_Y_FRAC
@@ -170,9 +166,7 @@ fun DrawScope.drawProceduralBuddy(spec: BuddySpriteSpec) {
         sweepAngle = SMILE_SWEEP_DEG,
         useCenter = false,
         topLeft = Offset(spec.center.x - radius * SMILE_W_FRAC, spec.center.y - radius * SMILE_Y_FRAC),
-        size =
-            androidx.compose.ui.geometry
-                .Size(radius * SMILE_W, radius * SMILE_H),
+        size = androidx.compose.ui.geometry.Size(radius * SMILE_W, radius * SMILE_H),
         style = Stroke(width = radius * SMILE_STROKE_FRAC),
     )
 }

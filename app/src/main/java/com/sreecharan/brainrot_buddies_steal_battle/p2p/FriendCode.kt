@@ -12,6 +12,7 @@ import java.util.Random
  * same guest ID and needs no storage.
  */
 object FriendCode {
+
     const val LENGTH = 6
     const val CHARSET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
@@ -28,18 +29,16 @@ object FriendCode {
      * 6 bytes mapped into the charset). Shown behind the parent gate.
      */
     fun deriveFrom(guestId: String): String {
-        val digest =
-            MessageDigest
-                .getInstance("SHA-256")
-                .digest(guestId.toByteArray(Charsets.UTF_8))
-        val chars =
-            CharArray(LENGTH) { i ->
-                CHARSET[(digest[i].toInt() and BYTE_MASK) % CHARSET.length]
-            }
+        val digest = MessageDigest.getInstance("SHA-256")
+            .digest(guestId.toByteArray(Charsets.UTF_8))
+        val chars = CharArray(LENGTH) { i ->
+            CHARSET[(digest[i].toInt() and BYTE_MASK) % CHARSET.length]
+        }
         return chars.concatToString()
     }
 
-    fun isValid(code: String): Boolean = code.length == LENGTH && code.all { it in CHARSET }
+    fun isValid(code: String): Boolean =
+        code.length == LENGTH && code.all { it in CHARSET }
 
     /** Masks a signed byte to its unsigned value when indexing the charset. */
     private const val BYTE_MASK = 0xFF

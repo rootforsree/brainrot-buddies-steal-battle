@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CalendarDao {
+
     @Query("SELECT * FROM calendar WHERE id = 1")
     fun observe(): Flow<CalendarEntity?>
 

@@ -15,9 +15,7 @@ enum class AudioChannel {
  * ambient ticks > music bed. Higher [priority] wins when the 8-sound cap
  * forces an eviction.
  */
-enum class SoundKind(
-    val priority: Int,
-) {
+enum class SoundKind(val priority: Int) {
     MUSIC(PRIORITY_MUSIC),
     AMBIENT(PRIORITY_AMBIENT),
     REWARD(PRIORITY_REWARD),

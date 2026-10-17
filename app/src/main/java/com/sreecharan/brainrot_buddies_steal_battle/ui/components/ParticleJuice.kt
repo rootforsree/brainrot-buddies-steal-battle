@@ -14,9 +14,7 @@ import kotlin.random.Random
  * Struct-of-arrays storage, zero allocation in [update] and [draw]:
  * dead particles are swap-removed, live ones are plain float math.
  */
-class ParticleSystem(
-    val capacity: Int = JuiceTimings.PARTICLE_MAX,
-) {
+class ParticleSystem(val capacity: Int = JuiceTimings.PARTICLE_MAX) {
     private val x = FloatArray(capacity)
     private val y = FloatArray(capacity)
     private val vx = FloatArray(capacity)
@@ -66,16 +64,11 @@ class ParticleSystem(
             life[i] -= dtSeconds * MILLIS_PER_SECOND_F
             if (life[i] <= 0f) {
                 val last = --aliveCount
-                x[i] = x[last]
-                y[i] = y[last]
-                vx[i] = vx[last]
-                vy[i] = vy[last]
-                life[i] = life[last]
-                maxLife[i] = maxLife[last]
-                size[i] = size[last]
-                color[i] = color[last]
-                gravity[i] = gravity[last]
-                drag[i] = drag[last]
+                x[i] = x[last]; y[i] = y[last]
+                vx[i] = vx[last]; vy[i] = vy[last]
+                life[i] = life[last]; maxLife[i] = maxLife[last]
+                size[i] = size[last]; color[i] = color[last]
+                gravity[i] = gravity[last]; drag[i] = drag[last]
                 shape[i] = shape[last]
                 continue
             }
@@ -95,19 +88,12 @@ class ParticleSystem(
             val px = x[i]
             val py = y[i]
             when (shape[i]) {
-                ParticleShape.CIRCLE.ordinal -> {
-                    scope.drawCircle(c, size[i] / 2f, Offset(px, py))
-                }
-
-                ParticleShape.SQUARE.ordinal -> {
-                    scope.drawRect(
-                        c,
-                        Offset(px - size[i] / 2f, py - size[i] / 2f),
-                        androidx.compose.ui.geometry
-                            .Size(size[i], size[i] * SQUARE_HEIGHT_FRAC),
-                    )
-                }
-
+                ParticleShape.CIRCLE.ordinal -> scope.drawCircle(c, size[i] / 2f, Offset(px, py))
+                ParticleShape.SQUARE.ordinal -> scope.drawRect(
+                    c,
+                    Offset(px - size[i] / 2f, py - size[i] / 2f),
+                    androidx.compose.ui.geometry.Size(size[i], size[i] * SQUARE_HEIGHT_FRAC),
+                )
                 else -> {
                     val half = size[i]
                     val dx = vx[i]
@@ -160,7 +146,6 @@ data class BurstSpec(
 ) {
     // IntArray breaks data-class equals; bursts are recipes, identity is fine.
     override fun equals(other: Any?): Boolean = this === other
-
     override fun hashCode(): Int = System.identityHashCode(this)
 }
 
@@ -175,108 +160,69 @@ object Bursts {
     private const val DUST = 0xFFD7CCC8.toInt()
     private const val BLUE = 0xFF448AFF.toInt()
 
-    val CONFETTI =
-        BurstSpec(
-            count = 16,
-            colors = intArrayOf(WHITE, GOLD, SKY, PINK, MINT),
-            speedMin = 120f,
-            speedMax = 420f,
-            lifeMinMs = 700,
-            lifeMaxMs = 1300,
-            sizeMinPx = 6f,
-            sizeMaxPx = 12f,
-            gravityPxPerSec2 = 900f,
-            dragPerSecond = 1.2f,
-            shape = ParticleShape.SQUARE,
-            upBias = 260f,
-        )
-    val DUST_POOF =
-        BurstSpec(
-            count = 8,
-            colors = intArrayOf(DUST, WHITE),
-            speedMin = 40f,
-            speedMax = 160f,
-            lifeMinMs = 400,
-            lifeMaxMs = 700,
-            sizeMinPx = 8f,
-            sizeMaxPx = 18f,
-            gravityPxPerSec2 = -60f,
-            dragPerSecond = 2.5f,
-            shape = ParticleShape.CIRCLE,
-            spreadPx = 24f,
-        )
-    val COINS =
-        BurstSpec(
-            count = 12,
-            colors = intArrayOf(GOLD, GOLD_DEEP, WHITE),
-            speedMin = 100f,
-            speedMax = 380f,
-            lifeMinMs = 600,
-            lifeMaxMs = 1100,
-            sizeMinPx = 8f,
-            sizeMaxPx = 14f,
-            gravityPxPerSec2 = 1100f,
-            dragPerSecond = 0.6f,
-            shape = ParticleShape.CIRCLE,
-            upBias = 320f,
-        )
-    val STARS =
-        BurstSpec(
-            count = 12,
-            colors = intArrayOf(WHITE, GOLD),
-            speedMin = 80f,
-            speedMax = 300f,
-            lifeMinMs = 500,
-            lifeMaxMs = 900,
-            sizeMinPx = 10f,
-            sizeMaxPx = 20f,
-            gravityPxPerSec2 = 200f,
-            dragPerSecond = 1.8f,
-            shape = ParticleShape.SPARK,
-        )
-    val BLUE_RING =
-        BurstSpec(
-            count = 14,
-            colors = intArrayOf(BLUE, SKY, WHITE),
-            speedMin = 200f,
-            speedMax = 340f,
-            lifeMinMs = 500,
-            lifeMaxMs = 800,
-            sizeMinPx = 6f,
-            sizeMaxPx = 12f,
-            gravityPxPerSec2 = 0f,
-            dragPerSecond = 2.2f,
-            shape = ParticleShape.CIRCLE,
-        )
-    val GOLD_RAYS =
-        BurstSpec(
-            count = 20,
-            colors = intArrayOf(GOLD, WHITE, GOLD_DEEP),
-            speedMin = 260f,
-            speedMax = 520f,
-            lifeMinMs = 600,
-            lifeMaxMs = 1000,
-            sizeMinPx = 12f,
-            sizeMaxPx = 24f,
-            gravityPxPerSec2 = 0f,
-            dragPerSecond = 2.6f,
-            shape = ParticleShape.SPARK,
-        )
-    val RED_POOF =
-        BurstSpec(
-            count = 10,
-            colors = intArrayOf(0xFFFF8A80.toInt(), 0xFFFFAB91.toInt(), WHITE),
-            speedMin = 60f,
-            speedMax = 220f,
-            lifeMinMs = 400,
-            lifeMaxMs = 700,
-            sizeMinPx = 10f,
-            sizeMaxPx = 20f,
-            gravityPxPerSec2 = 100f,
-            dragPerSecond = 2.4f,
-            shape = ParticleShape.CIRCLE,
-            spreadPx = 20f,
-        )
+    val CONFETTI = BurstSpec(
+        count = 16,
+        colors = intArrayOf(WHITE, GOLD, SKY, PINK, MINT),
+        speedMin = 120f, speedMax = 420f,
+        lifeMinMs = 700, lifeMaxMs = 1300,
+        sizeMinPx = 6f, sizeMaxPx = 12f,
+        gravityPxPerSec2 = 900f, dragPerSecond = 1.2f,
+        shape = ParticleShape.SQUARE, upBias = 260f,
+    )
+    val DUST_POOF = BurstSpec(
+        count = 8,
+        colors = intArrayOf(DUST, WHITE),
+        speedMin = 40f, speedMax = 160f,
+        lifeMinMs = 400, lifeMaxMs = 700,
+        sizeMinPx = 8f, sizeMaxPx = 18f,
+        gravityPxPerSec2 = -60f, dragPerSecond = 2.5f,
+        shape = ParticleShape.CIRCLE, spreadPx = 24f,
+    )
+    val COINS = BurstSpec(
+        count = 12,
+        colors = intArrayOf(GOLD, GOLD_DEEP, WHITE),
+        speedMin = 100f, speedMax = 380f,
+        lifeMinMs = 600, lifeMaxMs = 1100,
+        sizeMinPx = 8f, sizeMaxPx = 14f,
+        gravityPxPerSec2 = 1100f, dragPerSecond = 0.6f,
+        shape = ParticleShape.CIRCLE, upBias = 320f,
+    )
+    val STARS = BurstSpec(
+        count = 12,
+        colors = intArrayOf(WHITE, GOLD),
+        speedMin = 80f, speedMax = 300f,
+        lifeMinMs = 500, lifeMaxMs = 900,
+        sizeMinPx = 10f, sizeMaxPx = 20f,
+        gravityPxPerSec2 = 200f, dragPerSecond = 1.8f,
+        shape = ParticleShape.SPARK,
+    )
+    val BLUE_RING = BurstSpec(
+        count = 14,
+        colors = intArrayOf(BLUE, SKY, WHITE),
+        speedMin = 200f, speedMax = 340f,
+        lifeMinMs = 500, lifeMaxMs = 800,
+        sizeMinPx = 6f, sizeMaxPx = 12f,
+        gravityPxPerSec2 = 0f, dragPerSecond = 2.2f,
+        shape = ParticleShape.CIRCLE,
+    )
+    val GOLD_RAYS = BurstSpec(
+        count = 20,
+        colors = intArrayOf(GOLD, WHITE, GOLD_DEEP),
+        speedMin = 260f, speedMax = 520f,
+        lifeMinMs = 600, lifeMaxMs = 1000,
+        sizeMinPx = 12f, sizeMaxPx = 24f,
+        gravityPxPerSec2 = 0f, dragPerSecond = 2.6f,
+        shape = ParticleShape.SPARK,
+    )
+    val RED_POOF = BurstSpec(
+        count = 10,
+        colors = intArrayOf(0xFFFF8A80.toInt(), 0xFFFFAB91.toInt(), WHITE),
+        speedMin = 60f, speedMax = 220f,
+        lifeMinMs = 400, lifeMaxMs = 700,
+        sizeMinPx = 10f, sizeMaxPx = 20f,
+        gravityPxPerSec2 = 100f, dragPerSecond = 2.4f,
+        shape = ParticleShape.CIRCLE, spreadPx = 20f,
+    )
 }
 
 /**
@@ -289,50 +235,23 @@ class JuiceController {
     val shake = TraumaShake()
     val flashGuard = FlashGuard()
 
-    fun confetti(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.CONFETTI)
-
-    fun dust(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.DUST_POOF)
-
-    fun coins(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.COINS)
-
-    fun stars(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.STARS)
-
-    fun blueRing(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.BLUE_RING)
+    fun confetti(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.CONFETTI)
+    fun dust(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.DUST_POOF)
+    fun coins(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.COINS)
+    fun stars(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.STARS)
+    fun blueRing(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.BLUE_RING)
 
     /** Epic gold rays: gated by the photosensitivity guard (small area, never red). */
-    fun goldRays(
-        cx: Float,
-        cy: Float,
-        canvasAreaPx: Float,
-    ) {
-        val areaFraction =
-            (GOLD_RAYS_RADIUS_PX * GOLD_RAYS_RADIUS_PX * Math.PI.toFloat()) /
-                canvasAreaPx.coerceAtLeast(1f)
+    fun goldRays(cx: Float, cy: Float, canvasAreaPx: Float) {
+        val areaFraction = (GOLD_RAYS_RADIUS_PX * GOLD_RAYS_RADIUS_PX * Math.PI.toFloat()) /
+            canvasAreaPx.coerceAtLeast(1f)
         if (flashGuard.allowFlash(areaFraction, isRed = false)) {
             particles.burst(cx, cy, Bursts.GOLD_RAYS)
         }
     }
 
     /** Comedy poof for steals. Desaturated warm tones: never a red flash. */
-    fun stealPoof(
-        cx: Float,
-        cy: Float,
-    ) = particles.burst(cx, cy, Bursts.RED_POOF)
+    fun stealPoof(cx: Float, cy: Float) = particles.burst(cx, cy, Bursts.RED_POOF)
 
     companion object {
         private const val GOLD_RAYS_RADIUS_PX = 160f

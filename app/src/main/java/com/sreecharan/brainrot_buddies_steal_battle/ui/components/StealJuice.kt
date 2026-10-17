@@ -68,16 +68,15 @@ fun StealJuiceOverlay(
                 poofFired = true
                 request.juice.stealPoof(center.x, center.y)
             }
-            val frame =
-                StealFrame(
-                    anim = anim,
-                    t = t,
-                    center = center,
-                    buddySize = buddySize,
-                    buddyImage = buddyImage,
-                    textMeasurer = textMeasurer,
-                    reduceMotion = request.reduceMotion,
-                )
+            val frame = StealFrame(
+                anim = anim,
+                t = t,
+                center = center,
+                buddySize = buddySize,
+                buddyImage = buddyImage,
+                textMeasurer = textMeasurer,
+                reduceMotion = request.reduceMotion,
+            )
             drawStealPhase(frame)
             request.juice.particles.update(frameDtSeconds(lastFrame, request.frameTime))
             request.juice.particles.draw(this)
@@ -87,16 +86,12 @@ fun StealJuiceOverlay(
 
 private enum class StealPhase { HIT_STOP, STRETCH, ARC, FAIL }
 
-private fun stealPhase(
-    success: Boolean,
-    t: Long,
-): StealPhase =
-    when {
-        !success -> StealPhase.FAIL
-        t < JuiceTimings.STEAL_HITSTOP_MS -> StealPhase.HIT_STOP
-        t < STRETCH_END_MS -> StealPhase.STRETCH
-        else -> StealPhase.ARC
-    }
+private fun stealPhase(success: Boolean, t: Long): StealPhase = when {
+    !success -> StealPhase.FAIL
+    t < JuiceTimings.STEAL_HITSTOP_MS -> StealPhase.HIT_STOP
+    t < STRETCH_END_MS -> StealPhase.STRETCH
+    else -> StealPhase.ARC
+}
 
 /** One drawn frame of the steal animation. */
 private data class StealFrame(
@@ -145,35 +140,30 @@ private fun DrawScope.drawStretch(frame: StealFrame) {
             scaleY = 1f + STRETCH_SQUASH_Y * p,
         ),
     )
-    val label =
-        frame.textMeasurer.measure(
-            AnnotatedString("Yoink!"),
-            style =
-                TextStyle(
-                    fontSize = (YOINK_BASE_SP + YOINK_GROW_SP * p).sp,
-                    fontWeight = FontWeight.Black,
-                    color = GOLD,
-                ),
-        )
+    val label = frame.textMeasurer.measure(
+        AnnotatedString("Yoink!"),
+        style = TextStyle(
+            fontSize = (YOINK_BASE_SP + YOINK_GROW_SP * p).sp,
+            fontWeight = FontWeight.Black,
+            color = GOLD,
+        ),
+    )
     drawText(
         label,
-        topLeft =
-            frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
-                Offset(0f, -frame.buddySize * YOINK_LABEL_DY_FRAC),
+        topLeft = frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
+            Offset(0f, -frame.buddySize * YOINK_LABEL_DY_FRAC),
     )
 }
 
 /** Arc into the sack (bottom-right) with a trail. */
 private fun DrawScope.drawSackArc(frame: StealFrame) {
-    val p =
-        ((frame.t - STRETCH_END_MS) / (JuiceTimings.STEAL_SUCCESS_MS - STRETCH_END_MS).toFloat())
-            .coerceIn(0f, 1f)
+    val p = ((frame.t - STRETCH_END_MS) / (JuiceTimings.STEAL_SUCCESS_MS - STRETCH_END_MS).toFloat())
+        .coerceIn(0f, 1f)
     val sack = Offset(size.width * SACK_X_FRAC, size.height * SACK_Y_FRAC)
-    val pos =
-        Offset(
-            frame.center.x + (sack.x - frame.center.x) * p,
-            frame.center.y + (sack.y - frame.center.y) * p - sin(p * PI.toFloat()) * ARC_LIFT_DP.toPx(),
-        )
+    val pos = Offset(
+        frame.center.x + (sack.x - frame.center.x) * p,
+        frame.center.y + (sack.y - frame.center.y) * p - sin(p * PI.toFloat()) * ARC_LIFT_DP.toPx(),
+    )
     val shrink = 1f - SACK_SHRINK * p
     drawCircle(
         color = SACK_BROWN.copy(alpha = SACK_ALPHA),
@@ -196,22 +186,20 @@ private fun DrawScope.drawSackArc(frame: StealFrame) {
 /** Fail: dome spring-wobble ripple + taunt wiggle + "Shielded!". */
 private fun DrawScope.drawFailPhase(frame: StealFrame) {
     val p = (frame.t / JuiceTimings.STEAL_FAIL_MS.toFloat()).coerceIn(0f, 1f)
-    val wobble =
-        if (frame.reduceMotion) {
-            0f
-        } else {
-            sin(p * PI.toFloat() * FAIL_OSCILLATIONS) * (1f - p)
-        }
+    val wobble = if (frame.reduceMotion) {
+        0f
+    } else {
+        sin(p * PI.toFloat() * FAIL_OSCILLATIONS) * (1f - p)
+    }
     drawArc(
         color = SHIELD_BLUE.copy(alpha = SHIELD_DOME_ALPHA),
         startAngle = DOME_START_DEG,
         sweepAngle = DOME_SWEEP_DEG,
         useCenter = false,
-        topLeft =
-            Offset(
-                frame.center.x - frame.buddySize * DOME_X_FRAC,
-                frame.center.y - frame.buddySize * DOME_Y_FRAC,
-            ),
+        topLeft = Offset(
+            frame.center.x - frame.buddySize * DOME_X_FRAC,
+            frame.center.y - frame.buddySize * DOME_Y_FRAC,
+        ),
         size = Size(frame.buddySize * DOME_SIZE_FRAC, frame.buddySize * DOME_SIZE_FRAC),
         style = Stroke(width = (DOME_STROKE_BASE + DOME_STROKE_WOBBLE * wobble).dp.toPx()),
     )
@@ -226,29 +214,23 @@ private fun DrawScope.drawFailPhase(frame: StealFrame) {
         ),
     )
     val pop = easeOutBackTiny(p)
-    val label =
-        frame.textMeasurer.measure(
-            AnnotatedString("Shielded!"),
-            style =
-                TextStyle(
-                    fontSize = (SHIELDED_BASE_SP * pop).sp,
-                    fontWeight = FontWeight.Black,
-                    color = SHIELD_BLUE,
-                ),
-        )
+    val label = frame.textMeasurer.measure(
+        AnnotatedString("Shielded!"),
+        style = TextStyle(
+            fontSize = (SHIELDED_BASE_SP * pop).sp,
+            fontWeight = FontWeight.Black,
+            color = SHIELD_BLUE,
+        ),
+    )
     drawText(
         label,
-        topLeft =
-            frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
-                Offset(0f, -frame.buddySize * SHIELDED_LABEL_DY_FRAC),
+        topLeft = frame.center - Offset(label.size.width / 2f, label.size.height / 2f) +
+            Offset(0f, -frame.buddySize * SHIELDED_LABEL_DY_FRAC),
     )
 }
 
 /** Per-frame delta in seconds for particle updates; 1/60 s on the first frame. */
-private fun frameDtSeconds(
-    lastFrame: MutableLongState,
-    frameTime: State<Long>,
-): Float {
+private fun frameDtSeconds(lastFrame: MutableLongState, frameTime: State<Long>): Float {
     val last = lastFrame.longValue
     lastFrame.longValue = frameTime.value
     return if (last == 0L) {

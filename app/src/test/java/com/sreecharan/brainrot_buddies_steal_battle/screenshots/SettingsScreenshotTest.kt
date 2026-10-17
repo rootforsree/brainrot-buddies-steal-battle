@@ -1,5 +1,6 @@
 package com.sreecharan.brainrot_buddies_steal_battle.screenshots
 
+import androidx.compose.ui.test.junit4.createComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.ThemeMode
 import com.sreecharan.brainrot_buddies_steal_battle.ui.gifts.RedeemUiState
@@ -12,10 +13,10 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsActions
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsScreenContent
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsUiState
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
@@ -25,8 +26,11 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [35])
 class SettingsScreenshotTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
     @Test
     fun settings_light() {
         capture(
@@ -45,49 +49,40 @@ class SettingsScreenshotTest {
         )
     }
 
-    private fun capture(
-        darkTheme: Boolean,
-        state: SettingsUiState,
-        name: String,
-    ) {
-        captureRoboImage(filePath = name) {
+    private fun capture(darkTheme: Boolean, state: SettingsUiState, name: String) {
+        composeRule.setContent {
             AppTheme(darkTheme = darkTheme, hapticsEnabled = false) {
                 SettingsScreenContent(
                     state = state,
                     redeemState = RedeemUiState(),
                     message = null,
-                    actions =
-                        SettingsActions(
-                            audio =
-                                AudioSettingsActions(
-                                    onMusicVolume = {},
-                                    onSfxVolume = {},
-                                    onVoiceVolume = {},
-                                ),
-                            appearance =
-                                AppearanceSettingsActions(
-                                    onThemeModeSelected = {},
-                                ),
-                            general =
-                                GeneralSettingsActions(
-                                    onHapticsToggled = {},
-                                    onBennyHintsToggled = {},
-                                ),
-                            redeem =
-                                RedeemSettingsActions(
-                                    onRedeem = {},
-                                    onRedeemConsumed = {},
-                                ),
-                            grownUp =
-                                GrownUpSettingsActions(
-                                    onForParents = {},
-                                    onPosterImport = {},
-                                    onRemoveAds = {},
-                                    onDeleteData = {},
-                                ),
+                    actions = SettingsActions(
+                        audio = AudioSettingsActions(
+                            onMusicVolume = {},
+                            onSfxVolume = {},
+                            onVoiceVolume = {},
                         ),
+                        appearance = AppearanceSettingsActions(
+                            onThemeModeSelected = {},
+                        ),
+                        general = GeneralSettingsActions(
+                            onHapticsToggled = {},
+                            onBennyHintsToggled = {},
+                        ),
+                        redeem = RedeemSettingsActions(
+                            onRedeem = {},
+                            onRedeemConsumed = {},
+                        ),
+                        grownUp = GrownUpSettingsActions(
+                            onForParents = {},
+                            onPosterImport = {},
+                            onRemoveAds = {},
+                            onDeleteData = {},
+                        ),
+                    ),
                 )
             }
         }
+        composeRule.captureRoboImage(name)
     }
 }

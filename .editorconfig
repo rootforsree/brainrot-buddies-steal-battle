@@ -3,13 +3,9 @@ root = true
 [*.{kt,kts}]
 indent_size = 4
 max_line_length = 120
-ktlint_code_style = ktlint_official
+ktlint_code_style = official
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
 ij_kotlin_imports_layout = *,java.**,javax.**,kotlin.**,^
 # The applicationId/package uses underscores (com.sreecharan.brainrot_buddies_steal_battle);
 # renaming would break the Play listing, so the package-name rule stays off.
 ktlint_standard_package-name = disabled
-# @Composable functions use PascalCase by Compose convention (detekt's
-# FunctionNaming already tolerates this); ktlint's stock rule cannot, so it
-# stays off rather than flagging every composable in the codebase.
-ktlint_standard_function-naming = disabled

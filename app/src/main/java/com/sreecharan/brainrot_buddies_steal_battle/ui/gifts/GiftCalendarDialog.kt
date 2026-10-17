@@ -76,13 +76,12 @@ fun GiftCalendarRoute(
     GiftCalendarContent(
         state = state,
         toast = toast,
-        actions =
-            GiftCalendarActions(
-                onClaimToday = viewModel::onClaimToday,
-                onCatchUp = viewModel::onCatchUpConfirmed,
-                onClaimWeekly = viewModel::onClaimWeekly,
-                onDismiss = onDismiss,
-            ),
+        actions = GiftCalendarActions(
+            onClaimToday = viewModel::onClaimToday,
+            onCatchUp = viewModel::onCatchUpConfirmed,
+            onClaimWeekly = viewModel::onClaimWeekly,
+            onDismiss = onDismiss,
+        ),
     )
 }
 
@@ -117,36 +116,28 @@ private fun GiftToastEffect(
         viewModel.events.collect { event ->
             onToast(
                 when (event) {
-                    is GiftsEvent.GiftClaimed -> {
+                    is GiftsEvent.GiftClaimed ->
                         context.getString(R.string.gifts_opened_day, event.day)
-                    }
-
-                    GiftsEvent.CatchUpDone -> {
+                    GiftsEvent.CatchUpDone ->
                         context.getString(R.string.shop_bought)
-                    }
-
-                    is GiftsEvent.WeeklyClaimed -> {
+                    is GiftsEvent.WeeklyClaimed ->
                         context.getString(R.string.gifts_weekly_got, event.buddyName)
-                    }
-
-                    GiftsEvent.ActionFailed -> {
+                    GiftsEvent.ActionFailed ->
                         context.getString(R.string.shop_error)
-                    }
                 },
             )
         }
     }
 }
 
-private fun dayRewardRes(day: Int): Int =
-    when (day) {
-        REWARD_DAY_1 -> R.string.gifts_reward_day1
-        REWARD_DAY_7 -> R.string.gifts_reward_day7
-        REWARD_DAY_14 -> R.string.gifts_reward_day14
-        REWARD_DAY_21 -> R.string.gifts_reward_day21
-        REWARD_DAY_30 -> R.string.gifts_reward_day30
-        else -> R.string.gifts_reward_surprise
-    }
+private fun dayRewardRes(day: Int): Int = when (day) {
+    REWARD_DAY_1 -> R.string.gifts_reward_day1
+    REWARD_DAY_7 -> R.string.gifts_reward_day7
+    REWARD_DAY_14 -> R.string.gifts_reward_day14
+    REWARD_DAY_21 -> R.string.gifts_reward_day21
+    REWARD_DAY_30 -> R.string.gifts_reward_day30
+    else -> R.string.gifts_reward_surprise
+}
 
 @Composable
 fun GiftCalendarContent(
@@ -161,12 +152,11 @@ fun GiftCalendarContent(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .background(colors.groupedBackground)
-                    .padding(AppDimens.spacing16)
-                    .verticalScroll(rememberScrollState()),
+            modifier = modifier
+                .fillMaxSize()
+                .background(colors.groupedBackground)
+                .padding(AppDimens.spacing16)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
         ) {
             GiftCalendarHeader(onDismiss = actions.onDismiss)
@@ -195,9 +185,8 @@ fun GiftCalendarContent(
                             Box(modifier = Modifier.weight(1f)) {
                                 DayCell(
                                     day = day,
-                                    claimed =
-                                        day < state.upcomingDay ||
-                                            (day == state.upcomingDay && !state.canClaimToday),
+                                    claimed = day < state.upcomingDay ||
+                                        (day == state.upcomingDay && !state.canClaimToday),
                                     isToday = day == state.upcomingDay,
                                 )
                             }
@@ -248,36 +237,30 @@ private fun CalendarToast(toast: String?) {
     val colors = LocalAppColors.current
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = colors.accent.copy(alpha = 0.15f),
-            ),
+        colors = CardDefaults.cardColors(
+            containerColor = colors.accent.copy(alpha = 0.15f),
+        ),
     ) {
         Text(
             text = toast,
             style = AppTypography.body,
             color = colors.label,
             textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing12),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing12),
         )
     }
 }
 
 @Composable
-private fun TodayGiftCard(
-    state: GiftsUiState,
-    onClaimToday: () -> Unit,
-) {
+private fun TodayGiftCard(state: GiftsUiState, onClaimToday: () -> Unit) {
     val colors = LocalAppColors.current
     GroupCard {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
         ) {
@@ -302,14 +285,14 @@ private fun TodayGiftCard(
         if (state.canClaimToday) {
             Button(
                 onClick = onClaimToday,
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            start = AppDimens.spacing16,
-                            end = AppDimens.spacing16,
-                            bottom = AppDimens.spacing16,
-                        ).heightIn(min = 56.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = AppDimens.spacing16,
+                        end = AppDimens.spacing16,
+                        bottom = AppDimens.spacing16,
+                    )
+                    .heightIn(min = 56.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
             ) {
                 Text(
@@ -354,10 +337,9 @@ private fun WeeklyGiftCard(onClaimWeekly: () -> Unit) {
     val colors = LocalAppColors.current
     GroupCard {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(AppDimens.spacing16),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppDimens.spacing16),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing16),
         ) {
@@ -381,14 +363,14 @@ private fun WeeklyGiftCard(onClaimWeekly: () -> Unit) {
         }
         Button(
             onClick = onClaimWeekly,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = AppDimens.spacing16,
-                        end = AppDimens.spacing16,
-                        bottom = AppDimens.spacing16,
-                    ).heightIn(min = 56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = AppDimens.spacing16,
+                    end = AppDimens.spacing16,
+                    bottom = AppDimens.spacing16,
+                )
+                .heightIn(min = 56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
         ) {
             Text(
@@ -400,32 +382,25 @@ private fun WeeklyGiftCard(onClaimWeekly: () -> Unit) {
 }
 
 @Composable
-private fun DayCell(
-    day: Int,
-    claimed: Boolean,
-    isToday: Boolean,
-) {
+private fun DayCell(day: Int, claimed: Boolean, isToday: Boolean) {
     val colors = LocalAppColors.current
-    val background =
-        when {
-            isToday -> colors.accent
-            claimed -> colors.accent.copy(alpha = 0.25f)
-            else -> colors.cardSurface
-        }
-    val contentColor =
-        when {
-            isToday -> Color.White
-            claimed -> colors.accent
-            else -> colors.secondaryLabel
-        }
+    val background = when {
+        isToday -> colors.accent
+        claimed -> colors.accent.copy(alpha = 0.25f)
+        else -> colors.cardSurface
+    }
+    val contentColor = when {
+        isToday -> Color.White
+        claimed -> colors.accent
+        else -> colors.secondaryLabel
+    }
     Box(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(background)
-                .padding(AppDimens.spacing4),
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .padding(AppDimens.spacing4),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

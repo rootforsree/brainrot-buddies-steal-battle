@@ -105,10 +105,7 @@ class TraumaShake {
     }
 
     /** Shake offset in px, scaled by [maxPx]. Zero when trauma is gone. */
-    fun offset(
-        timeMs: Long,
-        maxPx: Float,
-    ): Offset {
+    fun offset(timeMs: Long, maxPx: Float): Offset {
         val shake = trauma * trauma
         if (shake <= 0f || maxPx <= 0f) return Offset.Zero
         return Offset(
@@ -125,10 +122,7 @@ class TraumaShake {
         private const val NOISE_HASH_SCALE = 43758.5453
 
         /** Deterministic smooth-ish noise in [-1, 1] from a time value. */
-        fun pseudoNoise(
-            t: Long,
-            seed: Double,
-        ): Float {
+        fun pseudoNoise(t: Long, seed: Double): Float {
             val x = sin(t * NOISE_TIME_SCALE + seed * NOISE_HASH_SCALE) * seed
             return (x - kotlin.math.floor(x)).toFloat() * 2f - 1f
         }
@@ -146,10 +140,7 @@ class FlashGuard(
 ) {
     private val recentFlashes = ArrayDeque<Long>()
 
-    fun allowFlash(
-        areaFraction: Float,
-        isRed: Boolean,
-    ): Boolean {
+    fun allowFlash(areaFraction: Float, isRed: Boolean): Boolean {
         if (isRed || areaFraction >= JuiceTimings.FLASH_MAX_AREA_FRACTION) return false
         val now = clock()
         while (recentFlashes.isNotEmpty() && now - recentFlashes.first() > FLASH_WINDOW_MS) {

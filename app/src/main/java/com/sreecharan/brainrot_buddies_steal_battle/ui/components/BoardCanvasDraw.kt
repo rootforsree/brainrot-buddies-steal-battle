@@ -24,11 +24,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppColors
 import kotlin.math.PI
 import kotlin.math.sin
 
-/**
- * Board drawing: conveyor, grid, claim animations. Frame orchestration lives in BaseBoardCanvas.
- *
- * Everything drawConveyor needs, in one value.
- */
+/** Board drawing: conveyor, grid, claim animations. Frame orchestration lives in BaseBoardCanvas. */
+
+/** Everything drawConveyor needs, in one value. */
 internal data class ConveyorDrawParams(
     val layout: BoardLayout,
     val board: BoardCanvasState,
@@ -120,17 +118,13 @@ internal fun DrawScope.drawConveyor(p: ConveyorDrawParams) {
     }
 }
 
-private fun DrawScope.drawConveyorRider(
-    p: ConveyorDrawParams,
-    item: ConveyorBuddyUi,
-) {
+private fun DrawScope.drawConveyorRider(p: ConveyorDrawParams, item: ConveyorBuddyUi) {
     val progress = rideProgress(item, p.tUptime, p.clockOffset)
     if (progress !in 0f..1f) return
     val center = p.layout.laneCenter(item.lane, progress)
-    val pose =
-        idlePose(
-            IdlePoseRequest(item.seed, p.tUptime, p.layout.buddySize, !p.reduceMotion, p.reduceMotion),
-        )
+    val pose = idlePose(
+        IdlePoseRequest(item.seed, p.tUptime, p.layout.buddySize, !p.reduceMotion, p.reduceMotion),
+    )
     var scaleX = pose.scaleX
     var scaleY = pose.scaleY
     // Last 3 s: anticipation crouch (§10).
@@ -184,11 +178,7 @@ private fun DrawScope.drawConveyorRider(
     }
 }
 
-internal fun rideProgress(
-    item: ConveyorBuddyUi,
-    tUptime: Long,
-    clockOffset: Long,
-): Float {
+internal fun rideProgress(item: ConveyorBuddyUi, tUptime: Long, clockOffset: Long): Float {
     val spawnedUptime = item.spawnedAtMs + clockOffset
     return ((tUptime - spawnedUptime).toFloat() / JuiceTimings.CONVEYOR_RIDE_MS).coerceIn(0f, 1f)
 }
@@ -199,10 +189,7 @@ internal fun DrawScope.drawGrid(p: GridDrawParams) {
     }
 }
 
-private fun DrawScope.drawSlot(
-    p: GridDrawParams,
-    slot: SlotUi,
-) {
+private fun DrawScope.drawSlot(p: GridDrawParams, slot: SlotUi) {
     val layout = p.layout
     val center = layout.slotCenter(slot.index)
     val cellTopLeft = Offset(center.x - layout.cell / 2f, center.y - layout.cell / 2f)
@@ -233,7 +220,6 @@ private fun DrawScope.drawSlot(
     drawSlottedBuddy(p, slot, buddy, center, flexSize)
 }
 
-@Suppress("LongMethod")
 private fun DrawScope.drawSlottedBuddy(
     p: GridDrawParams,
     slot: SlotUi,
@@ -271,17 +257,16 @@ private fun DrawScope.drawSlottedBuddy(
             }
         }
     }
-    val pose =
-        idlePose(
-            IdlePoseRequest(
-                seed = buddy.seed,
-                tMs = p.tUptime,
-                sizePx = flexSize,
-                wobbleWalk = false,
-                calm = p.reduceMotion,
-                forceAct = isTourSpot && !p.reduceMotion,
-            ),
-        )
+    val pose = idlePose(
+        IdlePoseRequest(
+            seed = buddy.seed,
+            tMs = p.tUptime,
+            sizePx = flexSize,
+            wobbleWalk = false,
+            calm = p.reduceMotion,
+            forceAct = isTourSpot && !p.reduceMotion,
+        ),
+    )
     val dimmed = buddy.stealCooldownEndsAtMs > p.board.nowMs
     drawBuddyWithPose(
         p.images,
@@ -323,7 +308,6 @@ private fun DrawScope.drawRarityFlex(
                 center = center,
             )
         }
-
         buddy.level >= LEVEL_RAINBOW_MIN && !p.reduceMotion -> {
             val hue = (p.tUptime / RAINBOW_STEP_MS % HUE_DEGREES).toFloat()
             drawCircle(
@@ -333,7 +317,6 @@ private fun DrawScope.drawRarityFlex(
                 style = Stroke(width = 4.dp.toPx()),
             )
         }
-
         buddy.rarity == Rarity.RARE -> {
             drawCircle(
                 color = RARE_BLUE.copy(alpha = RARE_RING_ALPHA),
@@ -373,11 +356,10 @@ private fun DrawScope.drawSlotBadges(
         val badgeR = LEVEL_BADGE_DP.toPx()
         val badgeC = center + Offset(-layout.cell * BADGE_OFFSET_FRAC, layout.cell * BADGE_OFFSET_FRAC)
         drawCircle(LEVEL_BADGE_GOLD, badgeR, badgeC)
-        val label =
-            p.textMeasurer.measure(
-                AnnotatedString("L${buddy.level}"),
-                style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White),
-            )
+        val label = p.textMeasurer.measure(
+            AnnotatedString("L${buddy.level}"),
+            style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White),
+        )
         drawText(
             label,
             topLeft = badgeC - Offset(label.size.width / 2f, label.size.height / 2f),
@@ -390,11 +372,10 @@ private fun DrawScope.drawSlotBadges(
             startAngle = 180f,
             sweepAngle = 180f,
             useCenter = false,
-            topLeft =
-                Offset(
-                    center.x - layout.cell * SLOT_SHIELD_X_FRAC,
-                    center.y - layout.cell * SLOT_SHIELD_Y_FRAC,
-                ),
+            topLeft = Offset(
+                center.x - layout.cell * SLOT_SHIELD_X_FRAC,
+                center.y - layout.cell * SLOT_SHIELD_Y_FRAC,
+            ),
             size = Size(layout.cell * SLOT_SHIELD_SIZE_FRAC, layout.cell * SLOT_SHIELD_SIZE_FRAC),
             style = Stroke(width = 3.dp.toPx()),
         )
@@ -406,16 +387,14 @@ internal fun DrawScope.drawClaimAnims(p: ClaimDrawParams) {
         val t = p.tUptime - anim.startUptimeMs
         if (t < 0) return@forEach
         // Epic: 100 ms of 0.3x slow-mo on grab, then catch up seamlessly.
-        val te =
-            when {
-                p.reduceMotion || anim.rarity != Rarity.EPIC -> t
-                t < JuiceTimings.EPIC_SLOWMO_MS -> (t * JuiceTimings.EPIC_SLOWMO_SCALE).toLong()
-                else -> t - SLOWMO_CATCHUP_MS
-            }
+        val te = when {
+            p.reduceMotion || anim.rarity != Rarity.EPIC -> t
+            t < JuiceTimings.EPIC_SLOWMO_MS -> (t * JuiceTimings.EPIC_SLOWMO_SCALE).toLong()
+            else -> t - SLOWMO_CATCHUP_MS
+        }
         val from = p.layout.laneCenter(anim.fromLane, anim.fromProgress)
-        val to =
-            anim.targetSlotIndex?.let { p.layout.slotCenter(it) }
-                ?: Offset(size.width / 2f, p.layout.gridTop)
+        val to = anim.targetSlotIndex?.let { p.layout.slotCenter(it) }
+            ?: Offset(size.width / 2f, p.layout.gridTop)
         drawClaimPhase(p, anim, te, from, to)
     }
 }
@@ -428,13 +407,7 @@ private fun DrawScope.drawClaimPhase(
     from: Offset,
     to: Offset,
 ) {
-    fun drawClaimBuddy(
-        center: Offset,
-        size: Float,
-        sx: Float = 1f,
-        sy: Float = 1f,
-        rot: Float = 0f,
-    ) {
+    fun drawClaimBuddy(center: Offset, size: Float, sx: Float = 1f, sy: Float = 1f, rot: Float = 0f) {
         drawBuddyWithPose(
             p.images,
             anim.imageRes,
@@ -450,11 +423,7 @@ private fun DrawScope.drawClaimPhase(
             ),
         )
     }
-
-    fun phaseEntry(
-        phase: Int,
-        fire: () -> Unit,
-    ) {
+    fun phaseEntry(phase: Int, fire: () -> Unit) {
         if ((p.phaseTracker[anim.instanceId] ?: -1) < phase) {
             p.phaseTracker[anim.instanceId] = phase
             fire()
@@ -466,7 +435,6 @@ private fun DrawScope.drawClaimPhase(
             drawClaimBuddy(from, p.layout.buddySize, sx = 1f + CLAIM_SQUASH * q, sy = 1f - CLAIM_SQUASH * q)
             phaseEntry(0) { p.juice.stars(from.x, from.y) }
         }
-
         te < JuiceTimings.CLAIM_SQUASH_MS + JuiceTimings.CLAIM_ARC_MS -> {
             val q = (te - JuiceTimings.CLAIM_SQUASH_MS) / JuiceTimings.CLAIM_ARC_MS.toFloat()
             val eased = easeInOut(q)
@@ -480,13 +448,9 @@ private fun DrawScope.drawClaimPhase(
             )
             phaseEntry(1) { p.juice.stars(from.x, from.y) }
         }
-
         te < JuiceTimings.CLAIM_TOTAL_MS -> {
-            val q =
-                (
-                    (te - JuiceTimings.CLAIM_SQUASH_MS - JuiceTimings.CLAIM_ARC_MS) /
-                        JuiceTimings.CLAIM_LAND_MS.toFloat()
-                ).coerceIn(0f, 1f)
+            val q = ((te - JuiceTimings.CLAIM_SQUASH_MS - JuiceTimings.CLAIM_ARC_MS) /
+                JuiceTimings.CLAIM_LAND_MS.toFloat()).coerceIn(0f, 1f)
             // Overshoot 1.15 -> 1.0 (§10).
             val scale = 1f + LAND_SQUASH * (1f - easeOutBack(q))
             drawClaimBuddy(to, p.layout.buddySize * scale, sx = scale, sy = 2f - scale)

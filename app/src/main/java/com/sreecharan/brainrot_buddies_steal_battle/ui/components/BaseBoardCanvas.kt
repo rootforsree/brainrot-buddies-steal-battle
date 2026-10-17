@@ -41,9 +41,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.math.abs
 
-// Public API: HomeScreen calls with all 8 arguments, so the parameter list
-// cannot be regrouped without breaking that call site.
-
 /**
  * The whole game board in one Canvas: conveyor, 24-slot grid, shield dome,
  * claim arcs, particles, trauma shake and idle life. 60 fps by construction:
@@ -54,6 +51,8 @@ import kotlin.math.abs
  * Tap targets: creatures get an invisible 1.5x forgiving hit zone (§11);
  * slots are >= 56 dp.
  */
+// Public API: HomeScreen calls with all 8 arguments, so the parameter list
+// cannot be regrouped without breaking that call site.
 @Suppress("LongParameterList")
 @Composable
 fun BaseBoardCanvas(
@@ -77,12 +76,11 @@ fun BaseBoardCanvas(
     val lastFrame = remember { mutableLongStateOf(0L) }
 
     Canvas(
-        modifier =
-            modifier.then(
-                boardTapModifier(
-                    BoardTapParams(board, layoutHolder, onConveyorTap, onSlotTap, clockOffset, minTargetPx),
-                ),
+        modifier = modifier.then(
+            boardTapModifier(
+                BoardTapParams(board, layoutHolder, onConveyorTap, onSlotTap, clockOffset, minTargetPx),
             ),
+        ),
     ) {
         drawBoardFrame(
             BoardFrameParams(
@@ -122,10 +120,7 @@ data class BoardCanvasState(
 )
 
 @Immutable
-data class CameraState(
-    val panXFraction: Float = 0f,
-    val zoom: Float = 1f,
-)
+data class CameraState(val panXFraction: Float = 0f, val zoom: Float = 1f)
 
 /** Everything one board frame draw needs, in one value. */
 private data class BoardFrameParams(
@@ -169,14 +164,13 @@ private fun rememberClockOffset(): State<Long> {
 /** Buddy art, keyed stably so sprites survive list churn. */
 @Composable
 private fun rememberBoardImages(board: BoardCanvasState): MutableMap<Int, ImageBitmap?> {
-    val imageResIds =
-        remember(board.conveyor, board.slots, board.claimAnims) {
-            buildSet {
-                board.conveyor.forEach { add(it.imageRes) }
-                board.slots.forEach { slot -> slot.buddy?.let { add(it.imageRes) } }
-                board.claimAnims.values.forEach { add(it.imageRes) }
-            }
+    val imageResIds = remember(board.conveyor, board.slots, board.claimAnims) {
+        buildSet {
+            board.conveyor.forEach { add(it.imageRes) }
+            board.slots.forEach { slot -> slot.buddy?.let { add(it.imageRes) } }
+            board.claimAnims.values.forEach { add(it.imageRes) }
         }
+    }
     val images = remember { mutableStateMapOf<Int, ImageBitmap?>() }
     imageResIds.forEach { imageRes ->
         key(imageRes) {
@@ -202,16 +196,15 @@ private fun boardTapModifier(p: BoardTapParams): Modifier {
             val (onConveyor, onSlot) = latestTaps
             val uptimeNow = SystemClock.uptimeMillis()
             // Conveyor first: creatures get the 1.5x forgiving hit zone.
-            val hit =
-                p.board.conveyor.asReversed().firstOrNull { item ->
-                    val progress = rideProgress(item, uptimeNow, latestOffset)
-                    if (progress !in 0f..1f) {
-                        return@firstOrNull false
-                    }
-                    val center = layout.laneCenter(item.lane, progress)
-                    val radius = layout.buddySize * HIT_ZONE_SCALE
-                    (tap - center).getDistance() <= radius
+            val hit = p.board.conveyor.asReversed().firstOrNull { item ->
+                val progress = rideProgress(item, uptimeNow, latestOffset)
+                if (progress !in 0f..1f) {
+                    return@firstOrNull false
                 }
+                val center = layout.laneCenter(item.lane, progress)
+                val radius = layout.buddySize * HIT_ZONE_SCALE
+                (tap - center).getDistance() <= radius
+            }
             if (hit != null) {
                 onConveyor(hit.id)
                 return@detectTapGestures
@@ -235,12 +228,11 @@ private fun boardTapModifier(p: BoardTapParams): Modifier {
 
 private fun DrawScope.drawBoardFrame(p: BoardFrameParams) {
     val tUptime = p.frameTime.value
-    val dtSeconds =
-        run {
-            val last = p.lastFrame.longValue
-            p.lastFrame.longValue = tUptime
-            if (last == 0L) FRAME_DT_FALLBACK else ((tUptime - last) / MILLIS_TO_SECONDS_F).coerceIn(0f, DT_MAX_SECONDS)
-        }
+    val dtSeconds = run {
+        val last = p.lastFrame.longValue
+        p.lastFrame.longValue = tUptime
+        if (last == 0L) FRAME_DT_FALLBACK else ((tUptime - last) / MILLIS_TO_SECONDS_F).coerceIn(0f, DT_MAX_SECONDS)
+    }
 
     val layout = computeLayout()
     p.layoutHolder.layout = layout
@@ -250,12 +242,11 @@ private fun DrawScope.drawBoardFrame(p: BoardFrameParams) {
     if (!p.reduceMotion) {
         p.juice.shake.update(dtSeconds)
     }
-    val shakeOffset =
-        if (p.reduceMotion) {
-            Offset.Zero
-        } else {
-            p.juice.shake.offset(tUptime, SHAKE_MAX_PX)
-        }
+    val shakeOffset = if (p.reduceMotion) {
+        Offset.Zero
+    } else {
+        p.juice.shake.offset(tUptime, SHAKE_MAX_PX)
+    }
 
     drawBoardBackground(p.colors)
     translate(shakeOffset.x, shakeOffset.y) {
@@ -348,39 +339,32 @@ internal data class BoardLayout(
         )
     }
 
-    fun laneCenter(
-        lane: Int,
-        progress: Float,
-    ): Offset =
-        Offset(
-            laneX[lane.coerceIn(0, CONVEYOR_LANES - 1)],
-            beltTop + progress.coerceIn(0f, 1f) * beltHeight,
-        )
+    fun laneCenter(lane: Int, progress: Float): Offset = Offset(
+        laneX[lane.coerceIn(0, CONVEYOR_LANES - 1)],
+        beltTop + progress.coerceIn(0f, 1f) * beltHeight,
+    )
 
-    fun gridCenter(): Offset =
-        Offset(
-            gridLeft + (GRID_COLS * (cell + spacing) - spacing) / 2f,
-            gridTop + (GRID_ROWS * (cell + spacing) - spacing) / 2f,
-        )
+    fun gridCenter(): Offset = Offset(
+        gridLeft + (GRID_COLS * (cell + spacing) - spacing) / 2f,
+        gridTop + (GRID_ROWS * (cell + spacing) - spacing) / 2f,
+    )
 }
 
 private fun DrawScope.computeLayout(): BoardLayout {
     val padding = PAD_DP.toPx()
     val beltHeight = BELT_HEIGHT_DP.toPx()
     val beltTop = padding
-    val laneX =
-        FloatArray(CONVEYOR_LANES) { i ->
-            padding + (size.width - padding * 2f) * (i + 1f) / (CONVEYOR_LANES + 1f)
-        }
+    val laneX = FloatArray(CONVEYOR_LANES) { i ->
+        padding + (size.width - padding * 2f) * (i + 1f) / (CONVEYOR_LANES + 1f)
+    }
     val gridTop = beltTop + beltHeight + padding
     val spacing = GRID_SPACING_DP.toPx()
     val gridWidth = size.width - padding * 2f
     val gridHeight = size.height - gridTop - padding
-    val cell =
-        minOf(
-            (gridWidth - spacing * (GRID_COLS - 1)) / GRID_COLS,
-            (gridHeight - spacing * (GRID_ROWS - 1)) / GRID_ROWS,
-        ).coerceAtLeast(MIN_CELL_DP.toPx())
+    val cell = minOf(
+        (gridWidth - spacing * (GRID_COLS - 1)) / GRID_COLS,
+        (gridHeight - spacing * (GRID_ROWS - 1)) / GRID_ROWS,
+    ).coerceAtLeast(MIN_CELL_DP.toPx())
     val gridLeft = padding + (gridWidth - (GRID_COLS * cell + (GRID_COLS - 1) * spacing)) / 2f
     return BoardLayout(
         beltTop = beltTop,
@@ -397,7 +381,6 @@ private fun DrawScope.computeLayout(): BoardLayout {
 internal const val GRID_COLS = 6
 internal const val GRID_ROWS = 4
 private const val CONVEYOR_LANES = 3
-
 /** 1.5x forgiving hit zone: radius = buddySize * 0.75 (§11). */
 private const val HIT_ZONE_SCALE = 0.75f
 private const val CLOCK_SYNC_MS = 30_000L

@@ -45,9 +45,9 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.components.TabItem
 import com.sreecharan.brainrot_buddies_steal_battle.ui.friends.FriendsRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.home.BaseScreen
 import com.sreecharan.brainrot_buddies_steal_battle.ui.onboarding.OnboardingFlow
-import com.sreecharan.brainrot_buddies_steal_battle.ui.poster.PosterRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.raids.RaidVisitRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.ForParentsRoute
+import com.sreecharan.brainrot_buddies_steal_battle.ui.poster.PosterRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.settings.SettingsRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.shop.ShopRoute
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppDimens
@@ -74,10 +74,9 @@ fun AppNavHost(modifier: Modifier = Modifier) {
 
     if (gate.loading) {
         Box(
-            modifier =
-                modifier
-                    .fillMaxSize()
-                    .background(LocalAppColors.current.groupedBackground),
+            modifier = modifier
+                .fillMaxSize()
+                .background(LocalAppColors.current.groupedBackground),
         )
         return
     }
@@ -99,10 +98,7 @@ private data class MainTab(
 )
 
 @Composable
-private fun MainTabs(
-    showAlbumTab: Boolean,
-    modifier: Modifier = Modifier,
-) {
+private fun MainTabs(showAlbumTab: Boolean, modifier: Modifier = Modifier) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val destination = backStackEntry?.destination
@@ -158,7 +154,9 @@ private fun MainNavGraph(navController: NavHostController) {
     }
 }
 
-private fun NavGraphBuilder.baseGraph(navController: NavHostController) {
+private fun NavGraphBuilder.baseGraph(
+    navController: NavHostController,
+) {
     navigation<BaseTab>(startDestination = Base) {
         composable<Base> {
             BaseScreen(
@@ -187,7 +185,9 @@ private fun NavGraphBuilder.albumGraph() {
     }
 }
 
-private fun NavGraphBuilder.friendsGraph(navController: NavHostController) {
+private fun NavGraphBuilder.friendsGraph(
+    navController: NavHostController,
+) {
     navigation<FriendsTab>(startDestination = Friends) {
         composable<Friends> {
             FriendsRoute(
@@ -199,7 +199,9 @@ private fun NavGraphBuilder.friendsGraph(navController: NavHostController) {
     }
 }
 
-private fun NavGraphBuilder.moreGraph(navController: NavHostController) {
+private fun NavGraphBuilder.moreGraph(
+    navController: NavHostController,
+) {
     navigation<MoreTab>(startDestination = Settings) {
         composable<Settings> {
             SettingsRoute(
@@ -222,45 +224,37 @@ private fun BoxScope.MainTabBar(
     destination: NavDestination?,
     onTabSelected: (Int) -> Unit,
 ) {
-    val tabItems =
-        tabs
-            .map { tab ->
-                TabItem(
-                    label = stringResource(tab.labelRes),
-                    selectedIcon = tab.selectedIcon,
-                    unselectedIcon = tab.unselectedIcon,
-                )
-            }.toImmutableList()
-    val hierarchy =
-        destination
-            ?.let { dest ->
-                generateSequence(dest) { it.parent }.toList()
-            }.orEmpty()
-    val selectedIndex =
-        tabs
-            .indexOfFirst { tab ->
-                val routeClass =
-                    when (tab.graph) {
-                        is BaseTab -> BaseTab::class
-                        is ShopTab -> ShopTab::class
-                        is AlbumTab -> AlbumTab::class
-                        is FriendsTab -> FriendsTab::class
-                        else -> MoreTab::class
-                    }
-                hierarchy.any { it.hasRoute(routeClass) }
-            }.coerceAtLeast(0)
+    val tabItems = tabs.map { tab ->
+        TabItem(
+            label = stringResource(tab.labelRes),
+            selectedIcon = tab.selectedIcon,
+            unselectedIcon = tab.unselectedIcon,
+        )
+    }.toImmutableList()
+    val hierarchy = destination?.let { dest ->
+        generateSequence(dest) { it.parent }.toList()
+    }.orEmpty()
+    val selectedIndex = tabs.indexOfFirst { tab ->
+        val routeClass = when (tab.graph) {
+            is BaseTab -> BaseTab::class
+            is ShopTab -> ShopTab::class
+            is AlbumTab -> AlbumTab::class
+            is FriendsTab -> FriendsTab::class
+            else -> MoreTab::class
+        }
+        hierarchy.any { it.hasRoute(routeClass) }
+    }.coerceAtLeast(0)
     GlassTabBar(
         tabs = tabItems,
         selectedIndex = selectedIndex,
         onTabSelected = onTabSelected,
-        modifier =
-            Modifier
-                .align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.navigationBars)
-                .padding(
-                    start = AppDimens.screenMargin,
-                    end = AppDimens.screenMargin,
-                    bottom = AppDimens.screenMargin,
-                ),
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(
+                start = AppDimens.screenMargin,
+                end = AppDimens.screenMargin,
+                bottom = AppDimens.screenMargin,
+            ),
     )
 }

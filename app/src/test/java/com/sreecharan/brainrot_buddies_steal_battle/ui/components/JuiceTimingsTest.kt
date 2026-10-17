@@ -11,6 +11,7 @@ import kotlin.test.assertTrue
  * the photosensitivity guard enforces the hard limits.
  */
 class JuiceTimingsTest {
+
     @Test
     fun `trauma shake is quadratic and decays about 1 per second`() {
         val shake = TraumaShake()
@@ -18,11 +19,9 @@ class JuiceTimingsTest {
 
         val offset = shake.offset(1_000L, 100f)
         // offset magnitude = trauma^2 * maxPx * |noise| <= 0.25 * 100
-        val magnitude =
-            kotlin.math
-                .sqrt(
-                    (offset.x * offset.x + offset.y * offset.y).toDouble(),
-                ).toFloat()
+        val magnitude = kotlin.math.sqrt(
+            (offset.x * offset.x + offset.y * offset.y).toDouble(),
+        ).toFloat()
         assertTrue(magnitude <= 25.001f, "offset must equal trauma^2 * noise * maxPx")
 
         shake.update(0.25f)
@@ -97,13 +96,8 @@ class JuiceTimingsTest {
     @Test
     fun `burst counts stay inside the 5 to 20 band`() {
         listOf(
-            Bursts.CONFETTI,
-            Bursts.DUST_POOF,
-            Bursts.COINS,
-            Bursts.STARS,
-            Bursts.BLUE_RING,
-            Bursts.GOLD_RAYS,
-            Bursts.RED_POOF,
+            Bursts.CONFETTI, Bursts.DUST_POOF, Bursts.COINS,
+            Bursts.STARS, Bursts.BLUE_RING, Bursts.GOLD_RAYS, Bursts.RED_POOF,
         ).forEach { spec ->
             assertTrue(
                 spec.count in JuiceTimings.PARTICLE_BURST_MIN..JuiceTimings.PARTICLE_BURST_MAX,

@@ -11,12 +11,11 @@ import java.io.OutputStream
  * Defaults to system theme with haptics on.
  */
 object SettingsSerializer : Serializer<SettingsProto> {
-    override val defaultValue: SettingsProto =
-        SettingsProto
-            .newBuilder()
-            .setThemeMode(ThemeModeProto.SYSTEM)
-            .setHapticsEnabled(true)
-            .build()
+
+    override val defaultValue: SettingsProto = SettingsProto.newBuilder()
+        .setThemeMode(ThemeModeProto.SYSTEM)
+        .setHapticsEnabled(true)
+        .build()
 
     override suspend fun readFrom(input: InputStream): SettingsProto =
         try {
@@ -25,10 +24,7 @@ object SettingsSerializer : Serializer<SettingsProto> {
             throw CorruptionException("Cannot read settings proto.", e)
         }
 
-    override suspend fun writeTo(
-        t: SettingsProto,
-        output: OutputStream,
-    ) {
+    override suspend fun writeTo(t: SettingsProto, output: OutputStream) {
         t.writeTo(output)
     }
 }
