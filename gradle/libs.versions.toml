@@ -30,7 +30,7 @@ desugar = "2.1.5"
 
 # Steal Battle additions (verified 2026-10-16)
 nearby = "19.3.0"          # play-services-nearby: P2P_STAR friend raids, no internet
-playAds = "23.6.0"         # play-services-ads: Families self-certified rewarded ads
+playAds = "25.5.0"         # play-services-ads: Families self-certified rewarded ads
 billing = "8.0.0"          # billing-ktx: remove-ads + cosmetic hats, parent-gated
 
 # Testing
