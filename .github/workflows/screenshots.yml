@@ -33,6 +33,10 @@ jobs:
       - name: Record Roborazzi goldens
         run: ./gradlew :app:recordRoborazziDebug --stacktrace
 
+      - name: Debug - locate recorded PNGs
+        if: always()
+        run: find app -name "*.png" -newer app/build.gradle.kts 2>/dev/null | head -20
+
       - name: Upload Roborazzi images
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
