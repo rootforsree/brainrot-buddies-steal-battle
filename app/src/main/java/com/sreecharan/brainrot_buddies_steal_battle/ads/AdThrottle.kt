@@ -7,13 +7,18 @@ package com.sreecharan.brainrot_buddies_steal_battle.ads
 class AdThrottle(
     val minIntervalMs: Long = DEFAULT_MIN_INTERVAL_MS,
 ) {
-
-    fun canShow(nowMs: Long, lastShownMs: Long): Boolean {
+    fun canShow(
+        nowMs: Long,
+        lastShownMs: Long,
+    ): Boolean {
         if (lastShownMs <= 0L) return true
         return nowMs - lastShownMs >= minIntervalMs
     }
 
-    fun millisUntilNextShow(nowMs: Long, lastShownMs: Long): Long {
+    fun millisUntilNextShow(
+        nowMs: Long,
+        lastShownMs: Long,
+    ): Long {
         if (lastShownMs <= 0L) return 0L
         return (minIntervalMs - (nowMs - lastShownMs)).coerceAtLeast(0L)
     }

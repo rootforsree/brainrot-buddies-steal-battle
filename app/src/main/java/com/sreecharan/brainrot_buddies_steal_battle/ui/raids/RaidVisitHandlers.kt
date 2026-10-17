@@ -1,5 +1,7 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
 
+@file:Suppress("KotlinConstantConditionIf")
+
 import androidx.annotation.StringRes
 import com.sreecharan.brainrot_buddies_steal_battle.R
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.OwnedBuddyEntity
@@ -583,7 +585,6 @@ class RaidVisitHelpers(
         val snapshotRaided = snapshotRaidedNow()
         val slots = (0 until RaidVisitCore.BASE_SLOT_COUNT).map { slot ->
             val target = snapshot?.let { SnapshotCodec.slotOf(it, slot) }
-            @Suppress("KotlinConstantConditionIf")
             val blockedBy = when {
                 target == null -> StealRejectReason.EMPTY
                 alreadyRaided -> StealRejectReason.ALREADY_RAIDED
