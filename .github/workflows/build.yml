@@ -59,7 +59,7 @@ jobs:
       - name: Assemble APKs
         run: |
           rm -rf app/build
-          ./gradlew assembleDebug assembleRelease -PversionCode=${{ github.run_number }} -Pksp.incremental=false --no-build-cache --stacktrace
+          ./gradlew assembleDebug assembleRelease -PversionCode=${{ github.run_number }} -Pksp.incremental=false --no-build-cache --no-parallel --stacktrace
         env:
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
