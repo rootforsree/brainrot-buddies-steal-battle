@@ -95,6 +95,8 @@ class HomeViewModelTest {
     @Test
     fun `snapshot clears loading and fills the board`() =
         runVmTest {
+            assertTrue(viewModel.uiState.value.isLoading)
+
             gameData.snapshotFlow.value =
                 baseSnapshot(
                     baseName = "Wobble Tower",
@@ -102,8 +104,11 @@ class HomeViewModelTest {
                 )
             runCurrent()
 
-            // Minimal check: does the snapshot reach the UI state at all?
-            assertEquals("Wobble Tower", viewModel.uiState.value.baseName)
+            val loaded = viewModel.uiState.value
+            assertFalse(loaded.isLoading)
+            assertEquals("Wobble Tower", loaded.baseName)
+            assertEquals(1_234L, loaded.vault.coins)
+            assertEquals(24, loaded.slots.size)
         }
 
     @Test
