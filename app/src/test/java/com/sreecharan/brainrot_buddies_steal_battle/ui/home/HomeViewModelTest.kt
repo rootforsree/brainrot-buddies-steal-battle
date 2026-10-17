@@ -95,9 +95,13 @@ class HomeViewModelTest {
     @Test
     fun `snapshot clears loading and fills the board`() =
         runVmTest {
-            viewModel.uiState.test {
-                assertTrue(awaitItem().isLoading)
+            // The board starts loading before any snapshot arrives. Read it
+            // synchronously: once turbine suspends, the collector may process
+            // the fake's initial empty snapshot first.
+            assertTrue(viewModel.uiState.value.isLoading)
 
+            viewModel.uiState.test {
+                awaitItem() // stale: initial or empty-snapshot state
                 gameData.snapshotFlow.value =
                     baseSnapshot(
                         baseName = "Wobble Tower",

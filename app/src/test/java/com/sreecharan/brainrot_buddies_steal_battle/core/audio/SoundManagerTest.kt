@@ -151,8 +151,14 @@ class SoundManagerTest {
     fun `utility sfx get 5 to 8 percent pitch and volume jitter`() =
         runTest(testDispatcher) {
             manager.unlockAudio()
-            repeat(40) { manager.playButton() }
-            runCurrent()
+            // The 8-sound cap drops same-priority ambients when full, so let
+            // each batch retire (ambient cap is 500 ms) before playing more.
+            repeat(5) {
+                repeat(8) { manager.playButton() }
+                runCurrent()
+                advanceTimeBy(600)
+                runCurrent()
+            }
 
             assertEquals(40, engine.oneShotCalls.size)
             engine.oneShotCalls.forEach { call ->
