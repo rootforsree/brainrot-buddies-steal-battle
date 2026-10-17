@@ -1,10 +1,8 @@
 package com.sreecharan.brainrot_buddies_steal_battle.screenshots
 
-import androidx.compose.ui.test.junit4.createComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.sreecharan.brainrot_buddies_steal_battle.ui.about.AboutScreenContent // ASSUMPTION: UI worker places this in ui.about
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -19,9 +17,6 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class AboutScreenShotTest {
-    @get:Rule
-    val composeRule = createComposeRule()
-
     @Test
     fun about_light() {
         capture(darkTheme = false, name = "about_light")
@@ -36,7 +31,7 @@ class AboutScreenShotTest {
         darkTheme: Boolean,
         name: String,
     ) {
-        composeRule.setContent {
+        captureRoboImage(filePath = name) {
             AppTheme(darkTheme = darkTheme, hapticsEnabled = false) {
                 AboutScreenContent(
                     appVersion = "1.0.0-dev",
@@ -46,6 +41,5 @@ class AboutScreenShotTest {
                 )
             }
         }
-        composeRule.onRoot().captureRoboImage(name)
     }
 }

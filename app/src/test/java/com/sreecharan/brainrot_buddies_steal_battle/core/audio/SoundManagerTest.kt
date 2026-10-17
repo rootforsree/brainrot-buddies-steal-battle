@@ -295,6 +295,8 @@ class SoundManagerTest {
         val musicFlow = MutableStateFlow(100)
         val sfxFlow = MutableStateFlow(100)
         val voiceFlow = MutableStateFlow(100)
+        val bitesFlow = MutableStateFlow(0)
+        val albumBonusFlow = MutableStateFlow<Set<String>>(emptySet())
 
         override val guestId: Flow<String?> get() = MutableStateFlow(null)
         override val baseName: Flow<String> get() = MutableStateFlow("")
@@ -311,6 +313,8 @@ class SoundManagerTest {
         override val bennyHintsEnabled: Flow<Boolean> get() = MutableStateFlow(true)
         override val usedCodes: Flow<Set<String>> get() = MutableStateFlow(emptySet())
         override val lastWeeklyGiftDate: Flow<String> get() = MutableStateFlow("")
+        override val buddyBites: Flow<Int> get() = bitesFlow
+        override val claimedAlbumBonuses: Flow<Set<String>> get() = albumBonusFlow
 
         override suspend fun ensureGuestId(): String = "fake-guest"
 
@@ -347,6 +351,14 @@ class SoundManagerTest {
         override suspend fun addUsedCode(code: String) = Unit
 
         override suspend fun setLastWeeklyGiftDate(date: String) = Unit
+
+        override suspend fun setBuddyBites(count: Int) {
+            bitesFlow.value = count
+        }
+
+        override suspend fun addClaimedAlbumBonus(tier: String) {
+            albumBonusFlow.value = albumBonusFlow.value + tier
+        }
 
         override suspend fun clearAll() = Unit
     }

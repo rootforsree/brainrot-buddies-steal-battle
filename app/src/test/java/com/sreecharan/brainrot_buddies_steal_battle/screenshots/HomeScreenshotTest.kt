@@ -1,7 +1,6 @@
 package com.sreecharan.brainrot_buddies_steal_battle.screenshots
 
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.ui.test.junit4.createComposeRule
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.BuddyCatalog
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.BuddyId
@@ -19,7 +18,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.home.VaultUi
 import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -33,9 +31,6 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class HomeScreenshotTest {
-    @get:Rule
-    val composeRule = createComposeRule()
-
     @Test
     fun base_loading() {
         capture(darkTheme = false, state = HomeUiState(isLoading = true), name = "base_loading")
@@ -81,7 +76,7 @@ class HomeScreenshotTest {
     ) {
         val frameTime = mutableLongStateOf(1_000_000L)
         val juice = JuiceController()
-        composeRule.setContent {
+        captureRoboImage(filePath = name) {
             AppTheme(darkTheme = darkTheme, hapticsEnabled = false) {
                 HomeScreen(
                     state = state,
@@ -91,7 +86,6 @@ class HomeScreenshotTest {
                 )
             }
         }
-        composeRule.onRoot().captureRoboImage(name)
     }
 
     private fun emptyBase(): HomeUiState =
