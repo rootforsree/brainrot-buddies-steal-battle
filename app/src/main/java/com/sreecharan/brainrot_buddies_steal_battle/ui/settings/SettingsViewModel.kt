@@ -119,9 +119,7 @@ class SettingsViewModel
                             eventsChannel.send(SettingsEvent.BillingFailed)
                         }
 
-                        else -> {
-                            Unit
-                        }
+                        else -> {}
                     }
                 }
             }

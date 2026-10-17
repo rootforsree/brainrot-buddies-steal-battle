@@ -668,7 +668,7 @@ class RaidVisitHelpers(
                             alreadyRaided -> StealRejectReason.ALREADY_RAIDED
                             !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
                             isSnapshotSpent(snapshotRaided, core.liveEndpoint) -> StealRejectReason.SNAPSHOT_SPENT
-                            snapshot?.let { now < it.shieldUntil } == true -> StealRejectReason.SHIELDED
+                            now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
                             else -> null
                         }
                     RaidSlotUi(

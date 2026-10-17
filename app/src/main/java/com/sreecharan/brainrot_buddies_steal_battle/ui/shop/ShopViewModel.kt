@@ -272,9 +272,7 @@ class ShopViewModel
                             }
                         }
 
-                        else -> {
-                            Unit
-                        }
+                        else -> {}
                     }
                 }
             }
@@ -289,9 +287,7 @@ class ShopViewModel
                             eventsChannel.send(ShopEvent.AdCooldown(event.millisRemaining))
                         }
 
-                        AdEvent.Closed -> {
-                            Unit
-                        }
+                        AdEvent.Closed -> {}
                     }
                 }
             }

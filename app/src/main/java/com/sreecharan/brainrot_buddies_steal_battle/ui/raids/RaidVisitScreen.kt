@@ -310,9 +310,7 @@ private fun LazyListScope.stealResultSection(state: RaidVisitUiState) {
             }
         }
 
-        else -> {
-            Unit
-        }
+        else -> {}
     }
 }
 
