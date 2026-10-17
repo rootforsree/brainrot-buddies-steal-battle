@@ -15,7 +15,9 @@ import androidx.compose.ui.platform.LocalContext
  * `<slug>_happy.webp` (claim celebration), `<slug>_sad.webp` (steal/stolen).
  * Pose swaps layer on top of code-driven motion; they never replace it.
  */
-enum class BuddyPose(val suffix: String) {
+enum class BuddyPose(
+    val suffix: String,
+) {
     NORMAL(""),
     HAPPY("_happy"),
     SAD("_sad"),

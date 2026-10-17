@@ -68,8 +68,9 @@ fun ReplayCanvas(
     val colors = LocalAppColors.current
     val textMeasurer = rememberTextMeasurer()
     // Sad pose on the steal/stolen replay beat (§ Asset Spec), normal as fallback.
-    val buddyImage = rememberBuddyPoseImage(replay.buddyId, BuddyPose.SAD)
-        ?: rememberBuddyImage(replay.buddyImageRes)
+    val buddyImage =
+        rememberBuddyPoseImage(replay.buddyId, BuddyPose.SAD)
+            ?: rememberBuddyImage(replay.buddyImageRes)
     var confettiFired by remember(replay.id) { mutableStateOf(false) }
     val lastFrame = remember(replay.id) { mutableLongStateOf(0L) }
 
