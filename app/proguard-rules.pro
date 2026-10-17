@@ -33,3 +33,6 @@
 -keep class com.google.protobuf.** { *; }
 -dontwarn com.google.protobuf.**
 -keep class androidx.datastore.** { *; }
+# Our own generated proto classes (SettingsProto): the protobuf runtime
+# accesses fields via reflection, so R8 must not rename them.
+-keep class com.sreecharan.brainrot_buddies_steal_battle.data.datastore.** { *; }
