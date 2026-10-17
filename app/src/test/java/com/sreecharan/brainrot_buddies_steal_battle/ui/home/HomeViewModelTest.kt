@@ -100,22 +100,20 @@ class HomeViewModelTest {
             // the fake's initial empty snapshot first.
             assertTrue(viewModel.uiState.value.isLoading)
 
-            viewModel.uiState.test {
-                awaitItem() // stale: initial or empty-snapshot state
-                gameData.snapshotFlow.value =
-                    baseSnapshot(
-                        baseName = "Wobble Tower",
-                        coins = 1_234L,
-                    )
-                runCurrent()
+            gameData.snapshotFlow.value =
+                baseSnapshot(
+                    baseName = "Wobble Tower",
+                    coins = 1_234L,
+                )
+            runCurrent()
 
-                val loaded = awaitItem()
-                assertFalse(loaded.isLoading)
-                assertEquals("Wobble Tower", loaded.baseName)
-                assertEquals(1_234L, loaded.vault.coins)
-                assertEquals(24, loaded.slots.size)
-                cancelAndIgnoreRemainingEvents()
-            }
+            // Synchronous read after pumping the collector: deterministic,
+            // no turbine race on the initial emission.
+            val loaded = viewModel.uiState.value
+            assertFalse(loaded.isLoading)
+            assertEquals("Wobble Tower", loaded.baseName)
+            assertEquals(1_234L, loaded.vault.coins)
+            assertEquals(24, loaded.slots.size)
         }
 
     @Test
