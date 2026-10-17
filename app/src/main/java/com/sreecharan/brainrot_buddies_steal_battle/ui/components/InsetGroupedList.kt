@@ -25,15 +25,17 @@ fun InsetGroupedList(
 ) {
     val colors = LocalAppColors.current
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.groupedBackground),
-        contentPadding = PaddingValues(
-            start = AppDimens.screenMargin,
-            top = contentPadding.calculateTopPadding(),
-            end = AppDimens.screenMargin,
-            bottom = contentPadding.calculateBottomPadding(),
-        ),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(colors.groupedBackground),
+        contentPadding =
+            PaddingValues(
+                start = AppDimens.screenMargin,
+                top = contentPadding.calculateTopPadding(),
+                end = AppDimens.screenMargin,
+                bottom = contentPadding.calculateBottomPadding(),
+            ),
         verticalArrangement = Arrangement.spacedBy(AppDimens.spacing24),
         content = content,
     )

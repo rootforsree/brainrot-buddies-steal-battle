@@ -8,7 +8,6 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class FriendCodeTest {
-
     @Test
     fun `generated code is 6 chars from the frozen charset`() {
         val code = FriendCode.generate(Random(42))

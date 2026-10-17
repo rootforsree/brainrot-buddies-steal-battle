@@ -39,7 +39,6 @@ import kotlin.test.assertTrue
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var gameData: FakeBaseGameData
     private lateinit var soundManager: SoundManager
@@ -63,191 +62,234 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `snapshot clears loading and fills the board`() = runTest(testDispatcher) {
-        viewModel.uiState.test {
-            assertTrue(awaitItem().isLoading)
+    fun `snapshot clears loading and fills the board`() =
+        runTest(testDispatcher) {
+            viewModel.uiState.test {
+                assertTrue(awaitItem().isLoading)
 
-            gameData.snapshotFlow.value = baseSnapshot(
-                baseName = "Wobble Tower",
-                coins = 1_234L,
-            )
+                gameData.snapshotFlow.value =
+                    baseSnapshot(
+                        baseName = "Wobble Tower",
+                        coins = 1_234L,
+                    )
+                runCurrent()
+
+                val loaded = awaitItem()
+                assertFalse(loaded.isLoading)
+                assertEquals("Wobble Tower", loaded.baseName)
+                assertEquals(1_234L, loaded.vault.coins)
+                assertEquals(24, loaded.slots.size)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `the spawner puts a buddy on the conveyor`() =
+        runTest(testDispatcher) {
+            advanceTimeBy(600L)
             runCurrent()
 
-            val loaded = awaitItem()
-            assertFalse(loaded.isLoading)
-            assertEquals("Wobble Tower", loaded.baseName)
-            assertEquals(1_234L, loaded.vault.coins)
-            assertEquals(24, loaded.slots.size)
-            cancelAndIgnoreRemainingEvents()
+            val conveyor = viewModel.uiState.value.conveyor
+            assertTrue(conveyor.isNotEmpty(), "one spawn expected after the first tick")
+            val ride = conveyor.first()
+            assertTrue(ride.expiresAtMs > ride.spawnedAtMs)
+            assertTrue(viewModel.uiState.value.nextSpawnMs > System.currentTimeMillis())
         }
-    }
 
     @Test
-    fun `the spawner puts a buddy on the conveyor`() = runTest(testDispatcher) {
-        advanceTimeBy(600L)
-        runCurrent()
+    fun `claim tap acks instantly without waiting on the data layer`() =
+        runTest(testDispatcher) {
+            advanceTimeBy(600L)
+            runCurrent()
+            val ride =
+                viewModel.uiState.value.conveyor
+                    .first()
 
-        val conveyor = viewModel.uiState.value.conveyor
-        assertTrue(conveyor.isNotEmpty(), "one spawn expected after the first tick")
-        val ride = conveyor.first()
-        assertTrue(ride.expiresAtMs > ride.spawnedAtMs)
-        assertTrue(viewModel.uiState.value.nextSpawnMs > System.currentTimeMillis())
-    }
+            val gate = CompletableDeferred<ClaimPlacement>()
+            gameData.placeHandler = { gate.await() }
 
-    @Test
-    fun `claim tap acks instantly without waiting on the data layer`() = runTest(testDispatcher) {
-        advanceTimeBy(600L)
-        runCurrent()
-        val ride = viewModel.uiState.value.conveyor.first()
+            viewModel.onConveyorTap(ride.id)
+            runCurrent()
 
-        val gate = CompletableDeferred<ClaimPlacement>()
-        gameData.placeHandler = { gate.await() }
+            // The squash ack is in state before the data layer answers, and the
+            // ride leaves the conveyor optimistically.
+            assertTrue(
+                viewModel.uiState.value.claimAnims
+                    .containsKey(ride.id),
+            )
+            assertFalse(
+                viewModel.uiState.value.conveyor
+                    .any { it.id == ride.id },
+            )
+            assertFalse(gate.isCompleted)
 
-        viewModel.onConveyorTap(ride.id)
-        runCurrent()
-
-        // The squash ack is in state before the data layer answers, and the
-        // ride leaves the conveyor optimistically.
-        assertTrue(viewModel.uiState.value.claimAnims.containsKey(ride.id))
-        assertFalse(viewModel.uiState.value.conveyor.any { it.id == ride.id })
-        assertFalse(gate.isCompleted)
-
-        gate.complete(ClaimPlacement.Placed(4, slottedBuddy("uid-1", Rarity.COMMON)))
-        runCurrent()
-        assertTrue(viewModel.uiState.value.waddleAnims.containsKey("uid-1"))
-    }
-
-    @Test
-    fun `full base converts the claim to buddy bites`() = runTest(testDispatcher) {
-        advanceTimeBy(600L)
-        runCurrent()
-        val ride = viewModel.uiState.value.conveyor.first()
-        gameData.placeHandler = { ClaimPlacement.BaseFull }
-
-        viewModel.onConveyorTap(ride.id)
-        runCurrent()
-
-        assertEquals(5, viewModel.uiState.value.bites)
-        assertTrue(viewModel.uiState.value.floatUps.isNotEmpty())
-    }
+            gate.complete(ClaimPlacement.Placed(4, slottedBuddy("uid-1", Rarity.COMMON)))
+            runCurrent()
+            assertTrue(
+                viewModel.uiState.value.waddleAnims
+                    .containsKey("uid-1"),
+            )
+        }
 
     @Test
-    fun `mega ticket reveal is always epic and adds a trauma impulse`() = runTest(testDispatcher) {
-        gameData.snapshotFlow.value = baseSnapshot(megaTickets = 1)
-        runCurrent()
+    fun `full base converts the claim to buddy bites`() =
+        runTest(testDispatcher) {
+            advanceTimeBy(600L)
+            runCurrent()
+            val ride =
+                viewModel.uiState.value.conveyor
+                    .first()
+            gameData.placeHandler = { ClaimPlacement.BaseFull }
 
-        viewModel.onTicketTap(TicketType.MEGA)
-        runCurrent()
+            viewModel.onConveyorTap(ride.id)
+            runCurrent()
 
-        val drumroll = viewModel.uiState.value.ceremony
-        assertNotNull(drumroll)
-        assertEquals(CeremonyPhase.DRUMROLL, drumroll.phase)
-        verify { soundManager.playVoice("voice_drumroll_please") }
-
-        advanceTimeBy(1_300L)
-        runCurrent()
-
-        val reveal = viewModel.uiState.value.ceremony
-        assertNotNull(reveal)
-        assertEquals(CeremonyPhase.REVEAL, reveal.phase)
-        val buddy = assertNotNull(reveal.buddy)
-        assertEquals(Rarity.EPIC, buddy.rarity)
-        val trauma = viewModel.uiState.value.trauma
-        assertTrue(trauma.token > 0L)
-        assertTrue(trauma.amount > 0f)
-
-        viewModel.onCeremonySkip()
-        runCurrent()
-        assertNull(viewModel.uiState.value.ceremony)
-    }
+            assertEquals(5, viewModel.uiState.value.bites)
+            assertTrue(
+                viewModel.uiState.value.floatUps
+                    .isNotEmpty(),
+            )
+        }
 
     @Test
-    fun `locked slot tap wiggles and never stays silent`() = runTest(testDispatcher) {
-        gameData.snapshotFlow.value = baseSnapshot()
-        runCurrent()
+    fun `mega ticket reveal is always epic and adds a trauma impulse`() =
+        runTest(testDispatcher) {
+            gameData.snapshotFlow.value = baseSnapshot(megaTickets = 1)
+            runCurrent()
 
-        viewModel.onSlotTap(7) // locked: only 0..3 start unlocked
-        runCurrent()
+            viewModel.onTicketTap(TicketType.MEGA)
+            runCurrent()
 
-        assertEquals(7, viewModel.uiState.value.wiggleSlot?.slotIndex)
-        assertTrue(viewModel.uiState.value.floatUps.isNotEmpty(), "a price float-up must appear")
-        verify { soundManager.playButton() }
-    }
+            val drumroll = viewModel.uiState.value.ceremony
+            assertNotNull(drumroll)
+            assertEquals(CeremonyPhase.DRUMROLL, drumroll.phase)
+            verify { soundManager.playVoice("voice_drumroll_please") }
 
-    @Test
-    fun `tapping your own buddy plays its catchphrase`() = runTest(testDispatcher) {
-        gameData.snapshotFlow.value = baseSnapshot()
-        runCurrent()
+            advanceTimeBy(1_300L)
+            runCurrent()
 
-        viewModel.onSlotTap(0) // occupied in the fixture
-        runCurrent()
+            val reveal = viewModel.uiState.value.ceremony
+            assertNotNull(reveal)
+            assertEquals(CeremonyPhase.REVEAL, reveal.phase)
+            val buddy = assertNotNull(reveal.buddy)
+            assertEquals(Rarity.EPIC, buddy.rarity)
+            val trauma = viewModel.uiState.value.trauma
+            assertTrue(trauma.token > 0L)
+            assertTrue(trauma.amount > 0f)
 
-        verify { soundManager.playVoice("voice_frogboot") }
-        assertTrue(viewModel.uiState.value.boingAnims.containsKey("uid-frogboot"))
-    }
-
-    @Test
-    fun `collect vault collects and floats the amount`() = runTest(testDispatcher) {
-        gameData.collectedCoins = 500L
-
-        viewModel.onCollectVault()
-        runCurrent()
-
-        verify { soundManager.playVaultCollect() }
-        assertTrue(viewModel.uiState.value.floatUps.isNotEmpty())
-    }
+            viewModel.onCeremonySkip()
+            runCurrent()
+            assertNull(viewModel.uiState.value.ceremony)
+        }
 
     @Test
-    fun `tour mode toggles and spotlights the first buddy`() = runTest(testDispatcher) {
-        gameData.snapshotFlow.value = baseSnapshot()
-        runCurrent()
+    fun `locked slot tap wiggles and never stays silent`() =
+        runTest(testDispatcher) {
+            gameData.snapshotFlow.value = baseSnapshot()
+            runCurrent()
 
-        viewModel.onTourToggle()
-        runCurrent()
-        val tour = viewModel.uiState.value.tour
-        assertNotNull(tour)
-        assertEquals(0, tour.spotlightSlot)
+            viewModel.onSlotTap(7) // locked: only 0..3 start unlocked
+            runCurrent()
 
-        viewModel.onTourToggle()
-        runCurrent()
-        assertNull(viewModel.uiState.value.tour)
-    }
-
-    @Test
-    fun `pending raid record plays the staged replay then acknowledges`() = runTest(testDispatcher) {
-        val replay = StagedReplayUi(
-            id = "replay-1",
-            kind = ReplayKind.STEAL,
-            buddyId = "frogboot",
-            buddyImageRes = 0,
-            buddyName = "Frogboot",
-            buddySeed = 42L,
-            otherBaseName = "Snack Shack",
-            caption = "Sneaky Snout took Frogboot!",
-            startUptimeMs = 0L,
-        )
-        gameData.snapshotFlow.value = baseSnapshot(pendingReplay = replay)
-        runCurrent()
-
-        assertNotNull(viewModel.uiState.value.replay)
-        verify { soundManager.playStealSuccess() }
-
-        advanceTimeBy(5_100L)
-        runCurrent()
-
-        assertNull(viewModel.uiState.value.replay)
-        assertTrue(gameData.acknowledgedReplays.contains("replay-1"))
-    }
+            assertEquals(
+                7,
+                viewModel.uiState.value.wiggleSlot
+                    ?.slotIndex,
+            )
+            assertTrue(
+                viewModel.uiState.value.floatUps
+                    .isNotEmpty(),
+                "a price float-up must appear",
+            )
+            verify { soundManager.playButton() }
+        }
 
     @Test
-    fun `first interaction unlocks audio and starts music`() = runTest(testDispatcher) {
-        every { soundManager.isUnlocked() } returns false
+    fun `tapping your own buddy plays its catchphrase`() =
+        runTest(testDispatcher) {
+            gameData.snapshotFlow.value = baseSnapshot()
+            runCurrent()
 
-        viewModel.onFirstInteraction()
+            viewModel.onSlotTap(0) // occupied in the fixture
+            runCurrent()
 
-        verify { soundManager.unlockAudio() }
-        verify { soundManager.startMusic() }
-    }
+            verify { soundManager.playVoice("voice_frogboot") }
+            assertTrue(
+                viewModel.uiState.value.boingAnims
+                    .containsKey("uid-frogboot"),
+            )
+        }
+
+    @Test
+    fun `collect vault collects and floats the amount`() =
+        runTest(testDispatcher) {
+            gameData.collectedCoins = 500L
+
+            viewModel.onCollectVault()
+            runCurrent()
+
+            verify { soundManager.playVaultCollect() }
+            assertTrue(
+                viewModel.uiState.value.floatUps
+                    .isNotEmpty(),
+            )
+        }
+
+    @Test
+    fun `tour mode toggles and spotlights the first buddy`() =
+        runTest(testDispatcher) {
+            gameData.snapshotFlow.value = baseSnapshot()
+            runCurrent()
+
+            viewModel.onTourToggle()
+            runCurrent()
+            val tour = viewModel.uiState.value.tour
+            assertNotNull(tour)
+            assertEquals(0, tour.spotlightSlot)
+
+            viewModel.onTourToggle()
+            runCurrent()
+            assertNull(viewModel.uiState.value.tour)
+        }
+
+    @Test
+    fun `pending raid record plays the staged replay then acknowledges`() =
+        runTest(testDispatcher) {
+            val replay =
+                StagedReplayUi(
+                    id = "replay-1",
+                    kind = ReplayKind.STEAL,
+                    buddyId = "frogboot",
+                    buddyImageRes = 0,
+                    buddyName = "Frogboot",
+                    buddySeed = 42L,
+                    otherBaseName = "Snack Shack",
+                    caption = "Sneaky Snout took Frogboot!",
+                    startUptimeMs = 0L,
+                )
+            gameData.snapshotFlow.value = baseSnapshot(pendingReplay = replay)
+            runCurrent()
+
+            assertNotNull(viewModel.uiState.value.replay)
+            verify { soundManager.playStealSuccess() }
+
+            advanceTimeBy(5_100L)
+            runCurrent()
+
+            assertNull(viewModel.uiState.value.replay)
+            assertTrue(gameData.acknowledgedReplays.contains("replay-1"))
+        }
+
+    @Test
+    fun `first interaction unlocks audio and starts music`() =
+        runTest(testDispatcher) {
+            every { soundManager.isUnlocked() } returns false
+
+            viewModel.onFirstInteraction()
+
+            verify { soundManager.unlockAudio() }
+            verify { soundManager.startMusic() }
+        }
 
     // ------------------------------------------------------------------
     // Fixtures
@@ -260,15 +302,16 @@ class HomeViewModelTest {
         megaTickets: Int = 0,
         pendingReplay: StagedReplayUi? = null,
     ): BaseSnapshot {
-        val slots = (0 until 24).map { index ->
-            SlotUi(
-                index = index,
-                unlocked = index < 4,
-                buddy = if (index == 0) slottedBuddy("uid-frogboot", Rarity.COMMON) else null,
-                shielded = false,
-                unlockCost = if (index < 4) 0L else 50L,
-            )
-        }
+        val slots =
+            (0 until 24).map { index ->
+                SlotUi(
+                    index = index,
+                    unlocked = index < 4,
+                    buddy = if (index == 0) slottedBuddy("uid-frogboot", Rarity.COMMON) else null,
+                    shielded = false,
+                    unlockCost = if (index < 4) 0L else 50L,
+                )
+            }
         return BaseSnapshot(
             baseName = baseName,
             slots = slots,
@@ -286,39 +329,44 @@ class HomeViewModelTest {
         )
     }
 
-    private fun slottedBuddy(uid: String, rarity: Rarity): SlottedBuddyUi = SlottedBuddyUi(
-        uid = uid,
-        buddyId = "frogboot",
-        name = "Frogboot",
-        rarity = rarity,
-        imageRes = 0,
-        voiceResName = "voice_frogboot",
-        catchphrase = "Plip plop! RAIN'S HERE!",
-        level = 1,
-        seed = 123L,
-        hatId = null,
-        coinsPerSec = 1,
-        stealCooldownEndsAtMs = 0L,
-    )
+    private fun slottedBuddy(
+        uid: String,
+        rarity: Rarity,
+    ): SlottedBuddyUi =
+        SlottedBuddyUi(
+            uid = uid,
+            buddyId = "frogboot",
+            name = "Frogboot",
+            rarity = rarity,
+            imageRes = 0,
+            voiceResName = "voice_frogboot",
+            catchphrase = "Plip plop! RAIN'S HERE!",
+            level = 1,
+            seed = 123L,
+            hatId = null,
+            coinsPerSec = 1,
+            stealCooldownEndsAtMs = 0L,
+        )
 
     private class FakeBaseGameData : BaseGameData {
-        val snapshotFlow = MutableStateFlow(
-            BaseSnapshot(
-                baseName = "",
-                slots = emptyList(),
-                vaultCoins = 0L,
-                vaultCap = 1L,
-                shieldActive = false,
-                shieldEndsAtMs = 0L,
-                raidWindowActive = false,
-                raidsLeft = 0,
-                nextRaidWindowMs = 0L,
-                luckyTickets = 0,
-                megaTickets = 0,
-                coachMark = null,
-                pendingReplay = null,
-            ),
-        )
+        val snapshotFlow =
+            MutableStateFlow(
+                BaseSnapshot(
+                    baseName = "",
+                    slots = emptyList(),
+                    vaultCoins = 0L,
+                    vaultCap = 1L,
+                    shieldActive = false,
+                    shieldEndsAtMs = 0L,
+                    raidWindowActive = false,
+                    raidsLeft = 0,
+                    nextRaidWindowMs = 0L,
+                    luckyTickets = 0,
+                    megaTickets = 0,
+                    coachMark = null,
+                    pendingReplay = null,
+                ),
+            )
         override val snapshot: Flow<BaseSnapshot> = snapshotFlow
 
         var placeHandler: suspend (String) -> ClaimPlacement = {
@@ -329,8 +377,7 @@ class HomeViewModelTest {
         val acknowledgedReplays = mutableListOf<String>()
         val consumedTickets = mutableListOf<TicketType>()
 
-        override suspend fun placeClaimedBuddy(buddyId: String): ClaimPlacement =
-            placeHandler(buddyId)
+        override suspend fun placeClaimedBuddy(buddyId: String): ClaimPlacement = placeHandler(buddyId)
 
         override suspend fun collectVault(): Long = collectedCoins
 
@@ -350,20 +397,21 @@ class HomeViewModelTest {
         }
 
         companion object {
-            fun slottedBuddyFixture(uid: String): SlottedBuddyUi = SlottedBuddyUi(
-                uid = uid,
-                buddyId = "frogboot",
-                name = "Frogboot",
-                rarity = Rarity.COMMON,
-                imageRes = 0,
-                voiceResName = "voice_frogboot",
-                catchphrase = "Plip plop! RAIN'S HERE!",
-                level = 1,
-                seed = 1L,
-                hatId = null,
-                coinsPerSec = 1,
-                stealCooldownEndsAtMs = 0L,
-            )
+            fun slottedBuddyFixture(uid: String): SlottedBuddyUi =
+                SlottedBuddyUi(
+                    uid = uid,
+                    buddyId = "frogboot",
+                    name = "Frogboot",
+                    rarity = Rarity.COMMON,
+                    imageRes = 0,
+                    voiceResName = "voice_frogboot",
+                    catchphrase = "Plip plop! RAIN'S HERE!",
+                    level = 1,
+                    seed = 1L,
+                    hatId = null,
+                    coinsPerSec = 1,
+                    stealCooldownEndsAtMs = 0L,
+                )
         }
     }
 }

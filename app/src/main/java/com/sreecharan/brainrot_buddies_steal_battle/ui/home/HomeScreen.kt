@@ -35,8 +35,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -85,26 +85,28 @@ fun HomeScreen(
     val colors = LocalAppColors.current
     val reduceMotion = !animationsEnabled(LocalContext.current)
 
-    val camera = rememberTourCamera(
-        tourSlot = state.tour?.spotlightSlot,
-        touring = state.tour != null,
-    )
+    val camera =
+        rememberTourCamera(
+            tourSlot = state.tour?.spotlightSlot,
+            touring = state.tour != null,
+        )
 
-    val board = BoardCanvasState(
-        conveyor = state.conveyor,
-        slots = state.slots,
-        claimAnims = state.claimAnims,
-        waddleAnims = state.waddleAnims,
-        boingAnims = state.boingAnims,
-        floatUps = state.floatUps,
-        wiggleSlot = state.wiggleSlot,
-        shieldDome = state.shieldActive,
-        shieldEndsAtMs = state.shieldEndsAtMs,
-        tour = state.tour,
-        coachMark = state.coachMark,
-        nowMs = state.nowMs,
-        nextSpawnMs = state.nextSpawnMs,
-    )
+    val board =
+        BoardCanvasState(
+            conveyor = state.conveyor,
+            slots = state.slots,
+            claimAnims = state.claimAnims,
+            waddleAnims = state.waddleAnims,
+            boingAnims = state.boingAnims,
+            floatUps = state.floatUps,
+            wiggleSlot = state.wiggleSlot,
+            shieldDome = state.shieldActive,
+            shieldEndsAtMs = state.shieldEndsAtMs,
+            tour = state.tour,
+            coachMark = state.coachMark,
+            nowMs = state.nowMs,
+            nextSpawnMs = state.nextSpawnMs,
+        )
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -123,12 +125,13 @@ fun HomeScreen(
         TourFab(
             touring = state.tour != null,
             onEvent = onEvent,
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = AppDimens.screenMargin,
-                    bottom = AppDimens.tabBarClearance + AppDimens.screenMargin,
-                ),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(
+                        end = AppDimens.screenMargin,
+                        bottom = AppDimens.tabBarClearance + AppDimens.screenMargin,
+                    ),
         )
 
         ViralityOverlays(
@@ -143,7 +146,10 @@ fun HomeScreen(
 
 /** Tour camera: pan toward the spotlight slot, gentle zoom in. */
 @Composable
-private fun rememberTourCamera(tourSlot: Int?, touring: Boolean): CameraState {
+private fun rememberTourCamera(
+    tourSlot: Int?,
+    touring: Boolean,
+): CameraState {
     val camPan = remember { Animatable(0f) }
     val camZoom = remember { Animatable(1f) }
     LaunchedEffect(tourSlot, touring) {
@@ -184,9 +190,10 @@ private fun ColumnScope.BoardSection(
             TourModeOverlay(
                 tour = state.tour,
                 onEndTour = { onEvent(HomeUiEvent.TourToggle) },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = AppDimens.screenMargin),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = AppDimens.screenMargin),
             )
         }
     }
@@ -211,15 +218,17 @@ private fun TourFab(
     val colors = LocalAppColors.current
     IconButton(
         onClick = { onEvent(HomeUiEvent.TourToggle) },
-        modifier = modifier
-            .size(GAMEPLAY_TARGET_SIZE)
-            .background(colors.accent, CircleShape),
+        modifier =
+            modifier
+                .size(GAMEPLAY_TARGET_SIZE)
+                .background(colors.accent, CircleShape),
     ) {
         Icon(
             imageVector = if (touring) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-            contentDescription = stringResource(
-                if (touring) R.string.base_tour_end else R.string.base_tour,
-            ),
+            contentDescription =
+                stringResource(
+                    if (touring) R.string.base_tour_end else R.string.base_tour,
+                ),
             tint = Color.White,
         )
     }
@@ -267,13 +276,14 @@ private fun VaultHudRow(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = AppDimens.screenMargin,
-                    end = AppDimens.screenMargin,
-                    top = AppDimens.spacing12,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = AppDimens.screenMargin,
+                        end = AppDimens.screenMargin,
+                        top = AppDimens.spacing12,
+                    ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
@@ -304,10 +314,11 @@ private fun VaultCard(
 ) {
     val colors = LocalAppColors.current
     Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(CARD_CORNER_RADIUS))
-            .background(colors.cardSurface)
-            .padding(AppDimens.spacing12),
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(CARD_CORNER_RADIUS))
+                .background(colors.cardSurface)
+                .padding(AppDimens.spacing12),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
     ) {
@@ -325,10 +336,11 @@ private fun VaultCard(
             )
             LinearProgressIndicator(
                 progress = { state.vault.fillFraction },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(PROGRESS_BAR_HEIGHT)
-                    .clip(CircleShape),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(PROGRESS_BAR_HEIGHT)
+                        .clip(CircleShape),
                 color = colors.warning,
                 trackColor = colors.secondaryLabel.copy(alpha = TRACK_ALPHA),
             )
@@ -361,30 +373,33 @@ private fun RaidBellWidget(
     ) {
         IconButton(
             onClick = { onEvent(HomeUiEvent.RaidBellTap) },
-            modifier = Modifier
-                .size(GAMEPLAY_TARGET_SIZE)
-                .background(
-                    if (bell.windowActive) colors.accent else colors.cardSurface,
-                    CircleShape,
-                ),
+            modifier =
+                Modifier
+                    .size(GAMEPLAY_TARGET_SIZE)
+                    .background(
+                        if (bell.windowActive) colors.accent else colors.cardSurface,
+                        CircleShape,
+                    ),
         ) {
             Icon(
                 imageVector = Icons.Filled.Notifications,
                 contentDescription = stringResource(R.string.base_raid_bell),
-                tint = if (bell.windowActive) {
-                    Color.White
-                } else {
-                    colors.secondaryLabel
-                },
+                tint =
+                    if (bell.windowActive) {
+                        Color.White
+                    } else {
+                        colors.secondaryLabel
+                    },
             )
         }
         Text(
-            text = if (bell.windowActive) {
-                stringResource(R.string.base_raids_left, bell.raidsLeft)
-            } else {
-                val remaining = (bell.nextWindowMs - System.currentTimeMillis()).coerceAtLeast(0L)
-                stringResource(R.string.base_raid_in, formatShortDuration(remaining))
-            },
+            text =
+                if (bell.windowActive) {
+                    stringResource(R.string.base_raids_left, bell.raidsLeft)
+                } else {
+                    val remaining = (bell.nextWindowMs - System.currentTimeMillis()).coerceAtLeast(0L)
+                    stringResource(R.string.base_raid_in, formatShortDuration(remaining))
+                },
             style = AppTypography.tabLabel,
             color = colors.secondaryLabel,
         )

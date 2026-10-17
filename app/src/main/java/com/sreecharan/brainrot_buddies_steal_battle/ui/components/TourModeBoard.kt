@@ -39,16 +39,18 @@ fun TourModeOverlay(
 ) {
     val colors = LocalAppColors.current
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = AppDimens.screenMargin),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = AppDimens.screenMargin),
         colors = CardDefaults.cardColors(containerColor = colors.cardSurface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing12),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.spacing12),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
         ) {

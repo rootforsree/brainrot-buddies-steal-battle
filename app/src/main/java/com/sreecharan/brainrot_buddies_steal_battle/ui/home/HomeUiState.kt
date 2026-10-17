@@ -132,18 +132,31 @@ data class FloatUpUi(
 
 @Immutable
 sealed interface FloatUpAnchor {
-    @Immutable data class Slot(val index: Int) : FloatUpAnchor
-    @Immutable data class Conveyor(val instanceId: String) : FloatUpAnchor
+    @Immutable data class Slot(
+        val index: Int,
+    ) : FloatUpAnchor
+
+    @Immutable data class Conveyor(
+        val instanceId: String,
+    ) : FloatUpAnchor
+
     @Immutable data object Vault : FloatUpAnchor
+
     @Immutable data object Center : FloatUpAnchor
 }
 
 @Immutable
-data class WiggleUi(val slotIndex: Int, val startUptimeMs: Long)
+data class WiggleUi(
+    val slotIndex: Int,
+    val startUptimeMs: Long,
+)
 
 /** Trauma impulse for the shake controller; the route applies it once per token. */
 @Immutable
-data class TraumaUi(val amount: Float = 0f, val token: Long = 0L)
+data class TraumaUi(
+    val amount: Float = 0f,
+    val token: Long = 0L,
+)
 
 /** Base tour mode, contract §2 V1.8: auto-camera pan, idle acts, catchphrases. */
 @Immutable

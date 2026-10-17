@@ -75,11 +75,12 @@ fun SlotShieldSheet(
         sheetState = rememberModalBottomSheetState(),
     ) {
         Column(
-            modifier = Modifier.padding(
-                start = AppDimens.spacing16,
-                end = AppDimens.spacing16,
-                bottom = AppDimens.spacing32,
-            ),
+            modifier =
+                Modifier.padding(
+                    start = AppDimens.spacing16,
+                    end = AppDimens.spacing16,
+                    bottom = AppDimens.spacing32,
+                ),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
         ) {
             Text(
@@ -107,31 +108,35 @@ private fun SlotShieldRowCard(
     val colors = LocalAppColors.current
     GroupCard {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(AppDimens.spacing12),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(AppDimens.spacing12),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(AppDimens.spacing12),
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = row.buddyName
-                        ?: stringResource(R.string.shop_slot_next),
+                    text =
+                        row.buddyName
+                            ?: stringResource(R.string.shop_slot_next),
                     style = AppTypography.headline,
                     color = colors.label,
                 )
                 Text(
-                    text = if (row.shieldActive) {
-                        stringResource(R.string.shop_shield_active)
-                    } else {
-                        stringResource(R.string.coins_count, SLOT_SHIELD_COST)
-                    },
+                    text =
+                        if (row.shieldActive) {
+                            stringResource(R.string.shop_shield_active)
+                        } else {
+                            stringResource(R.string.coins_count, SLOT_SHIELD_COST)
+                        },
                     style = AppTypography.footnote,
-                    color = if (row.shieldActive) {
-                        colors.success
-                    } else {
-                        colors.secondaryLabel
-                    },
+                    color =
+                        if (row.shieldActive) {
+                            colors.success
+                        } else {
+                            colors.secondaryLabel
+                        },
                 )
             }
             if (!row.shieldActive) {
@@ -159,11 +164,12 @@ fun HatEquipSheet(
         sheetState = rememberModalBottomSheetState(),
     ) {
         Column(
-            modifier = Modifier.padding(
-                start = AppDimens.spacing16,
-                end = AppDimens.spacing16,
-                bottom = AppDimens.spacing32,
-            ),
+            modifier =
+                Modifier.padding(
+                    start = AppDimens.spacing16,
+                    end = AppDimens.spacing16,
+                    bottom = AppDimens.spacing32,
+                ),
             verticalArrangement = Arrangement.spacedBy(AppDimens.spacing8),
         ) {
             Text(
@@ -191,14 +197,16 @@ fun HatEquipSheet(
             }
             Button(
                 onClick = onRemoveHat,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
                 shape = AppShapes.capsule,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = LocalAppColors.current.destructive.copy(alpha = 0.15f),
-                    contentColor = LocalAppColors.current.destructive,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = LocalAppColors.current.destructive.copy(alpha = 0.15f),
+                        contentColor = LocalAppColors.current.destructive,
+                    ),
             ) {
                 Text(text = stringResource(R.string.shop_hat_remove))
             }

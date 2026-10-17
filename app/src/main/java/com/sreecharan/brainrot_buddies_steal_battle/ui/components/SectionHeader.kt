@@ -23,10 +23,11 @@ fun SectionHeader(
         text = title.uppercase(Locale.getDefault()),
         style = AppTypography.footnote.copy(letterSpacing = 0.5.sp),
         color = LocalAppColors.current.secondaryLabel,
-        modifier = modifier.padding(
-            start = AppDimens.spacing16,
-            top = AppDimens.spacing8,
-            bottom = AppDimens.spacing8,
-        ),
+        modifier =
+            modifier.padding(
+                start = AppDimens.spacing16,
+                top = AppDimens.spacing8,
+                bottom = AppDimens.spacing8,
+            ),
     )
 }

@@ -42,33 +42,33 @@ fun GlassTabBar(
     val colors = LocalAppColors.current
     val tick = rememberHapticTick()
     Row(
-        modifier = modifier
-            .height(AppDimens.tabBarHeight)
-            .clip(AppShapes.capsule)
-            .background(colors.glassFill)
-            .border(AppDimens.hairline, colors.glassBorder, AppShapes.capsule)
-            .padding(horizontal = AppDimens.spacing8),
+        modifier =
+            modifier
+                .height(AppDimens.tabBarHeight)
+                .clip(AppShapes.capsule)
+                .background(colors.glassFill)
+                .border(AppDimens.hairline, colors.glassBorder, AppShapes.capsule)
+                .padding(horizontal = AppDimens.spacing8),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         tabs.forEachIndexed { index, tab ->
             val selected = index == selectedIndex
             Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(AppShapes.capsule)
-                    .selectable(
-                        selected = selected,
-                        role = Role.Tab,
-                        onClick = {
-                            tick()
-                            onTabSelected(index)
-                        },
-                    )
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = tab.label
-                    }
-                    .padding(vertical = AppDimens.spacing4),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(AppShapes.capsule)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = {
+                                tick()
+                                onTabSelected(index)
+                            },
+                        ).semantics(mergeDescendants = true) {
+                            contentDescription = tab.label
+                        }.padding(vertical = AppDimens.spacing4),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {

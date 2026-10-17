@@ -6,13 +6,13 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.model.Result
 import com.sreecharan.brainrot_buddies_steal_battle.data.repository.GameRepository
 import com.sreecharan.brainrot_buddies_steal_battle.game.engine.GameEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 /**
  * Guided claims (§1 hour-1 ladder): claim Frogboot -> claim Pip McSnacks ->
@@ -43,79 +43,87 @@ enum class GuidedStep {
 }
 
 @HiltViewModel
-class GuidedClaimsViewModel @Inject constructor(
-    private val repository: GameRepository,
-    private val engine: GameEngine,
-) : ViewModel() {
+class GuidedClaimsViewModel
+    @Inject
+    constructor(
+        private val repository: GameRepository,
+        private val engine: GameEngine,
+    ) : ViewModel() {
+        /** Steps dismissed with "Later" this session (in-memory only). */
+        private val dismissed = MutableStateFlow<Set<GuidedStep>>(emptySet())
 
-    /** Steps dismissed with "Later" this session (in-memory only). */
-    private val dismissed = MutableStateFlow<Set<GuidedStep>>(emptySet())
-
-    val step: StateFlow<GuidedStep?> = combine(
-        combine(
+        val step: StateFlow<GuidedStep?> =
             combine(
-                repository.observeOwnedBuddies(),
-                repository.observeSlots(),
-            ) { buddiesResult, slotsResult -> buddiesResult to slotsResult },
-            repository.observeVault(),
-        ) { first, vaultResult -> Triple(first.first, first.second, vaultResult) },
-        combine(
-            combine(
-                repository.observeCalendar(),
-                repository.observeTutorialDone(),
-            ) { calendarResult, tutorialResult -> calendarResult to tutorialResult },
-            dismissed,
-        ) { first, dismissedSteps -> Triple(first.first, first.second, dismissedSteps) },
-    ) { first, second ->
-        val (buddiesResult, slotsResult, vaultResult) = first
-        val (calendarResult, tutorialResult, dismissedSteps) = second
-        val tutorialDone = tutorialResult.dataOrNull() == true
-        if (tutorialDone) {
-            null
-        } else {
-            deriveStep(
-                ownedIds = buddiesResult.dataOrNull().orEmpty().map { it.buddyId }.toSet(),
-                unlockedSlots = slotsResult.dataOrNull().orEmpty().count { it.unlocked },
-                vaultCoins = vaultResult.dataOrNull()?.coins ?: 0L,
-                giftClaimableToday = calendarResult.dataOrNull()?.lastClaimDate != engine.todayKey(),
-            )?.takeUnless { it in dismissedSteps }
+                combine(
+                    combine(
+                        repository.observeOwnedBuddies(),
+                        repository.observeSlots(),
+                    ) { buddiesResult, slotsResult -> buddiesResult to slotsResult },
+                    repository.observeVault(),
+                ) { first, vaultResult -> Triple(first.first, first.second, vaultResult) },
+                combine(
+                    combine(
+                        repository.observeCalendar(),
+                        repository.observeTutorialDone(),
+                    ) { calendarResult, tutorialResult -> calendarResult to tutorialResult },
+                    dismissed,
+                ) { first, dismissedSteps -> Triple(first.first, first.second, dismissedSteps) },
+            ) { first, second ->
+                val (buddiesResult, slotsResult, vaultResult) = first
+                val (calendarResult, tutorialResult, dismissedSteps) = second
+                val tutorialDone = tutorialResult.dataOrNull() == true
+                if (tutorialDone) {
+                    null
+                } else {
+                    deriveStep(
+                        ownedIds =
+                            buddiesResult
+                                .dataOrNull()
+                                .orEmpty()
+                                .map { it.buddyId }
+                                .toSet(),
+                        unlockedSlots = slotsResult.dataOrNull().orEmpty().count { it.unlocked },
+                        vaultCoins = vaultResult.dataOrNull()?.coins ?: 0L,
+                        giftClaimableToday = calendarResult.dataOrNull()?.lastClaimDate != engine.todayKey(),
+                    )?.takeUnless { it in dismissedSteps }
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = null,
+            )
+
+        fun onStepDismissed(step: GuidedStep) {
+            dismissed.value = dismissed.value + step
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = null,
-    )
 
-    fun onStepDismissed(step: GuidedStep) {
-        dismissed.value = dismissed.value + step
-    }
+        /** Called when the derived step becomes null: the ladder is complete. */
+        fun onLadderComplete() {
+            viewModelScope.launch {
+                repository.setTutorialDone(true)
+            }
+        }
 
-    /** Called when the derived step becomes null: the ladder is complete. */
-    fun onLadderComplete() {
-        viewModelScope.launch {
-            repository.setTutorialDone(true)
+        companion object {
+            /** Slot count the player starts with; buying one is a guided step. */
+            const val SLOTS_BEFORE_BUY_STEP = 5
+
+            fun deriveStep(
+                ownedIds: Set<String>,
+                unlockedSlots: Int,
+                vaultCoins: Long,
+                giftClaimableToday: Boolean,
+            ): GuidedStep? =
+                when {
+                    "frogboot" !in ownedIds -> GuidedStep.CLAIM_FROGBOOT
+                    "pip_mcsnacks" !in ownedIds -> GuidedStep.CLAIM_PIP
+                    unlockedSlots < SLOTS_BEFORE_BUY_STEP -> GuidedStep.BUY_SLOT
+                    "splorch" !in ownedIds -> GuidedStep.CLAIM_SPLORCH
+                    vaultCoins > 0 -> GuidedStep.COLLECT_VAULT
+                    giftClaimableToday -> GuidedStep.OPEN_GIFT
+                    else -> null
+                }
         }
     }
-
-    companion object {
-        /** Slot count the player starts with; buying one is a guided step. */
-        const val SLOTS_BEFORE_BUY_STEP = 5
-
-        fun deriveStep(
-            ownedIds: Set<String>,
-            unlockedSlots: Int,
-            vaultCoins: Long,
-            giftClaimableToday: Boolean,
-        ): GuidedStep? = when {
-            "frogboot" !in ownedIds -> GuidedStep.CLAIM_FROGBOOT
-            "pip_mcsnacks" !in ownedIds -> GuidedStep.CLAIM_PIP
-            unlockedSlots < SLOTS_BEFORE_BUY_STEP -> GuidedStep.BUY_SLOT
-            "splorch" !in ownedIds -> GuidedStep.CLAIM_SPLORCH
-            vaultCoins > 0 -> GuidedStep.COLLECT_VAULT
-            giftClaimableToday -> GuidedStep.OPEN_GIFT
-            else -> null
-        }
-    }
-}
 
 private fun <T> Result<T>.dataOrNull(): T? = (this as? Result.Success<T>)?.data

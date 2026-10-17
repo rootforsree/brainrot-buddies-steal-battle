@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ShieldDao {
-
     @Query("SELECT * FROM shields WHERE id = 1")
     fun observe(): Flow<ShieldEntity?>
 

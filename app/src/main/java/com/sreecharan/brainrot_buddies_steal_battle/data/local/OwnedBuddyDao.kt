@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OwnedBuddyDao {
-
     @Query("SELECT * FROM owned_buddies ORDER BY acquiredAt ASC")
     fun observeAll(): Flow<List<OwnedBuddyEntity>>
 

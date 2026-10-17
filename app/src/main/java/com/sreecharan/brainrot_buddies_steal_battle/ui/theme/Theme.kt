@@ -35,35 +35,36 @@ fun AppTheme(
     // Map the fixed palette onto Material3 roles so every stock component
     // (Switch, RadioButton, Button, ripples) uses the one accent, never the
     // default purple. Roles are the contract; hexes stay in Tokens.kt.
-    val colorScheme = if (darkTheme) {
-        darkColorScheme(
-            primary = colors.accent,
-            onPrimary = Color.White,
-            background = colors.groupedBackground,
-            onBackground = colors.label,
-            surface = colors.cardSurface,
-            onSurface = colors.label,
-            surfaceVariant = colors.groupedBackground,
-            onSurfaceVariant = colors.secondaryLabel,
-            error = colors.destructive,
-            onError = Color.White,
-            outline = colors.secondaryLabel.copy(alpha = 0.3f),
-        )
-    } else {
-        lightColorScheme(
-            primary = colors.accent,
-            onPrimary = Color.White,
-            background = colors.groupedBackground,
-            onBackground = colors.label,
-            surface = colors.cardSurface,
-            onSurface = colors.label,
-            surfaceVariant = colors.groupedBackground,
-            onSurfaceVariant = colors.secondaryLabel,
-            error = colors.destructive,
-            onError = Color.White,
-            outline = colors.secondaryLabel.copy(alpha = 0.3f),
-        )
-    }
+    val colorScheme =
+        if (darkTheme) {
+            darkColorScheme(
+                primary = colors.accent,
+                onPrimary = Color.White,
+                background = colors.groupedBackground,
+                onBackground = colors.label,
+                surface = colors.cardSurface,
+                onSurface = colors.label,
+                surfaceVariant = colors.groupedBackground,
+                onSurfaceVariant = colors.secondaryLabel,
+                error = colors.destructive,
+                onError = Color.White,
+                outline = colors.secondaryLabel.copy(alpha = 0.3f),
+            )
+        } else {
+            lightColorScheme(
+                primary = colors.accent,
+                onPrimary = Color.White,
+                background = colors.groupedBackground,
+                onBackground = colors.label,
+                surface = colors.cardSurface,
+                onSurface = colors.label,
+                surfaceVariant = colors.groupedBackground,
+                onSurfaceVariant = colors.secondaryLabel,
+                error = colors.destructive,
+                onError = Color.White,
+                outline = colors.secondaryLabel.copy(alpha = 0.3f),
+            )
+        }
     // Keep status and navigation bar icon tint in sync with the theme, since
     // edge-to-edge draws content under both bars.
     val view = LocalView.current
@@ -87,11 +88,12 @@ fun AppTheme(
 }
 
 @Composable
-fun ThemeMode.isDarkTheme(): Boolean = when (this) {
-    ThemeMode.SYSTEM -> isSystemInDarkTheme()
-    ThemeMode.LIGHT -> false
-    ThemeMode.DARK -> true
-}
+fun ThemeMode.isDarkTheme(): Boolean =
+    when (this) {
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+    }
 
 /**
  * Light tick for tabs, toggles and selections; medium for pull-to-refresh

@@ -8,7 +8,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class RaidRulesTest {
-
     private val zone = ZoneId.of("America/Chicago")
 
     // ---- window start math (window identity comes from GameEngine) ----
@@ -16,8 +15,13 @@ class RaidRulesTest {
     @Test
     fun `window start converts the engine window to epoch millis`() {
         val start = RaidRules.windowStartMs(LocalDate.of(2026, 10, 16), 14, zone)
-        val expected = LocalDate.of(2026, 10, 16).atTime(14, 0).atZone(zone)
-            .toInstant().toEpochMilli()
+        val expected =
+            LocalDate
+                .of(2026, 10, 16)
+                .atTime(14, 0)
+                .atZone(zone)
+                .toInstant()
+                .toEpochMilli()
         assertEquals(expected, start)
     }
 
@@ -132,75 +136,91 @@ class RaidRulesTest {
 
     @Test
     fun `attacker pre-check enforces window budget first`() {
-        val verdict = RaidRules.canAttemptSteal(
-            raidsUsed = 3,
-            alreadyRaidedFriend = false,
-            snapshotRaided = false,
-            isShadow = false,
-            slotOccupied = true,
-            baseShielded = false,
-            buddyOnCooldown = false,
-        )
+        val verdict =
+            RaidRules.canAttemptSteal(
+                raidsUsed = 3,
+                alreadyRaidedFriend = false,
+                snapshotRaided = false,
+                isShadow = false,
+                slotOccupied = true,
+                baseShielded = false,
+                buddyOnCooldown = false,
+            )
         assertEquals(StealRejectReason.WINDOW_EXHAUSTED, (verdict as StealVerdict.Rejected).reason)
     }
 
     @Test
     fun `attacker pre-check blocks an already-spent snapshot`() {
-        val verdict = RaidRules.canAttemptSteal(
-            raidsUsed = 0,
-            alreadyRaidedFriend = false,
-            snapshotRaided = true,
-            isShadow = true,
-            slotOccupied = true,
-            baseShielded = false,
-            buddyOnCooldown = false,
-        )
+        val verdict =
+            RaidRules.canAttemptSteal(
+                raidsUsed = 0,
+                alreadyRaidedFriend = false,
+                snapshotRaided = true,
+                isShadow = true,
+                slotOccupied = true,
+                baseShielded = false,
+                buddyOnCooldown = false,
+            )
         assertEquals(StealRejectReason.SNAPSHOT_SPENT, (verdict as StealVerdict.Rejected).reason)
     }
 
     // ---- shadow heist ----
 
-    private fun snapshot(shieldUntil: Long = 0L) = BaseSnapshot(
-        guestId = "guest-2",
-        baseName = "Noodle Nest",
-        exportedAt = 1_700_000_000_000L,
-        shieldUntil = shieldUntil,
-        coinsPerSec = 49,
-        slots = listOf(SnapshotSlot(slot = 2, buddyId = "gulp", level = 1)),
-    )
+    private fun snapshot(shieldUntil: Long = 0L) =
+        BaseSnapshot(
+            guestId = "guest-2",
+            baseName = "Noodle Nest",
+            exportedAt = 1_700_000_000_000L,
+            shieldUntil = shieldUntil,
+            coinsPerSec = 49,
+            slots = listOf(SnapshotSlot(slot = 2, buddyId = "gulp", level = 1)),
+        )
 
     @Test
     fun `shadow heist accepted against a fresh snapshot`() {
-        val verdict = RaidRules.validateShadowSteal(
-            snapshot(), 2, snapshotAlreadyRaided = false, 1_700_000_000_000L,
-        )
+        val verdict =
+            RaidRules.validateShadowSteal(
+                snapshot(),
+                2,
+                snapshotAlreadyRaided = false,
+                1_700_000_000_000L,
+            )
         assertTrue(verdict is StealVerdict.Accepted)
     }
 
     @Test
     fun `only one shadow heist per snapshot`() {
-        val verdict = RaidRules.validateShadowSteal(
-            snapshot(), 2, snapshotAlreadyRaided = true, 1_700_000_000_000L,
-        )
+        val verdict =
+            RaidRules.validateShadowSteal(
+                snapshot(),
+                2,
+                snapshotAlreadyRaided = true,
+                1_700_000_000_000L,
+            )
         assertEquals(StealRejectReason.SNAPSHOT_SPENT, (verdict as StealVerdict.Rejected).reason)
     }
 
     @Test
     fun `shadow heist respects snapshot shield`() {
-        val verdict = RaidRules.validateShadowSteal(
-            snapshot(shieldUntil = 1_700_000_000_000L + 3_600_000L),
-            2,
-            snapshotAlreadyRaided = false,
-            1_700_000_000_000L,
-        )
+        val verdict =
+            RaidRules.validateShadowSteal(
+                snapshot(shieldUntil = 1_700_000_000_000L + 3_600_000L),
+                2,
+                snapshotAlreadyRaided = false,
+                1_700_000_000_000L,
+            )
         assertEquals(StealRejectReason.SHIELDED, (verdict as StealVerdict.Rejected).reason)
     }
 
     @Test
     fun `shadow heist rejects empty slot`() {
-        val verdict = RaidRules.validateShadowSteal(
-            snapshot(), 7, snapshotAlreadyRaided = false, 1_700_000_000_000L,
-        )
+        val verdict =
+            RaidRules.validateShadowSteal(
+                snapshot(),
+                7,
+                snapshotAlreadyRaided = false,
+                1_700_000_000_000L,
+            )
         assertEquals(StealRejectReason.EMPTY, (verdict as StealVerdict.Rejected).reason)
     }
 }

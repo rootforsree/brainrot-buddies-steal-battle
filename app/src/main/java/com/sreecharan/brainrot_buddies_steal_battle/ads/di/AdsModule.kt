@@ -30,14 +30,14 @@ annotation class MainDispatcher
 @Module
 @InstallIn(SingletonComponent::class)
 object AdsModule {
-
     private val Context.adsPreferences by preferencesDataStore(name = "ads_prefs")
 
     @Provides
     @Singleton
     @AdsPreferences
-    fun provideAdsPreferences(@ApplicationContext context: Context): DataStore<Preferences> =
-        context.adsPreferences
+    fun provideAdsPreferences(
+        @ApplicationContext context: Context,
+    ): DataStore<Preferences> = context.adsPreferences
 
     @Provides
     @Singleton

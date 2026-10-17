@@ -11,10 +11,14 @@ import kotlinx.coroutines.flow.Flow
  */
 sealed interface HomeUiEvent {
     /** A conveyor buddy was tapped. `instanceId` is the ride, not the species. */
-    data class ConveyorTap(val instanceId: String) : HomeUiEvent
+    data class ConveyorTap(
+        val instanceId: String,
+    ) : HomeUiEvent
 
     /** A grid slot was tapped. */
-    data class SlotTap(val index: Int) : HomeUiEvent
+    data class SlotTap(
+        val index: Int,
+    ) : HomeUiEvent
 
     /** Vault collect button tapped. */
     data object VaultCollect : HomeUiEvent
@@ -23,10 +27,14 @@ sealed interface HomeUiEvent {
     data object RaidBellTap : HomeUiEvent
 
     /** Lucky/Mega ticket chip tapped: starts the mystery-pull ceremony. */
-    data class TicketTap(val type: TicketType) : HomeUiEvent
+    data class TicketTap(
+        val type: TicketType,
+    ) : HomeUiEvent
 
     /** Mystery-pull ceremony finished its drumroll; reveal the pull now. */
-    data class CeremonyReveal(val type: TicketType) : HomeUiEvent
+    data class CeremonyReveal(
+        val type: TicketType,
+    ) : HomeUiEvent
 
     /** A celebration overlay was dismissed early (contract §10: skippable). */
     data object DismissCelebration : HomeUiEvent
@@ -54,7 +62,9 @@ sealed interface HomeUiEvent {
  */
 sealed interface HomeEvent {
     /** Contract §11: every tap answers with haptic feedback. */
-    data class Haptic(val kind: HapticKind) : HomeEvent
+    data class Haptic(
+        val kind: HapticKind,
+    ) : HomeEvent
 
     /** A big moment (Epic claim, steal success) for a full-pattern buzz. */
     data object BigMoment : HomeEvent
@@ -80,7 +90,6 @@ enum class HapticKind { TAP, SUCCESS, CELEBRATION, WARNING }
  * ViewModel and its tests never touch the repository directly.
  */
 interface BaseGameData {
-
     /** The full persisted base, re-emitted on every change. */
     val snapshot: Flow<BaseSnapshot>
 
@@ -125,12 +134,18 @@ data class BaseSnapshot(
 )
 
 sealed interface ClaimPlacement {
-    data class Placed(val slotIndex: Int, val buddy: SlottedBuddyUi) : ClaimPlacement
+    data class Placed(
+        val slotIndex: Int,
+        val buddy: SlottedBuddyUi,
+    ) : ClaimPlacement
+
     data object BaseFull : ClaimPlacement
 }
 
 sealed interface BuySlotOutcome {
     data object Success : BuySlotOutcome
+
     data object NotEnoughCoins : BuySlotOutcome
+
     data object AlreadyUnlocked : BuySlotOutcome
 }

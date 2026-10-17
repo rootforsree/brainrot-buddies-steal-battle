@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface RaidRecordDao {
-
     @Query("SELECT * FROM raid_records ORDER BY createdAt DESC")
     fun observeAll(): Flow<List<RaidRecordEntity>>
 

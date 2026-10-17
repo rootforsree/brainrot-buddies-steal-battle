@@ -25,42 +25,48 @@ import javax.inject.Singleton
  */
 @Singleton
 @Suppress("LongParameterList")
-class GameRepositoryImpl @Inject constructor(
-    ownedBuddyDao: OwnedBuddyDao,
-    slotDao: BaseSlotDao,
-    vaultDao: VaultDao,
-    ticketDao: TicketDao,
-    shieldDao: ShieldDao,
-    raidRecordDao: RaidRecordDao,
-    friendDao: FriendDao,
-    calendarDao: CalendarDao,
-    gamePrefs: GamePrefs,
-    @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ops: RepositoryOps = RepositoryOps(
-        core = CoreDaos(
-            ownedBuddyDao = ownedBuddyDao,
-            slotDao = slotDao,
-            vaultDao = vaultDao,
-            ticketDao = ticketDao,
-        ),
-        meta = MetaDaos(
-            shieldDao = shieldDao,
-            raidRecordDao = raidRecordDao,
-            friendDao = friendDao,
-            calendarDao = calendarDao,
-        ),
-        helpers = RepositoryHelpers(
-            gamePrefs = gamePrefs,
-            ioDispatcher = ioDispatcher,
-        ),
-    ),
-) : GameRepository,
-    BuddyReads by ops.buddyReads,
-    IdentityPrefsReads by ops.identityReads,
-    SettingsPrefsReads by ops.settingsReads,
-    EntityWrites by ops.entityWrites,
-    EconomyWrites by ops.economyWrites,
-    RecordWrites by ops.recordWrites,
-    IdentityPrefsWrites by ops.identityWrites,
-    SettingsPrefsWrites by ops.settingsWrites,
-    GameLifecycle by ops.lifecycle
+class GameRepositoryImpl
+    @Inject
+    constructor(
+        ownedBuddyDao: OwnedBuddyDao,
+        slotDao: BaseSlotDao,
+        vaultDao: VaultDao,
+        ticketDao: TicketDao,
+        shieldDao: ShieldDao,
+        raidRecordDao: RaidRecordDao,
+        friendDao: FriendDao,
+        calendarDao: CalendarDao,
+        gamePrefs: GamePrefs,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+        ops: RepositoryOps =
+            RepositoryOps(
+                core =
+                    CoreDaos(
+                        ownedBuddyDao = ownedBuddyDao,
+                        slotDao = slotDao,
+                        vaultDao = vaultDao,
+                        ticketDao = ticketDao,
+                    ),
+                meta =
+                    MetaDaos(
+                        shieldDao = shieldDao,
+                        raidRecordDao = raidRecordDao,
+                        friendDao = friendDao,
+                        calendarDao = calendarDao,
+                    ),
+                helpers =
+                    RepositoryHelpers(
+                        gamePrefs = gamePrefs,
+                        ioDispatcher = ioDispatcher,
+                    ),
+            ),
+    ) : GameRepository,
+        BuddyReads by ops.buddyReads,
+        IdentityPrefsReads by ops.identityReads,
+        SettingsPrefsReads by ops.settingsReads,
+        EntityWrites by ops.entityWrites,
+        EconomyWrites by ops.economyWrites,
+        RecordWrites by ops.recordWrites,
+        IdentityPrefsWrites by ops.identityWrites,
+        SettingsPrefsWrites by ops.settingsWrites,
+        GameLifecycle by ops.lifecycle

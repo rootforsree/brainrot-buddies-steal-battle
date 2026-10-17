@@ -28,73 +28,83 @@ data class AppColors(
     val glassBorder: Color,
 )
 
-val LightAppColors = AppColors(
-    accent = Color(0xFF007AFF),
-    groupedBackground = Color(0xFFF2F2F7),
-    label = Color(0xFF1D1D1F),
-    secondaryLabel = Color(0xFF48484A),
-    cardSurface = Color(0xFFFFFFFF),
-    destructive = Color(0xFFFF3B30),
-    success = Color(0xFF34C759),
-    warning = Color(0xFFFF9500),
-    glassFill = Color(0x66FFFFFF),
-    glassBorder = Color(0x33FFFFFF),
-)
+val LightAppColors =
+    AppColors(
+        accent = Color(0xFF007AFF),
+        groupedBackground = Color(0xFFF2F2F7),
+        label = Color(0xFF1D1D1F),
+        secondaryLabel = Color(0xFF48484A),
+        cardSurface = Color(0xFFFFFFFF),
+        destructive = Color(0xFFFF3B30),
+        success = Color(0xFF34C759),
+        warning = Color(0xFFFF9500),
+        glassFill = Color(0x66FFFFFF),
+        glassBorder = Color(0x33FFFFFF),
+    )
 
-val DarkAppColors = AppColors(
-    accent = Color(0xFF007AFF),
-    groupedBackground = Color(0xFF1C1C1E),
-    label = Color(0xFFFFFFFF),
-    secondaryLabel = Color(0x99FFFFFF),
-    cardSurface = Color(0xFF2C2C2E),
-    destructive = Color(0xFFFF3B30),
-    success = Color(0xFF34C759),
-    warning = Color(0xFFFF9500),
-    glassFill = Color(0x26FFFFFF),
-    glassBorder = Color(0x1AFFFFFF),
-)
+val DarkAppColors =
+    AppColors(
+        accent = Color(0xFF007AFF),
+        groupedBackground = Color(0xFF1C1C1E),
+        label = Color(0xFFFFFFFF),
+        secondaryLabel = Color(0x99FFFFFF),
+        cardSurface = Color(0xFF2C2C2E),
+        destructive = Color(0xFFFF3B30),
+        success = Color(0xFF34C759),
+        warning = Color(0xFFFF9500),
+        glassFill = Color(0x26FFFFFF),
+        glassBorder = Color(0x1AFFFFFF),
+    )
 
 object AppTypography {
-    val largeTitle = TextStyle(
-        fontSize = 34.sp,
-        fontWeight = FontWeight.Bold,
-        lineHeight = 41.sp,
-    )
-    val title2 = TextStyle(
-        fontSize = 22.sp,
-        fontWeight = FontWeight.Bold,
-        lineHeight = 28.sp,
-    )
-    val headline = TextStyle(
-        fontSize = 17.sp,
-        fontWeight = FontWeight.SemiBold,
-        lineHeight = 22.sp,
-    )
-    val body = TextStyle(
-        fontSize = 17.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 23.sp,
-    )
-    val subheadline = TextStyle(
-        fontSize = 15.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 20.sp,
-    )
-    val footnote = TextStyle(
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 18.sp,
-    )
-    val caption = TextStyle(
-        fontSize = 12.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 16.sp,
-    )
-    val tabLabel = TextStyle(
-        fontSize = 11.sp,
-        fontWeight = FontWeight.Medium,
-        lineHeight = 13.sp,
-    )
+    val largeTitle =
+        TextStyle(
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 41.sp,
+        )
+    val title2 =
+        TextStyle(
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 28.sp,
+        )
+    val headline =
+        TextStyle(
+            fontSize = 17.sp,
+            fontWeight = FontWeight.SemiBold,
+            lineHeight = 22.sp,
+        )
+    val body =
+        TextStyle(
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Normal,
+            lineHeight = 23.sp,
+        )
+    val subheadline =
+        TextStyle(
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Normal,
+            lineHeight = 20.sp,
+        )
+    val footnote =
+        TextStyle(
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Normal,
+            lineHeight = 18.sp,
+        )
+    val caption =
+        TextStyle(
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Normal,
+            lineHeight = 16.sp,
+        )
+    val tabLabel =
+        TextStyle(
+            fontSize = 11.sp,
+            fontWeight = FontWeight.Medium,
+            lineHeight = 13.sp,
+        )
 }
 
 object AppShapes {

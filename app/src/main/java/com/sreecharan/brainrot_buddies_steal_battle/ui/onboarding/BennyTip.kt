@@ -67,12 +67,14 @@ fun BennyTip(
                 if (actionLabel != null && onAction != null) {
                     Button(
                         onClick = onAction,
-                        modifier = Modifier
-                            .padding(top = AppDimens.spacing8)
-                            .heightIn(min = 48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colors.accent,
-                        ),
+                        modifier =
+                            Modifier
+                                .padding(top = AppDimens.spacing8)
+                                .heightIn(min = 48.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = colors.accent,
+                            ),
                     ) {
                         Text(text = actionLabel, style = AppTypography.headline)
                     }

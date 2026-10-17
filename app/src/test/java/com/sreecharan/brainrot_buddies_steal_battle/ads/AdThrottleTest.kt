@@ -6,7 +6,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AdThrottleTest {
-
     private val throttle = AdThrottle()
     private val halfHour = 30L * 60L * 1000L
 

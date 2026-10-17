@@ -26,15 +26,17 @@ import javax.inject.Singleton
  * raids) so no single interface exceeds the complexity budget; [GamePrefs]
  * composes them all and stays the type the UI injects.
  */
-interface GamePrefs : GameIdentityPrefs, GameAudioPrefs, GameRewardPrefs, GameRaidPrefs {
-
+interface GamePrefs :
+    GameIdentityPrefs,
+    GameAudioPrefs,
+    GameRewardPrefs,
+    GameRaidPrefs {
     /** Clears every game preference (data-deletion button). */
     suspend fun clearAll()
 }
 
 /** Identity and onboarding state. */
 interface GameIdentityPrefs {
-
     val guestId: Flow<String?>
     val baseName: Flow<String>
     val onboardingDay: Flow<Int>
@@ -44,30 +46,36 @@ interface GameIdentityPrefs {
 
     /** Returns the stored guest id, creating and storing a UUID on first call. */
     suspend fun ensureGuestId(): String
+
     suspend fun setBaseName(name: String)
+
     suspend fun setOnboardingDay(day: Int)
+
     suspend fun setTutorialDone(done: Boolean)
+
     suspend fun setPosterPath(path: String)
+
     suspend fun setBennyHintsEnabled(enabled: Boolean)
 }
 
 /** The three audio channels (§9) plus haptics. */
 interface GameAudioPrefs {
-
     val musicVolume: Flow<Int>
     val sfxVolume: Flow<Int>
     val voiceVolume: Flow<Int>
     val hapticsEnabled: Flow<Boolean>
 
     suspend fun setMusicVolume(volume: Int)
+
     suspend fun setSfxVolume(volume: Int)
+
     suspend fun setVoiceVolume(volume: Int)
+
     suspend fun setHapticsEnabled(enabled: Boolean)
 }
 
 /** Rewards, entitlements and gift state. */
 interface GameRewardPrefs {
-
     val adsRemoved: Flow<Boolean>
 
     /**
@@ -107,11 +115,11 @@ interface GameRewardPrefs {
 
 /** Raid-window bookkeeping (§1: three raids per 6-hour window). */
 interface GameRaidPrefs {
-
     val lastRaidWindow: Flow<String>
     val raidsUsed: Flow<Int>
 
     suspend fun setLastRaidWindow(bucket: String)
+
     suspend fun setRaidsUsed(count: Int)
 }
 
@@ -143,19 +151,19 @@ internal object GamePrefsKeys {
  * DataStore reads that swallow only corruption/IO failures (emitting empty
  * preferences); anything else still crashes loudly.
  */
-internal fun DataStore<Preferences>.safePreferences(): Flow<Preferences> = data
-    .catch { e ->
-        if (e is IOException) {
-            emit(emptyPreferences())
-        } else {
-            throw e
+internal fun DataStore<Preferences>.safePreferences(): Flow<Preferences> =
+    data
+        .catch { e ->
+            if (e is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw e
+            }
         }
-    }
 
 internal class IdentityPrefsStore(
     private val dataStore: DataStore<Preferences>,
 ) : GameIdentityPrefs {
-
     private val prefs: Flow<Preferences> = dataStore.safePreferences()
 
     override val guestId: Flow<String?> = prefs.map { it[GamePrefsKeys.GUEST_ID] }
@@ -204,7 +212,6 @@ internal class IdentityPrefsStore(
 internal class AudioPrefsStore(
     private val dataStore: DataStore<Preferences>,
 ) : GameAudioPrefs {
-
     private val prefs: Flow<Preferences> = dataStore.safePreferences()
 
     override val musicVolume: Flow<Int> = prefs.map { it[GamePrefsKeys.MUSIC_VOL] ?: FULL_VOLUME }
@@ -237,7 +244,6 @@ internal class AudioPrefsStore(
 internal class RewardPrefsStore(
     private val dataStore: DataStore<Preferences>,
 ) : GameRewardPrefs {
-
     private val prefs: Flow<Preferences> = dataStore.safePreferences()
 
     override val adsRemoved: Flow<Boolean> = prefs.map { it[GamePrefsKeys.ADS_REMOVED] ?: false }
@@ -278,7 +284,6 @@ internal class RewardPrefsStore(
 internal class RaidPrefsStore(
     private val dataStore: DataStore<Preferences>,
 ) : GameRaidPrefs {
-
     private val prefs: Flow<Preferences> = dataStore.safePreferences()
 
     override val lastRaidWindow: Flow<String> =
@@ -295,15 +300,16 @@ internal class RaidPrefsStore(
 }
 
 @Singleton
-class GamePrefsImpl @Inject constructor(
-    private val dataStore: DataStore<Preferences>,
-) : GamePrefs,
-    GameIdentityPrefs by IdentityPrefsStore(dataStore),
-    GameAudioPrefs by AudioPrefsStore(dataStore),
-    GameRewardPrefs by RewardPrefsStore(dataStore),
-    GameRaidPrefs by RaidPrefsStore(dataStore) {
-
-    override suspend fun clearAll() {
-        dataStore.edit { it.clear() }
+class GamePrefsImpl
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) : GamePrefs,
+        GameIdentityPrefs by IdentityPrefsStore(dataStore),
+        GameAudioPrefs by AudioPrefsStore(dataStore),
+        GameRewardPrefs by RewardPrefsStore(dataStore),
+        GameRaidPrefs by RaidPrefsStore(dataStore) {
+        override suspend fun clearAll() {
+            dataStore.edit { it.clear() }
+        }
     }
-}

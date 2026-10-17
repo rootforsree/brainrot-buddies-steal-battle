@@ -27,7 +27,6 @@ import org.robolectric.annotation.GraphicsMode
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class SettingsScreenshotTest {
-
     @get:Rule
     val composeRule = createComposeRule()
 
@@ -49,37 +48,47 @@ class SettingsScreenshotTest {
         )
     }
 
-    private fun capture(darkTheme: Boolean, state: SettingsUiState, name: String) {
+    private fun capture(
+        darkTheme: Boolean,
+        state: SettingsUiState,
+        name: String,
+    ) {
         composeRule.setContent {
             AppTheme(darkTheme = darkTheme, hapticsEnabled = false) {
                 SettingsScreenContent(
                     state = state,
                     redeemState = RedeemUiState(),
                     message = null,
-                    actions = SettingsActions(
-                        audio = AudioSettingsActions(
-                            onMusicVolume = {},
-                            onSfxVolume = {},
-                            onVoiceVolume = {},
+                    actions =
+                        SettingsActions(
+                            audio =
+                                AudioSettingsActions(
+                                    onMusicVolume = {},
+                                    onSfxVolume = {},
+                                    onVoiceVolume = {},
+                                ),
+                            appearance =
+                                AppearanceSettingsActions(
+                                    onThemeModeSelected = {},
+                                ),
+                            general =
+                                GeneralSettingsActions(
+                                    onHapticsToggled = {},
+                                    onBennyHintsToggled = {},
+                                ),
+                            redeem =
+                                RedeemSettingsActions(
+                                    onRedeem = {},
+                                    onRedeemConsumed = {},
+                                ),
+                            grownUp =
+                                GrownUpSettingsActions(
+                                    onForParents = {},
+                                    onPosterImport = {},
+                                    onRemoveAds = {},
+                                    onDeleteData = {},
+                                ),
                         ),
-                        appearance = AppearanceSettingsActions(
-                            onThemeModeSelected = {},
-                        ),
-                        general = GeneralSettingsActions(
-                            onHapticsToggled = {},
-                            onBennyHintsToggled = {},
-                        ),
-                        redeem = RedeemSettingsActions(
-                            onRedeem = {},
-                            onRedeemConsumed = {},
-                        ),
-                        grownUp = GrownUpSettingsActions(
-                            onForParents = {},
-                            onPosterImport = {},
-                            onRemoveAds = {},
-                            onDeleteData = {},
-                        ),
-                    ),
                 )
             }
         }

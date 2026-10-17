@@ -12,8 +12,6 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import com.sreecharan.brainrot_buddies_steal_battle.game.engine.GameEngine
 import com.sreecharan.brainrot_buddies_steal_battle.game.engine.PullInput
 import com.sreecharan.brainrot_buddies_steal_battle.ui.components.JuiceTimings
-import java.util.UUID
-import kotlin.random.Random
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,6 +25,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
+import kotlin.random.Random
 
 /** Timing and tuning constants shared by the Home handlers. */
 internal object HomeTimings {
@@ -40,10 +40,13 @@ internal object HomeTimings {
     const val MILLIS_PER_SECOND = 1000L
     const val SECONDS_PER_MINUTE = 60L
     const val SECONDS_PER_HOUR = 3600L
+
     /** Vault accrual runs every 5 s (every 10th 500 ms tick). */
     const val ACCRUE_EVERY_TICKS = 10L
+
     /** Contract §1: duplicates convert to 5 Buddy Bites each. */
     const val BITES_PER_DUPLICATE = 5
+
     /** The catchphrase sting in the staged replay, contract §2 V1.1. */
     const val REPLAY_CATCHPHRASE_AT_MS = 3000L
 }
@@ -95,18 +98,26 @@ internal class HomeVmCore(
         soundManager.startMusic()
     }
 
-    fun addFloatUp(text: String, anchor: FloatUpAnchor) {
-        val duration = JuiceTimings.FLOAT_UP_MIN_MS +
-            (floatUpId % (JuiceTimings.FLOAT_UP_MAX_MS - JuiceTimings.FLOAT_UP_MIN_MS))
+    fun addFloatUp(
+        text: String,
+        anchor: FloatUpAnchor,
+    ) {
+        val duration =
+            JuiceTimings.FLOAT_UP_MIN_MS +
+                (floatUpId % (JuiceTimings.FLOAT_UP_MAX_MS - JuiceTimings.FLOAT_UP_MIN_MS))
         uiState.update { state ->
             state.copy(
-                floatUps = (state.floatUps + FloatUpUi(
-                    id = ++floatUpId,
-                    text = text,
-                    anchor = anchor,
-                    startUptimeMs = SystemClock.uptimeMillis(),
-                    durationMs = duration,
-                )).toImmutableList(),
+                floatUps =
+                    (
+                        state.floatUps +
+                            FloatUpUi(
+                                id = ++floatUpId,
+                                text = text,
+                                anchor = anchor,
+                                startUptimeMs = SystemClock.uptimeMillis(),
+                                durationMs = duration,
+                            )
+                    ).toImmutableList(),
             )
         }
     }
@@ -124,8 +135,9 @@ internal class HomeVmCore(
 }
 
 /** Conveyor, ticket ceremony and claim intents. */
-internal class ConveyorHandler(private val core: HomeVmCore) {
-
+internal class ConveyorHandler(
+    private val core: HomeVmCore,
+) {
     fun onConveyorTap(instanceId: String) {
         core.onFirstInteraction()
         val state = core.uiState.value
@@ -140,18 +152,22 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
         core.uiState.update { current ->
             current.copy(
                 conveyor = current.conveyor.filter { it.id != instanceId }.toImmutableList(),
-                claimAnims = (current.claimAnims + (
-                    instanceId to ClaimAnimUi(
-                        instanceId = instanceId,
-                        startUptimeMs = startUptime,
-                        rarity = item.rarity,
-                        imageRes = item.imageRes,
-                        seed = item.seed,
-                        fromLane = item.lane,
-                        fromProgress = rideProgress(item, System.currentTimeMillis()),
-                        targetSlotIndex = targetSlot,
-                    )
-                    )).toImmutableMap(),
+                claimAnims =
+                    (
+                        current.claimAnims + (
+                            instanceId to
+                                ClaimAnimUi(
+                                    instanceId = instanceId,
+                                    startUptimeMs = startUptime,
+                                    rarity = item.rarity,
+                                    imageRes = item.imageRes,
+                                    seed = item.seed,
+                                    fromLane = item.lane,
+                                    fromProgress = rideProgress(item, System.currentTimeMillis()),
+                                    targetSlotIndex = targetSlot,
+                                )
+                        )
+                    ).toImmutableMap(),
             )
         }
         core.coachMarkDismissed = true
@@ -185,26 +201,28 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
         // Drumroll Please's own catchphrase IS the drumroll.
         core.soundManager.playVoice(AudioAssets.voiceResName("drumroll_please"))
         core.ceremonyJob?.cancel()
-        core.ceremonyJob = core.scope.launch(core.ioDispatcher) {
-            core.gameData.consumeTicket(type)
-            delay(JuiceTimings.CEREMONY_DRUMROLL_MS)
-            val buddy = spawnBuddy(ticket = type)
-            core.uiState.update { current ->
-                current.copy(
-                    ceremony = current.ceremony?.copy(
-                        phase = CeremonyPhase.REVEAL,
-                        buddy = buddy,
-                        phaseStartUptimeMs = SystemClock.uptimeMillis(),
-                    ),
-                )
+        core.ceremonyJob =
+            core.scope.launch(core.ioDispatcher) {
+                core.gameData.consumeTicket(type)
+                delay(JuiceTimings.CEREMONY_DRUMROLL_MS)
+                val buddy = spawnBuddy(ticket = type)
+                core.uiState.update { current ->
+                    current.copy(
+                        ceremony =
+                            current.ceremony?.copy(
+                                phase = CeremonyPhase.REVEAL,
+                                buddy = buddy,
+                                phaseStartUptimeMs = SystemClock.uptimeMillis(),
+                            ),
+                    )
+                }
+                core.soundManager.playGiftOpen()
+                core.trySendEvent(HomeEvent.Haptic(HapticKind.SUCCESS))
+                if (buddy.rarity == Rarity.EPIC) {
+                    core.addTrauma(HomeTimings.EPIC_TRAUMA)
+                    core.trySendEvent(HomeEvent.BigMoment)
+                }
             }
-            core.soundManager.playGiftOpen()
-            core.trySendEvent(HomeEvent.Haptic(HapticKind.SUCCESS))
-            if (buddy.rarity == Rarity.EPIC) {
-                core.addTrauma(HomeTimings.EPIC_TRAUMA)
-                core.trySendEvent(HomeEvent.BigMoment)
-            }
-        }
     }
 
     /** Rare+ celebrations are skippable after 1 s (contract §10). */
@@ -216,52 +234,60 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
 
     fun spawnBuddy(ticket: TicketType? = null): ConveyorBuddyUi {
         val now = System.currentTimeMillis()
-        val output = core.engine.resolvePull(
-            PullInput(
-                hasLuckyTicket = ticket == TicketType.LUCKY,
-                hasMegaTicket = ticket == TicketType.MEGA,
-                commonsSinceRare = core.pityCommons,
-                pullsSinceEpic = core.pityEpics,
-                saturdayEvent = core.engine.isZoomRaceActive(),
-            ),
-            core.random,
-        )
+        val output =
+            core.engine.resolvePull(
+                PullInput(
+                    hasLuckyTicket = ticket == TicketType.LUCKY,
+                    hasMegaTicket = ticket == TicketType.MEGA,
+                    commonsSinceRare = core.pityCommons,
+                    pullsSinceEpic = core.pityEpics,
+                    saturdayEvent = core.engine.isZoomRaceActive(),
+                ),
+                core.random,
+            )
         core.pityCommons = output.commonsSinceRare
         core.pityEpics = output.pullsSinceEpic
-        val pool = when (output.rarity) {
-            Rarity.COMMON -> BuddyCatalog.commons
-            Rarity.RARE -> BuddyCatalog.rares
-            Rarity.EPIC -> BuddyCatalog.epics
-        }
+        val pool =
+            when (output.rarity) {
+                Rarity.COMMON -> BuddyCatalog.commons
+                Rarity.RARE -> BuddyCatalog.rares
+                Rarity.EPIC -> BuddyCatalog.epics
+            }
         val def = pool.random(core.random)
-        val buddy = ConveyorBuddyUi(
-            id = UUID.randomUUID().toString(),
-            buddyId = def.id.value,
-            name = def.name,
-            rarity = def.rarity,
-            imageRes = def.imageRes,
-            catchphrase = def.catchphrase,
-            voiceResName = def.voiceFile,
-            coinsPerSec = def.baseCoinsPerSec,
-            seed = core.random.nextLong(),
-            lane = (core.spawnCounter++) % HomeTimings.CONVEYOR_LANES,
-            spawnedAtMs = now,
-            expiresAtMs = now + JuiceTimings.CONVEYOR_RIDE_MS,
-            ticketPull = ticket != null,
-        )
+        val buddy =
+            ConveyorBuddyUi(
+                id = UUID.randomUUID().toString(),
+                buddyId = def.id.value,
+                name = def.name,
+                rarity = def.rarity,
+                imageRes = def.imageRes,
+                catchphrase = def.catchphrase,
+                voiceResName = def.voiceFile,
+                coinsPerSec = def.baseCoinsPerSec,
+                seed = core.random.nextLong(),
+                lane = (core.spawnCounter++) % HomeTimings.CONVEYOR_LANES,
+                spawnedAtMs = now,
+                expiresAtMs = now + JuiceTimings.CONVEYOR_RIDE_MS,
+                ticketPull = ticket != null,
+            )
         core.uiState.update { state ->
             state.copy(conveyor = (state.conveyor + buddy).toImmutableList())
         }
         return buddy
     }
 
-    private fun onClaimPlaced(outcome: ClaimPlacement.Placed, item: ConveyorBuddyUi) {
+    private fun onClaimPlaced(
+        outcome: ClaimPlacement.Placed,
+        item: ConveyorBuddyUi,
+    ) {
         val now = SystemClock.uptimeMillis()
         core.uiState.update { state ->
             state.copy(
-                claimAnims = state.claimAnims.mapValues { (id, anim) ->
-                    if (id == item.id) anim.copy(targetSlotIndex = outcome.slotIndex) else anim
-                }.toImmutableMap(),
+                claimAnims =
+                    state.claimAnims
+                        .mapValues { (id, anim) ->
+                            if (id == item.id) anim.copy(targetSlotIndex = outcome.slotIndex) else anim
+                        }.toImmutableMap(),
                 waddleAnims = (state.waddleAnims + (outcome.buddy.uid to now)).toImmutableMap(),
             )
         }
@@ -290,16 +316,21 @@ internal class ConveyorHandler(private val core: HomeVmCore) {
     }
 
     /** Ride progress 0..1 at [wallMs], so the claim arc starts where the buddy was tapped. */
-    private fun rideProgress(item: ConveyorBuddyUi, wallMs: Long): Float =
-        ((wallMs - item.spawnedAtMs).toFloat() / JuiceTimings.CONVEYOR_RIDE_MS).coerceIn(0f, 1f)
+    private fun rideProgress(
+        item: ConveyorBuddyUi,
+        wallMs: Long,
+    ): Float = ((wallMs - item.spawnedAtMs).toFloat() / JuiceTimings.CONVEYOR_RIDE_MS).coerceIn(0f, 1f)
 }
 
 /** Board intents: slots, vault, raid bell, coach mark. */
-internal class BoardHandler(private val core: HomeVmCore) {
-
+internal class BoardHandler(
+    private val core: HomeVmCore,
+) {
     fun onSlotTap(index: Int) {
         core.onFirstInteraction()
-        val slot = core.uiState.value.slots.getOrNull(index) ?: return
+        val slot =
+            core.uiState.value.slots
+                .getOrNull(index) ?: return
         when {
             !slot.unlocked -> wiggleLockedSlot(slot)
             slot.buddy != null -> bounceBuddy(slot.buddy)
@@ -367,8 +398,9 @@ internal class BoardHandler(private val core: HomeVmCore) {
 }
 
 /** Tour mode and staged-replay intents. */
-internal class TourHandler(private val core: HomeVmCore) {
-
+internal class TourHandler(
+    private val core: HomeVmCore,
+) {
     fun onTourToggle() {
         core.onFirstInteraction()
         val state = core.uiState.value
@@ -383,7 +415,10 @@ internal class TourHandler(private val core: HomeVmCore) {
         advanceTour(SystemClock.uptimeMillis(), force = true)
     }
 
-    fun advanceTour(nowUptime: Long, force: Boolean = false) {
+    fun advanceTour(
+        nowUptime: Long,
+        force: Boolean = false,
+    ) {
         val tour = core.uiState.value.tour ?: return
         if (force || nowUptime - core.lastTourAdvanceMs >= HomeTimings.TOUR_SPOTLIGHT_MS) {
             advanceTourToNext(tour, nowUptime)
@@ -413,9 +448,14 @@ internal class TourHandler(private val core: HomeVmCore) {
         if (buddy.voiceResName.isNotEmpty()) core.soundManager.playVoice(buddy.voiceResName)
     }
 
-    private fun advanceTourToNext(tour: TourModeUi, nowUptime: Long) {
+    private fun advanceTourToNext(
+        tour: TourModeUi,
+        nowUptime: Long,
+    ) {
         core.lastTourAdvanceMs = nowUptime
-        val occupied = core.uiState.value.slots.filter { it.buddy != null }
+        val occupied =
+            core.uiState.value.slots
+                .filter { it.buddy != null }
         if (occupied.isEmpty()) return
         val currentIdx = occupied.indexOfFirst { it.index == tour.spotlightSlot }.coerceAtLeast(0)
         val next = occupied[(currentIdx + 1) % occupied.size]
@@ -428,8 +468,9 @@ internal class TourHandler(private val core: HomeVmCore) {
 }
 
 /** Staged raid replays (contract §2 V1.1). */
-internal class ReplayHandler(private val core: HomeVmCore) {
-
+internal class ReplayHandler(
+    private val core: HomeVmCore,
+) {
     fun onReplaySkip() {
         dismissReplay()
     }
@@ -439,15 +480,16 @@ internal class ReplayHandler(private val core: HomeVmCore) {
         core.uiState.update { it.copy(replay = replay.copy(startUptimeMs = startUptime)) }
         core.soundManager.playStealSuccess()
         core.replayJob?.cancel()
-        core.replayJob = core.scope.launch {
-            // The catchphrase sting lands on the victim-reaction beat (~3 s).
-            delay(HomeTimings.REPLAY_CATCHPHRASE_AT_MS)
-            val voice = BuddyCatalog.find(BuddyId(replay.buddyId))?.voiceFile.orEmpty()
-            if (voice.isNotEmpty()) core.soundManager.playVoice(voice)
-            delay(JuiceTimings.REPLAY_MS - HomeTimings.REPLAY_CATCHPHRASE_AT_MS)
-            dismissReplay()
-            core.trySendEvent(HomeEvent.BigMoment)
-        }
+        core.replayJob =
+            core.scope.launch {
+                // The catchphrase sting lands on the victim-reaction beat (~3 s).
+                delay(HomeTimings.REPLAY_CATCHPHRASE_AT_MS)
+                val voice = BuddyCatalog.find(BuddyId(replay.buddyId))?.voiceFile.orEmpty()
+                if (voice.isNotEmpty()) core.soundManager.playVoice(voice)
+                delay(JuiceTimings.REPLAY_MS - HomeTimings.REPLAY_CATCHPHRASE_AT_MS)
+                dismissReplay()
+                core.trySendEvent(HomeEvent.BigMoment)
+            }
     }
 
     fun dismissReplay() {
@@ -467,7 +509,6 @@ internal class HomeSync(
     private val tour: TourHandler,
     private val replay: ReplayHandler,
 ) {
-
     fun onTick() {
         val nowUptime = SystemClock.uptimeMillis()
         val nowWall = System.currentTimeMillis()
@@ -491,11 +532,12 @@ internal class HomeSync(
                 baseName = snapshot.baseName,
                 slots = snapshot.slots.toImmutableList(),
                 vault = VaultUi(snapshot.vaultCoins, snapshot.vaultCap),
-                raidBell = RaidBellUi(
-                    windowActive = snapshot.raidWindowActive,
-                    raidsLeft = snapshot.raidsLeft,
-                    nextWindowMs = snapshot.nextRaidWindowMs,
-                ),
+                raidBell =
+                    RaidBellUi(
+                        windowActive = snapshot.raidWindowActive,
+                        raidsLeft = snapshot.raidsLeft,
+                        nextWindowMs = snapshot.nextRaidWindowMs,
+                    ),
                 shieldActive = snapshot.shieldActive,
                 shieldEndsAtMs = snapshot.shieldEndsAtMs,
                 luckyTickets = snapshot.luckyTickets,
@@ -506,30 +548,46 @@ internal class HomeSync(
         // Builder D's staged replays: a new pending raid record plays the 5 s
         // cinematic, then gets acknowledged.
         val pending = snapshot.pendingReplay
-        if (pending != null && core.uiState.value.replay?.id != pending.id && core.replayJob?.isActive != true) {
+        if (pending != null && core.uiState.value.replay
+                ?.id != pending.id && core.replayJob?.isActive != true
+        ) {
             replay.startReplay(pending)
         }
     }
 
-    private fun pruneAnims(nowUptime: Long, nowWall: Long) {
+    private fun pruneAnims(
+        nowUptime: Long,
+        nowWall: Long,
+    ) {
         core.uiState.update { state ->
-            var next = state.copy(
-                nowMs = nowWall,
-                conveyor = state.conveyor.filter { it.expiresAtMs > nowWall }.toImmutableList(),
-            )
-            next = next.copy(
-                claimAnims = next.claimAnims.filterValues { anim ->
-                    nowUptime - anim.startUptimeMs < JuiceTimings.CLAIM_TOTAL_MS + HomeTimings.PRUNE_SLACK_MS
-                }.toImmutableMap(),
-                waddleAnims = next.waddleAnims.filterValues { start ->
-                    nowUptime - start < JuiceTimings.WADDLE_IN_MS + HomeTimings.PRUNE_SLACK_MS
-                }.toImmutableMap(),
-                boingAnims = next.boingAnims.filterValues { start ->
-                    nowUptime - start < HomeTimings.BOING_MS + HomeTimings.PRUNE_SLACK_MS
-                }.toImmutableMap(),
-                floatUps = next.floatUps.filter { nowUptime - it.startUptimeMs < it.durationMs }
-                    .toImmutableList(),
-            )
+            var next =
+                state.copy(
+                    nowMs = nowWall,
+                    conveyor = state.conveyor.filter { it.expiresAtMs > nowWall }.toImmutableList(),
+                )
+            next =
+                next.copy(
+                    claimAnims =
+                        next.claimAnims
+                            .filterValues { anim ->
+                                nowUptime - anim.startUptimeMs <
+                                    JuiceTimings.CLAIM_TOTAL_MS + HomeTimings.PRUNE_SLACK_MS
+                            }.toImmutableMap(),
+                    waddleAnims =
+                        next.waddleAnims
+                            .filterValues { start ->
+                                nowUptime - start < JuiceTimings.WADDLE_IN_MS + HomeTimings.PRUNE_SLACK_MS
+                            }.toImmutableMap(),
+                    boingAnims =
+                        next.boingAnims
+                            .filterValues { start ->
+                                nowUptime - start < HomeTimings.BOING_MS + HomeTimings.PRUNE_SLACK_MS
+                            }.toImmutableMap(),
+                    floatUps =
+                        next.floatUps
+                            .filter { nowUptime - it.startUptimeMs < it.durationMs }
+                            .toImmutableList(),
+                )
             val wiggle = next.wiggleSlot
             if (wiggle != null && nowUptime - wiggle.startUptimeMs > HomeTimings.WIGGLE_MS) {
                 next = next.copy(wiggleSlot = null)

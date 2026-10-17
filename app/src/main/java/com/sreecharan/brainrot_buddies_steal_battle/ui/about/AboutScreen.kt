@@ -22,8 +22,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.sreecharan.brainrot_buddies_steal_battle.BuildConfig
@@ -64,10 +64,11 @@ fun AboutScreenContent(
         containerColor = colors.groupedBackground,
     ) { padding ->
         InsetGroupedList(
-            contentPadding = PaddingValues(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
-            ),
+            contentPadding =
+                PaddingValues(
+                    top = padding.calculateTopPadding(),
+                    bottom = padding.calculateBottomPadding() + AppDimens.tabBarClearance,
+                ),
         ) {
             item(key = "identity", contentType = "identity") {
                 AboutIdentityCard(appVersion)
@@ -85,9 +86,7 @@ fun AboutScreenContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AboutTopBar(
-    scrollBehavior: TopAppBarScrollBehavior,
-) {
+private fun AboutTopBar(scrollBehavior: TopAppBarScrollBehavior) {
     val colors = LocalAppColors.current
     LargeTopAppBar(
         title = {
@@ -97,10 +96,11 @@ private fun AboutTopBar(
             )
         },
         scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = colors.groupedBackground,
-            scrolledContainerColor = colors.groupedBackground,
-        ),
+        colors =
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = colors.groupedBackground,
+                scrolledContainerColor = colors.groupedBackground,
+            ),
     )
 }
 
@@ -118,10 +118,11 @@ private fun AboutIdentityCard(appVersion: String) {
                 color = colors.label,
             )
             Text(
-                text = stringResource(
-                    R.string.about_version,
-                    appVersion,
-                ),
+                text =
+                    stringResource(
+                        R.string.about_version,
+                        appVersion,
+                    ),
                 style = AppTypography.caption,
                 color = colors.secondaryLabel,
             )
@@ -182,31 +183,36 @@ private fun AboutLinkRow(
                 modifier = Modifier.size(AppDimens.iconSize),
             )
         },
-        trailing = if (showChevron) {
-            {
-                Icon(
-                    imageVector = Icons.Filled.ChevronRight,
-                    contentDescription = null,
-                    tint = colors.secondaryLabel,
-                    modifier = Modifier.size(AppDimens.iconSize),
-                )
-            }
-        } else {
-            null
-        },
+        trailing =
+            if (showChevron) {
+                {
+                    Icon(
+                        imageVector = Icons.Filled.ChevronRight,
+                        contentDescription = null,
+                        tint = colors.secondaryLabel,
+                        modifier = Modifier.size(AppDimens.iconSize),
+                    )
+                }
+            } else {
+                null
+            },
         onClick = onClick,
     )
 }
 
-private fun openUrl(context: Context, url: String) {
+private fun openUrl(
+    context: Context,
+    url: String,
+) {
     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
 }
 
 private fun shareApp(context: Context) {
-    val send = Intent(Intent.ACTION_SEND).apply {
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_text))
-    }
+    val send =
+        Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_text))
+        }
     val chooser = Intent.createChooser(send, context.getString(R.string.share_chooser_title))
     context.startActivity(chooser)
 }

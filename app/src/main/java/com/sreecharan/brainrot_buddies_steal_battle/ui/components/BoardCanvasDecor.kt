@@ -25,9 +25,11 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppColors
 import kotlin.math.PI
 import kotlin.math.sin
 
-/** Overlays and camera work for the board canvas: dome, spotlight, float-ups, coach mark. */
-
-/** Tour camera: horizontal pan plus a gentle zoom around the grid center. */
+/**
+ * Overlays and camera work for the board canvas: dome, spotlight, float-ups, coach mark.
+ *
+ * Tour camera: horizontal pan plus a gentle zoom around the grid center.
+ */
 internal fun DrawScope.withCamera(
     layout: BoardLayout,
     camera: CameraState,
@@ -42,7 +44,12 @@ internal fun DrawScope.withCamera(
 }
 
 /** Maps a board point through the same camera transform (for overlays). */
-internal fun cameraPoint(layout: BoardLayout, camera: CameraState, width: Float, point: Offset): Offset {
+internal fun cameraPoint(
+    layout: BoardLayout,
+    camera: CameraState,
+    width: Float,
+    point: Offset,
+): Offset {
     val pivot = layout.gridCenter()
     val panned = point + Offset(-camera.panXFraction * width, 0f)
     return pivot + (panned - pivot) * camera.zoom
@@ -56,14 +63,16 @@ internal fun DrawScope.drawShieldDome(
     textMeasurer: TextMeasurer,
 ) {
     val gridBottom = layout.gridTop + GRID_ROWS * (layout.cell + layout.spacing)
-    val domeTopLeft = Offset(
-        layout.gridLeft - layout.cell * DOME_PAD_FRAC,
-        layout.gridTop - layout.cell * DOME_TOP_PAD_FRAC,
-    )
-    val domeSize = Size(
-        GRID_COLS * (layout.cell + layout.spacing) + layout.cell * DOME_W_PAD_FRAC,
-        (gridBottom - layout.gridTop) + layout.cell * DOME_H_PAD_FRAC,
-    )
+    val domeTopLeft =
+        Offset(
+            layout.gridLeft - layout.cell * DOME_PAD_FRAC,
+            layout.gridTop - layout.cell * DOME_TOP_PAD_FRAC,
+        )
+    val domeSize =
+        Size(
+            GRID_COLS * (layout.cell + layout.spacing) + layout.cell * DOME_W_PAD_FRAC,
+            (gridBottom - layout.gridTop) + layout.cell * DOME_H_PAD_FRAC,
+        )
     // Dome: translucent arc over the whole grid.
     drawArc(
         color = SHIELD_DOME_BLUE.copy(alpha = DOME_FILL_ALPHA),
@@ -98,16 +107,18 @@ internal fun DrawScope.drawShieldDome(
     val hours = remainingMs / MILLIS_PER_HOUR
     val minutes = (remainingMs % MILLIS_PER_HOUR) / MILLIS_PER_MINUTE
     val text = if (hours > 0) "${hours}h ${minutes}m" else "${minutes}m"
-    val label = textMeasurer.measure(
-        AnnotatedString(text),
-        style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.secondaryLabel),
-    )
+    val label =
+        textMeasurer.measure(
+            AnnotatedString(text),
+            style = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.secondaryLabel),
+        )
     drawText(
         label,
-        topLeft = Offset(
-            layout.gridLeft + GRID_COLS * (layout.cell + layout.spacing) / 2f - label.size.width / 2f,
-            gridBottom + 4.dp.toPx(),
-        ),
+        topLeft =
+            Offset(
+                layout.gridLeft + GRID_COLS * (layout.cell + layout.spacing) / 2f - label.size.width / 2f,
+                gridBottom + 4.dp.toPx(),
+            ),
     )
 }
 
@@ -139,22 +150,25 @@ internal fun DrawScope.drawFloatUps(
         val t = (tUptime - item.startUptimeMs).coerceAtLeast(0L)
         val p = (t / item.durationMs.toFloat()).coerceIn(0f, 1f)
         if (p >= 1f) return@forEach
-        val anchor = when (val a = item.anchor) {
-            is FloatUpAnchor.Slot -> layout.slotCenter(a.index)
-            is FloatUpAnchor.Conveyor -> layout.laneCenter(1, LANE_MID_PROGRESS)
-            FloatUpAnchor.Vault -> Offset(size.width / 2f, 0f)
-            FloatUpAnchor.Center -> Offset(size.width / 2f, size.height / 2f)
-        }
+        val anchor =
+            when (val a = item.anchor) {
+                is FloatUpAnchor.Slot -> layout.slotCenter(a.index)
+                is FloatUpAnchor.Conveyor -> layout.laneCenter(1, LANE_MID_PROGRESS)
+                FloatUpAnchor.Vault -> Offset(size.width / 2f, 0f)
+                FloatUpAnchor.Center -> Offset(size.width / 2f, size.height / 2f)
+            }
         val rise = FLOAT_RISE_DP.toPx() * p
         val alpha = if (p > FLOAT_FADE_START) 1f - (p - FLOAT_FADE_START) / FLOAT_FADE_RANGE else 1f
-        val label = textMeasurer.measure(
-            AnnotatedString(item.text),
-            style = TextStyle(
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = colors.label.copy(alpha = alpha),
-            ),
-        )
+        val label =
+            textMeasurer.measure(
+                AnnotatedString(item.text),
+                style =
+                    TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.label.copy(alpha = alpha),
+                    ),
+            )
         drawText(
             label,
             topLeft = anchor + Offset(-label.size.width / 2f, -label.size.height / 2f - rise),
@@ -169,33 +183,37 @@ internal fun DrawScope.drawCoachMark(
     colors: AppColors,
     textMeasurer: TextMeasurer,
 ) {
-    val target = when (mark.target) {
-        CoachTarget.CONVEYOR -> Offset(size.width / 2f, layout.beltTop + layout.beltHeight / 2f)
-        CoachTarget.GRID -> Offset(size.width / 2f, layout.gridTop + layout.cell)
-        CoachTarget.VAULT -> Offset(size.width / 2f, 0f)
-    }
+    val target =
+        when (mark.target) {
+            CoachTarget.CONVEYOR -> Offset(size.width / 2f, layout.beltTop + layout.beltHeight / 2f)
+            CoachTarget.GRID -> Offset(size.width / 2f, layout.gridTop + layout.cell)
+            CoachTarget.VAULT -> Offset(size.width / 2f, 0f)
+        }
     // Pulsing arrow: "tap me now" without a single word of tutorial (§11).
     val bob = sin(2f * PI.toFloat() * tUptime / COACH_BOB_PERIOD_MS) * COACH_BOB_DP.toPx()
     val arrowC = target + Offset(0f, -layout.buddySize - COACH_ARROW_OFFSET_DP.toPx() + bob)
     val s = COACH_ARROW_SIZE_DP.toPx()
     drawPath(
-        path = Path().apply {
-            moveTo(arrowC.x - s, arrowC.y - s)
-            lineTo(arrowC.x + s, arrowC.y - s)
-            lineTo(arrowC.x, arrowC.y + s)
-            close()
-        },
+        path =
+            Path().apply {
+                moveTo(arrowC.x - s, arrowC.y - s)
+                lineTo(arrowC.x + s, arrowC.y - s)
+                lineTo(arrowC.x, arrowC.y + s)
+                close()
+            },
         color = colors.accent,
     )
-    val label = textMeasurer.measure(
-        AnnotatedString(mark.text),
-        style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White),
-    )
+    val label =
+        textMeasurer.measure(
+            AnnotatedString(mark.text),
+            style = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White),
+        )
     val pad = COACH_PAD_DP.toPx()
-    val bgTopLeft = Offset(
-        arrowC.x - label.size.width / 2f - pad,
-        arrowC.y - s - label.size.height - pad * 2f,
-    )
+    val bgTopLeft =
+        Offset(
+            arrowC.x - label.size.width / 2f - pad,
+            arrowC.y - s - label.size.height - pad * 2f,
+        )
     drawRoundRect(
         color = colors.accent,
         topLeft = bgTopLeft,
@@ -205,7 +223,11 @@ internal fun DrawScope.drawCoachMark(
     drawText(label, topLeft = bgTopLeft + Offset(pad, pad))
 }
 
-internal fun DrawScope.drawPadlock(center: Offset, size: Float, color: Color) {
+internal fun DrawScope.drawPadlock(
+    center: Offset,
+    size: Float,
+    color: Color,
+) {
     val bodyW = size
     val bodyH = size * PADLOCK_BODY_H_FRAC
     val bodyTop = center.y - bodyH / 2f + size * PADLOCK_SHACKLE_FRAC

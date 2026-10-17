@@ -11,7 +11,6 @@ import kotlin.test.assertTrue
 
 @Suppress("MagicNumber")
 class GameEngineTest {
-
     private val engine = GameEngine()
     private val chicago = ZoneId.of("America/Chicago")
 
@@ -58,8 +57,9 @@ class GameEngineTest {
 
     @Test
     fun `lucky ticket can still roll an epic`() {
-        val seed = generateSequence(0L) { it + 1 }
-            .first { engine.resolvePull(PullInput(hasLuckyTicket = true), Random(it)).rarity == Rarity.EPIC }
+        val seed =
+            generateSequence(0L) { it + 1 }
+                .first { engine.resolvePull(PullInput(hasLuckyTicket = true), Random(it)).rarity == Rarity.EPIC }
 
         val out = engine.resolvePull(PullInput(hasLuckyTicket = true), Random(seed))
 
@@ -100,19 +100,21 @@ class GameEngineTest {
         val plain = engine.resolvePull(PullInput(), Random(seed))
         val rerolled = engine.resolvePull(PullInput(hasBiteReroll = true), Random(seed))
 
-        val expected = when (plain.rarity) {
-            Rarity.COMMON -> Rarity.RARE
-            Rarity.RARE -> Rarity.EPIC
-            Rarity.EPIC -> Rarity.EPIC
-        }
+        val expected =
+            when (plain.rarity) {
+                Rarity.COMMON -> Rarity.RARE
+                Rarity.RARE -> Rarity.EPIC
+                Rarity.EPIC -> Rarity.EPIC
+            }
         assertEquals(expected, rerolled.rarity)
         assertTrue(rerolled.consumedBiteReroll)
     }
 
     @Test
     fun `bite reroll on an epic stays epic`() {
-        val seed = generateSequence(0L) { it + 1 }
-            .first { engine.resolvePull(PullInput(), Random(it)).rarity == Rarity.EPIC }
+        val seed =
+            generateSequence(0L) { it + 1 }
+                .first { engine.resolvePull(PullInput(), Random(it)).rarity == Rarity.EPIC }
 
         val rerolled = engine.resolvePull(PullInput(hasBiteReroll = true), Random(seed))
 
@@ -122,10 +124,11 @@ class GameEngineTest {
 
     @Test
     fun `pity counters reset after a rare or better pull`() {
-        val out = engine.resolvePull(
-            PullInput(hasMegaTicket = true, commonsSinceRare = 10, pullsSinceEpic = 59),
-            Random(1),
-        )
+        val out =
+            engine.resolvePull(
+                PullInput(hasMegaTicket = true, commonsSinceRare = 10, pullsSinceEpic = 59),
+                Random(1),
+            )
 
         assertEquals(0, out.commonsSinceRare)
         assertEquals(0, out.pullsSinceEpic)
@@ -134,9 +137,10 @@ class GameEngineTest {
     @Test
     fun `saturday event doubles epic chance`() {
         val random = Random(7)
-        val rarities = List(10_000) {
-            engine.resolvePull(PullInput(saturdayEvent = true), random).rarity
-        }
+        val rarities =
+            List(10_000) {
+                engine.resolvePull(PullInput(saturdayEvent = true), random).rarity
+            }
 
         val epicShare = rarities.count { it == Rarity.EPIC } / 10_000.0
 
@@ -194,36 +198,39 @@ class GameEngineTest {
 
     @Test
     fun `vault accrues income between ticks`() {
-        val coins = engine.accrueVaultCoins(
-            currentCoins = 0L,
-            totalCoinsPerSec = 10.0,
-            lastTickMs = 0L,
-            nowMs = 3_600_000L,
-        )
+        val coins =
+            engine.accrueVaultCoins(
+                currentCoins = 0L,
+                totalCoinsPerSec = 10.0,
+                lastTickMs = 0L,
+                nowMs = 3_600_000L,
+            )
 
         assertEquals(36_000L, coins)
     }
 
     @Test
     fun `vault never exceeds four hours of income`() {
-        val coins = engine.accrueVaultCoins(
-            currentCoins = 140_000L,
-            totalCoinsPerSec = 10.0,
-            lastTickMs = 0L,
-            nowMs = 3_600_000L,
-        )
+        val coins =
+            engine.accrueVaultCoins(
+                currentCoins = 140_000L,
+                totalCoinsPerSec = 10.0,
+                lastTickMs = 0L,
+                nowMs = 3_600_000L,
+            )
 
         assertEquals(144_000L, coins)
     }
 
     @Test
     fun `vault accrual ignores time before the last tick`() {
-        val coins = engine.accrueVaultCoins(
-            currentCoins = 1_000L,
-            totalCoinsPerSec = 10.0,
-            lastTickMs = 5_000L,
-            nowMs = 1_000L,
-        )
+        val coins =
+            engine.accrueVaultCoins(
+                currentCoins = 1_000L,
+                totalCoinsPerSec = 10.0,
+                lastTickMs = 5_000L,
+                nowMs = 1_000L,
+            )
 
         assertEquals(1_000L, coins)
     }
@@ -283,65 +290,70 @@ class GameEngineTest {
 
     @Test
     fun `first claim starts day one with a one day streak`() {
-        val advance = engine.advanceCalendarDay(
-            currentDay = 1,
-            lastClaimDate = "",
-            streakDays = 0,
-            todayKey = "2026-10-16",
-            yesterdayKey = "2026-10-15",
-        )
+        val advance =
+            engine.advanceCalendarDay(
+                currentDay = 1,
+                lastClaimDate = "",
+                streakDays = 0,
+                todayKey = "2026-10-16",
+                yesterdayKey = "2026-10-15",
+            )
 
         assertEquals(CalendarAdvance(1, "2026-10-16", 1, claimed = true), advance)
     }
 
     @Test
     fun `consecutive claim advances the day and streak`() {
-        val advance = engine.advanceCalendarDay(
-            currentDay = 3,
-            lastClaimDate = "2026-10-15",
-            streakDays = 3,
-            todayKey = "2026-10-16",
-            yesterdayKey = "2026-10-15",
-        )
+        val advance =
+            engine.advanceCalendarDay(
+                currentDay = 3,
+                lastClaimDate = "2026-10-15",
+                streakDays = 3,
+                todayKey = "2026-10-16",
+                yesterdayKey = "2026-10-15",
+            )
 
         assertEquals(CalendarAdvance(4, "2026-10-16", 4, claimed = true), advance)
     }
 
     @Test
     fun `claiming twice in one day is a no-op`() {
-        val advance = engine.advanceCalendarDay(
-            currentDay = 3,
-            lastClaimDate = "2026-10-16",
-            streakDays = 3,
-            todayKey = "2026-10-16",
-            yesterdayKey = "2026-10-15",
-        )
+        val advance =
+            engine.advanceCalendarDay(
+                currentDay = 3,
+                lastClaimDate = "2026-10-16",
+                streakDays = 3,
+                todayKey = "2026-10-16",
+                yesterdayKey = "2026-10-15",
+            )
 
         assertEquals(CalendarAdvance(3, "2026-10-16", 3, claimed = false), advance)
     }
 
     @Test
     fun `a missed day pauses without resetting`() {
-        val advance = engine.advanceCalendarDay(
-            currentDay = 5,
-            lastClaimDate = "2026-10-13",
-            streakDays = 5,
-            todayKey = "2026-10-16",
-            yesterdayKey = "2026-10-15",
-        )
+        val advance =
+            engine.advanceCalendarDay(
+                currentDay = 5,
+                lastClaimDate = "2026-10-13",
+                streakDays = 5,
+                todayKey = "2026-10-16",
+                yesterdayKey = "2026-10-15",
+            )
 
         assertEquals(CalendarAdvance(5, "2026-10-16", 5, claimed = true), advance)
     }
 
     @Test
     fun `calendar caps at day thirty`() {
-        val advance = engine.advanceCalendarDay(
-            currentDay = 30,
-            lastClaimDate = "2026-10-15",
-            streakDays = 29,
-            todayKey = "2026-10-16",
-            yesterdayKey = "2026-10-15",
-        )
+        val advance =
+            engine.advanceCalendarDay(
+                currentDay = 30,
+                lastClaimDate = "2026-10-15",
+                streakDays = 29,
+                todayKey = "2026-10-16",
+                yesterdayKey = "2026-10-15",
+            )
 
         assertEquals(CalendarAdvance(30, "2026-10-16", 30, claimed = true), advance)
     }

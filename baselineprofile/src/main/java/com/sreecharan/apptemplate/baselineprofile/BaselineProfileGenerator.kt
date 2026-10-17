@@ -15,7 +15,6 @@ import org.junit.Test
  */
 @LargeTest
 class BaselineProfileGenerator {
-
     @get:Rule
     val baselineProfileRule = BaselineProfileRule()
 
