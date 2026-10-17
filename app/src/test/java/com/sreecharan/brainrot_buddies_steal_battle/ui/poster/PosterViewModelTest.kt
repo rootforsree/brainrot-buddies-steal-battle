@@ -1,10 +1,9 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.poster
 
 import android.content.Context
+import android.content.ContextWrapper
 import app.cash.turbine.test
 import com.sreecharan.brainrot_buddies_steal_battle.fakes.FakeGameRepository
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -33,11 +32,7 @@ class PosterViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = FakeGameRepository()
         filesDir = Files.createTempDirectory("poster-test").toFile()
-        context =
-            mockk {
-                every { getFilesDir() } returns filesDir
-                every { getCacheDir() } returns filesDir
-            }
+        context = FakeContext(filesDir)
     }
 
     @AfterEach
@@ -129,4 +124,19 @@ class PosterViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
+}
+
+/**
+ * Minimal [Context] fake for poster storage tests. mockk throws
+ * MockKException when stubbing [Context.getFilesDir]/[Context.getCacheDir]
+ * in plain unit tests, so this hand fake backs both with a real temp dir.
+ */
+private class FakeContext(
+    filesDir: File,
+) : ContextWrapper(null) {
+    private val dir: File = filesDir
+
+    override fun getFilesDir(): File = dir
+
+    override fun getCacheDir(): File = dir
 }

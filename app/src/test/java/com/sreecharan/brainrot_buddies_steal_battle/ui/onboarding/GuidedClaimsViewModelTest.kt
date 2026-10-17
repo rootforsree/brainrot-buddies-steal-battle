@@ -45,6 +45,7 @@ class GuidedClaimsViewModelTest {
             val vm = viewModel()
 
             vm.step.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(GuidedStep.CLAIM_FROGBOOT, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
@@ -57,6 +58,7 @@ class GuidedClaimsViewModelTest {
             val vm = viewModel()
 
             vm.step.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(GuidedStep.CLAIM_FROGBOOT, awaitItem())
                 repository.buddiesState.value =
                     listOf(
@@ -120,6 +122,7 @@ class GuidedClaimsViewModelTest {
             val vm = viewModel()
 
             vm.step.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(GuidedStep.CLAIM_FROGBOOT, awaitItem())
                 vm.onStepDismissed(GuidedStep.CLAIM_FROGBOOT)
                 assertNull(awaitItem())

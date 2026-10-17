@@ -1,6 +1,7 @@
 package com.sreecharan.brainrot_buddies_steal_battle.ui.home
 
 import android.content.Context
+import android.os.SystemClock
 import app.cash.turbine.test
 import com.sreecharan.brainrot_buddies_steal_battle.core.audio.SoundManager
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Rarity
@@ -8,6 +9,8 @@ import com.sreecharan.brainrot_buddies_steal_battle.data.model.TicketType
 import com.sreecharan.brainrot_buddies_steal_battle.game.engine.GameEngine
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +18,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestResult
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
@@ -48,22 +53,46 @@ class HomeViewModelTest {
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        // SystemClock is an Android stub in unit tests (throws RuntimeException
+        // on every call). The handlers stamp animations with uptimeMillis, so
+        // pin it to a fixed value instead of touching main code.
+        mockkStatic(SystemClock::class)
+        every { SystemClock.uptimeMillis() } returns 0L
         gameData = FakeBaseGameData()
         soundManager = mockk(relaxed = true)
         appContext = mockk()
         every { appContext.getString(any(), *anyVararg()) } answers { "fmt" }
+        // Note: no scheduler run here on purpose. Pumping it would apply the
+        // fake's initial snapshot before the tests subscribe, so the
+        // `snapshot clears loading` test could never observe isLoading = true.
         viewModel = HomeViewModel(gameData, GameEngine(), soundManager, appContext, testDispatcher)
-        testDispatcher.scheduler.runCurrent()
     }
 
     @AfterEach
     fun tearDown() {
+        unmockkStatic(SystemClock::class)
         Dispatchers.resetMain()
     }
 
+    /**
+     * Runs [body] on the shared test dispatcher and always clears the
+     * ViewModel afterwards. Clearing stops the ViewModel's infinite tick
+     * loop: runTest drains the shared scheduler when the body finishes, and
+     * a live infinite loop would never drain, hanging the test. The
+     * try/finally keeps a failing assertion from turning into that hang.
+     */
+    private fun runVmTest(body: suspend TestScope.() -> Unit): TestResult =
+        runTest(testDispatcher) {
+            try {
+                body()
+            } finally {
+                viewModel.clear()
+            }
+        }
+
     @Test
     fun `snapshot clears loading and fills the board`() =
-        runTest(testDispatcher) {
+        runVmTest {
             viewModel.uiState.test {
                 assertTrue(awaitItem().isLoading)
 
@@ -85,7 +114,7 @@ class HomeViewModelTest {
 
     @Test
     fun `the spawner puts a buddy on the conveyor`() =
-        runTest(testDispatcher) {
+        runVmTest {
             advanceTimeBy(600L)
             runCurrent()
 
@@ -98,7 +127,7 @@ class HomeViewModelTest {
 
     @Test
     fun `claim tap acks instantly without waiting on the data layer`() =
-        runTest(testDispatcher) {
+        runVmTest {
             advanceTimeBy(600L)
             runCurrent()
             val ride =
@@ -133,7 +162,7 @@ class HomeViewModelTest {
 
     @Test
     fun `full base converts the claim to buddy bites`() =
-        runTest(testDispatcher) {
+        runVmTest {
             advanceTimeBy(600L)
             runCurrent()
             val ride =
@@ -153,7 +182,7 @@ class HomeViewModelTest {
 
     @Test
     fun `mega ticket reveal is always epic and adds a trauma impulse`() =
-        runTest(testDispatcher) {
+        runVmTest {
             gameData.snapshotFlow.value = baseSnapshot(megaTickets = 1)
             runCurrent()
 
@@ -184,7 +213,7 @@ class HomeViewModelTest {
 
     @Test
     fun `locked slot tap wiggles and never stays silent`() =
-        runTest(testDispatcher) {
+        runVmTest {
             gameData.snapshotFlow.value = baseSnapshot()
             runCurrent()
 
@@ -206,7 +235,7 @@ class HomeViewModelTest {
 
     @Test
     fun `tapping your own buddy plays its catchphrase`() =
-        runTest(testDispatcher) {
+        runVmTest {
             gameData.snapshotFlow.value = baseSnapshot()
             runCurrent()
 
@@ -222,7 +251,7 @@ class HomeViewModelTest {
 
     @Test
     fun `collect vault collects and floats the amount`() =
-        runTest(testDispatcher) {
+        runVmTest {
             gameData.collectedCoins = 500L
 
             viewModel.onCollectVault()
@@ -237,7 +266,7 @@ class HomeViewModelTest {
 
     @Test
     fun `tour mode toggles and spotlights the first buddy`() =
-        runTest(testDispatcher) {
+        runVmTest {
             gameData.snapshotFlow.value = baseSnapshot()
             runCurrent()
 
@@ -254,7 +283,7 @@ class HomeViewModelTest {
 
     @Test
     fun `pending raid record plays the staged replay then acknowledges`() =
-        runTest(testDispatcher) {
+        runVmTest {
             val replay =
                 StagedReplayUi(
                     id = "replay-1",
@@ -282,7 +311,7 @@ class HomeViewModelTest {
 
     @Test
     fun `first interaction unlocks audio and starts music`() =
-        runTest(testDispatcher) {
+        runVmTest {
             every { soundManager.isUnlocked() } returns false
 
             viewModel.onFirstInteraction()

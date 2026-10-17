@@ -15,6 +15,7 @@ import com.sreecharan.brainrot_buddies_steal_battle.ui.theme.AppTheme
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
@@ -24,6 +25,7 @@ import org.robolectric.annotation.GraphicsMode
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [35])
 class SettingsScreenshotTest {
     @Test
     fun settings_light() {

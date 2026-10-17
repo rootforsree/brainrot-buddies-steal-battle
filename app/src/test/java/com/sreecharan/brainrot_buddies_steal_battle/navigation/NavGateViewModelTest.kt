@@ -60,14 +60,13 @@ class NavGateViewModelTest {
                 val gate = awaitItem()
                 assertTrue(gate.hasBaseName)
                 assertEquals(3, gate.onboardingDay)
-                cancelAndIgnoreRemainingEvents()
-            }
 
-            repository.onboardingDayState.value = 5
-            vm.uiState.test {
-                // Already loaded; day change flows through.
-                val gate = awaitItem()
-                assertEquals(5, gate.onboardingDay)
+                // A day change flows through while still subscribed. (A fresh
+                // subscription would first replay the stale day-3 value, so
+                // the update is asserted on the live upstream instead.)
+                repository.onboardingDayState.value = 5
+                val updated = awaitItem()
+                assertEquals(5, updated.onboardingDay)
                 cancelAndIgnoreRemainingEvents()
             }
         }

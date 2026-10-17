@@ -65,6 +65,10 @@ class RepositoryHelpers
                     emit(Result.Error(DataError.Storage(e.message ?: "Read failed")))
                 }.flowOn(ioDispatcher)
 
+        // The generic catch is intentional: the repository boundary maps every
+        // failure to Result.Error, so no raw throwable (e.g. a RuntimeException
+        // from a DAO) may escape.
+        @Suppress("TooGenericExceptionCaught")
         suspend fun <T> write(block: suspend () -> T): Result<T> =
             withContext(ioDispatcher) {
                 try {
@@ -78,6 +82,8 @@ class RepositoryHelpers
                 } catch (e: IllegalStateException) {
                     Result.Error(DataError.Storage(e.message ?: "Write failed"))
                 } catch (e: IllegalArgumentException) {
+                    Result.Error(DataError.Storage(e.message ?: "Write failed"))
+                } catch (e: Exception) {
                     Result.Error(DataError.Storage(e.message ?: "Write failed"))
                 }
             }

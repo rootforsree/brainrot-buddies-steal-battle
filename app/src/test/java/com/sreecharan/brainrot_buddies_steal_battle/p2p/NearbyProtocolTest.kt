@@ -101,7 +101,8 @@ class NearbyProtocolTest {
             )
         payloads.forEach { payload ->
             val wire = NearbyProtocol.encode(payload).toString(Charsets.UTF_8)
-            assertTrue(wire.contains("\"v\":1"), "payload $payload must carry \"v\":1")
+            // The envelope nests the payload as an escaped JSON string, so v appears escaped.
+            assertTrue(wire.contains("\\\"v\\\":1"), "payload $payload must carry \"v\":1")
         }
     }
 

@@ -179,7 +179,9 @@ class GameEngineTest {
     fun `buddy income scales with the level multiplier`() {
         assertEquals(8.0, engine.buddyCoinsPerSec(baseCoinsPerSec = 8, level = 1))
         assertEquals(12.0, engine.buddyCoinsPerSec(baseCoinsPerSec = 8, level = 2))
-        assertEquals(63_360.0, engine.buddyCoinsPerHour(baseCoinsPerSec = 8, level = 3))
+        // 8 x 2.2 x 3600 is not exactly representable in binary floating point,
+        // so compare with a tolerance instead of exact equality.
+        assertEquals(63_360.0, engine.buddyCoinsPerHour(baseCoinsPerSec = 8, level = 3), 0.001)
     }
 
     @Test

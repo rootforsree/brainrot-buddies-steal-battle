@@ -370,6 +370,7 @@ class ShopViewModelTest {
     @Test
     fun `owned hats come from entitlements`() =
         runTest(testDispatcher) {
+            repository.slotsState.value = repository.freshSlots()
             billingManager =
                 mockk {
                     every { entitlements } returns

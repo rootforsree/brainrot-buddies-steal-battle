@@ -54,6 +54,7 @@ class UnlockMomentsViewModelTest {
             val vm = viewModel()
 
             vm.pendingMoment.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(UnlockMoment.TICKET, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
@@ -64,9 +65,13 @@ class UnlockMomentsViewModelTest {
         runTest(testDispatcher) {
             repository.onboardingDayState.value = 4
             val vm = viewModel()
+            // Earlier days' moments queue first; mark them seen so SHIELD is pending.
+            vm.onMomentDismissed(UnlockMoment.TICKET)
+            vm.onMomentDismissed(UnlockMoment.UPGRADES)
             val before = System.currentTimeMillis()
 
             vm.pendingMoment.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(UnlockMoment.SHIELD, awaitItem())
                 vm.onMomentOpened(UnlockMoment.SHIELD)
                 advanceUntilIdle()
@@ -86,12 +91,13 @@ class UnlockMomentsViewModelTest {
             val vm = viewModel()
 
             vm.pendingMoment.test {
+                assertNull(awaitItem()) // initial value
                 assertEquals(UnlockMoment.TICKET, awaitItem())
                 vm.onMomentDismissed(UnlockMoment.TICKET)
                 assertEquals(UnlockMoment.UPGRADES, awaitItem())
                 vm.onMomentDismissed(UnlockMoment.UPGRADES)
-                // Day 3: shield (day 4) not yet due.
-                expectNoEvents()
+                // Day 3: shield (day 4) not yet due, and dismissed moments stay hidden.
+                assertNull(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
         }

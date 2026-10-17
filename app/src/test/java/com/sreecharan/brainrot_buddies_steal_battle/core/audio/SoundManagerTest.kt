@@ -172,7 +172,9 @@ class SoundManagerTest {
         runTest(testDispatcher) {
             manager.unlockAudio()
             repeat(10) { manager.playClaimChime() }
-            manager.playUpgrade(3)
+            // Level 6 -> pitch 1.6f, the smallest level that clears the 1.5f
+            // upgrade skip below (level-based pitch, not jitter).
+            manager.playUpgrade(6)
             runCurrent()
 
             engine.oneShotCalls.forEach { call ->
@@ -393,7 +395,15 @@ class SoundManagerTest {
         private var voiceEnd: (Int) -> Unit = {}
         private var nextId = 1
 
-        override fun loadOneShot(resName: String): Int = if (resName in missing) -1 else resName.hashCode()
+        // Stable positive sound ids like a real SoundPool: non-positive ids
+        // mean "load failed" to SoundPlaybackCore, and String.hashCode() is
+        // negative for several of our asset names (e.g. sfx_button).
+        private val loadedIds = mutableMapOf<String, Int>()
+
+        override fun loadOneShot(resName: String): Int {
+            if (resName in missing) return -1
+            return loadedIds.getOrPut(resName) { loadedIds.size + 1 }
+        }
 
         override fun playOneShot(
             soundId: Int,

@@ -1,7 +1,11 @@
 package com.sreecharan.brainrot_buddies_steal_battle.billing
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.job
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -62,21 +66,29 @@ class BillingEntitlementsTest {
     @Test
     fun `granted hats persist across store instances`() =
         runTest {
-            fun newStore() =
+            val produceFile = { tempDir.resolve("billing_prefs.preferences_pb").toFile() }
+
+            fun newStore(scope: CoroutineScope) =
                 DataStoreBillingEntitlementStore(
                     PreferenceDataStoreFactory.create(
-                        scope = backgroundScope,
-                        produceFile = { tempDir.resolve("billing_prefs.preferences_pb").toFile() },
+                        scope = scope,
+                        produceFile = produceFile,
                     ),
                 )
 
-            val first = newStore()
+            // The first instance gets its own scope so it can be retired: a
+            // DataStore is active only while its scope is active, and two
+            // instances may never share a file.
+            val firstScope = CoroutineScope(SupervisorJob())
+            val first = newStore(firstScope)
             assertEquals(emptySet(), first.ownedHats.first())
             first.grantHat(BillingProducts.HAT_PARTY_CONE)
             assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), first.ownedHats.first())
+            firstScope.cancel()
+            firstScope.coroutineContext.job.join()
 
             // A fresh store over the same file sees the grant: deterministic.
-            val second = newStore()
+            val second = newStore(backgroundScope)
             assertEquals(setOf(BillingProducts.HAT_PARTY_CONE), second.ownedHats.first())
 
             second.grantHat(BillingProducts.HAT_TINY_CROWN)

@@ -61,8 +61,11 @@ class OnboardingViewModelTest {
                 vm.onPlayClicked()
                 advanceUntilIdle()
 
-                val naming = awaitItem()
-                assertEquals(OnboardingStep.NAMING, naming.step)
+                // onPlayClicked emits isWorking=true before the final state.
+                var naming = awaitItem()
+                while (naming.step != OnboardingStep.NAMING) {
+                    naming = awaitItem()
+                }
                 assertFalse(naming.isWorking)
                 cancelAndIgnoreRemainingEvents()
             }
