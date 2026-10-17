@@ -1,7 +1,10 @@
-@file:Suppress("KotlinConstantConditionIf")
 package com.sreecharan.brainrot_buddies_steal_battle.ui.raids
 
 import androidx.annotation.StringRes
+
+/** Returns true if the snapshot was already raided and there's no live connection. */
+private fun isSnapshotSpent(snapshotRaided: Boolean, liveEndpoint: String?): Boolean =
+    snapshotRaided && liveEndpoint == null
 import com.sreecharan.brainrot_buddies_steal_battle.R
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.OwnedBuddyEntity
 import com.sreecharan.brainrot_buddies_steal_battle.data.local.RaidRecordEntity
@@ -588,7 +591,7 @@ class RaidVisitHelpers(
                 target == null -> StealRejectReason.EMPTY
                 alreadyRaided -> StealRejectReason.ALREADY_RAIDED
                 !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
-                snapshotRaided && core.liveEndpoint == null -> StealRejectReason.SNAPSHOT_SPENT
+                isSnapshotSpent(snapshotRaided, core.liveEndpoint) -> StealRejectReason.SNAPSHOT_SPENT
                 snapshot != null && now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
                 else -> null
             }
