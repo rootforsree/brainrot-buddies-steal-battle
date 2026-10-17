@@ -91,7 +91,7 @@ class HomeScreenshotTest {
                 )
             }
         }
-        composeRule.captureRoboImage(name)
+        composeRule.onRoot().captureRoboImage(name)
     }
 
     private fun emptyBase(): HomeUiState =

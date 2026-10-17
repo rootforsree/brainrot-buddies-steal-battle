@@ -92,6 +92,6 @@ class SettingsScreenshotTest {
                 )
             }
         }
-        composeRule.captureRoboImage(name)
+        composeRule.onRoot().captureRoboImage(name)
     }
 }

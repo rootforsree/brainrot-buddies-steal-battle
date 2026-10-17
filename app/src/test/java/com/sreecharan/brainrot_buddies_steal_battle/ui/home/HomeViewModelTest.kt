@@ -53,7 +53,7 @@ class HomeViewModelTest {
         appContext = mockk()
         every { appContext.getString(any(), *anyVararg()) } answers { "fmt" }
         viewModel = HomeViewModel(gameData, GameEngine(), soundManager, appContext, testDispatcher)
-        testDispatcher.runCurrent()
+        testDispatcher.scheduler.runCurrent()
     }
 
     @AfterEach

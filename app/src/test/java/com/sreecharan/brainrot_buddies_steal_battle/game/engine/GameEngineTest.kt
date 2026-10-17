@@ -1,10 +1,10 @@
 package com.sreecharan.brainrot_buddies_steal_battle.game.engine
 
 import com.sreecharan.brainrot_buddies_steal_battle.data.model.Rarity
+import org.junit.jupiter.api.Test
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.random.Random
-import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

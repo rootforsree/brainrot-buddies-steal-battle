@@ -79,11 +79,25 @@ class NearbyProtocolTest {
         val payloads: List<P2pPayload> =
             listOf(
                 Hello(guestId = "g", baseName = "b", code = "ABCDEF"),
-                BaseSnapshot("g", "b", 0L, 0L, 0, emptyList()),
-                RaidRequest("r", "g", "b", 0),
-                RaidResult("r", true),
-                P2PChat("phrase", "0"),
-                ShadowNotice("r", "frogboot", 1, "g", "b", 0L),
+                BaseSnapshot(
+                    guestId = "g",
+                    baseName = "b",
+                    exportedAt = 0L,
+                    shieldUntil = 0L,
+                    coinsPerSec = 0,
+                    slots = emptyList(),
+                ),
+                RaidRequest(raidId = "r", attackerGuestId = "g", attackerBaseName = "b", slot = 0),
+                RaidResult(raidId = "r", accepted = true),
+                P2PChat(kind = "phrase", refId = "0"),
+                ShadowNotice(
+                    raidId = "r",
+                    buddyId = "frogboot",
+                    buddyLevel = 1,
+                    attackerGuestId = "g",
+                    attackerBaseName = "b",
+                    createdAt = 0L,
+                ),
             )
         payloads.forEach { payload ->
             val wire = NearbyProtocol.encode(payload).toString(Charsets.UTF_8)

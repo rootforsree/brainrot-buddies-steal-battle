@@ -31,7 +31,7 @@ class SoundManagerTest {
         engine = FakeAudioEngine()
         volumes = FakeGamePrefs()
         manager = SoundManager(engine, volumes, testDispatcher)
-        testDispatcher.runCurrent()
+        testDispatcher.scheduler.runCurrent()
     }
 
     // ------------------------------------------------------------------
@@ -310,6 +310,7 @@ class SoundManagerTest {
         override val raidsUsed: Flow<Int> get() = MutableStateFlow(0)
         override val bennyHintsEnabled: Flow<Boolean> get() = MutableStateFlow(true)
         override val usedCodes: Flow<Set<String>> get() = MutableStateFlow(emptySet())
+        override val lastWeeklyGiftDate: Flow<String> get() = MutableStateFlow("")
 
         override suspend fun ensureGuestId(): String = "fake-guest"
 
@@ -344,6 +345,8 @@ class SoundManagerTest {
         override suspend fun setBennyHintsEnabled(enabled: Boolean) = Unit
 
         override suspend fun addUsedCode(code: String) = Unit
+
+        override suspend fun setLastWeeklyGiftDate(date: String) = Unit
 
         override suspend fun clearAll() = Unit
     }

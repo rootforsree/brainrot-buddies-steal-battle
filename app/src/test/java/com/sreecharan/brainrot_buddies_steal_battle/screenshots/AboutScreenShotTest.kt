@@ -46,6 +46,6 @@ class AboutScreenShotTest {
                 )
             }
         }
-        composeRule.captureRoboImage(name)
+        composeRule.onRoot().captureRoboImage(name)
     }
 }

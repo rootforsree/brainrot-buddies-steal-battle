@@ -49,7 +49,8 @@ class SettingsViewModelTest {
         repository = FakeGameRepository()
         settingsRepository =
             mockk {
-                every { settings } returns MutableStateFlow(AppSettings())
+                every { settings } returns
+                    MutableStateFlow(AppSettings(themeMode = ThemeMode.SYSTEM, hapticsEnabled = true))
                 coEvery { setThemeMode(any()) } returns Unit
                 coEvery { setHapticsEnabled(any()) } returns Unit
             }
