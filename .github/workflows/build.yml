@@ -58,7 +58,7 @@ jobs:
 
       - name: Assemble APKs
         run: |
-          rm -rf app/build/generated/kspCaches app/build/kspCaches
+          rm -rf app/build
           ./gradlew assembleDebug assembleRelease -PversionCode=${{ github.run_number }} -Pksp.incremental=false --stacktrace
         env:
           KEYSTORE_PATH: ${{ env.KEYSTORE_PATH }}
