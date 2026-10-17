@@ -1,6 +1,6 @@
 [versions]
 # Toolchain (verified 2026-10-14)
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 agp = "9.4.1"
 # KSP 2.3.12 pairs with Kotlin 2.4.20: KSP versioning decoupled from the
 # Kotlin compiler version starting at KSP 2.3.0 (2.3.x is the whole line now).
