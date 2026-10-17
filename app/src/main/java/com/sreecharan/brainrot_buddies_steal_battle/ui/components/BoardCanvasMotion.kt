@@ -95,9 +95,9 @@ private fun idleSillyAct(aSeed: Long, tMs: Long, sizePx: Float, forceAct: Boolea
     val actKind = ((aSeed / ACT_KIND_DIV) % ACT_KIND_MOD).toInt()
     val active = actT < SILLY_ACT_MS || forceAct
     val p = if (forceAct) {
-        (tMs % SILLY_ACT_MS) / SILLY_ACT_MS.toFloat()
+        (tMs % SILLY_ACT_MS) / SILLY_ACT_MS
     } else {
-        actT / SILLY_ACT_MS.toFloat()
+        actT / SILLY_ACT_MS
     }
     return when {
         !active -> SillyAct(0f, 0f)

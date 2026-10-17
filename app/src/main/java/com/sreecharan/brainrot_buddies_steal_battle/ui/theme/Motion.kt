@@ -9,17 +9,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
 /** Spring constants (mirroring androidx.compose.animation.core values). */
-private const val DampingRatioNoBouncy = 1f
-private const val DampingRatioMediumBouncy = 0.5f
-private const val StiffnessMedium = 1500f
+private const val DAMPING_RATIO_NO_BOUNCY = 1f
+private const val DAMPING_RATIO_MEDIUM_BOUNCY = 0.5f
+private const val STIFFNESS_MEDIUM = 1500f
 
 /** Bouncy spring for delightful moments: tab switches, sheet entrances. */
 val DelightfulSpring: AnimationSpec<Float> =
-    spring(dampingRatio = DampingRatioMediumBouncy, stiffness = StiffnessMedium)
+    spring(dampingRatio = DAMPING_RATIO_MEDIUM_BOUNCY, stiffness = STIFFNESS_MEDIUM)
 
 /** No-bounce spring for utilitarian state changes. */
 val UtilitarianSpring: AnimationSpec<Float> =
-    spring(dampingRatio = DampingRatioNoBouncy, stiffness = StiffnessMedium)
+    spring(dampingRatio = DAMPING_RATIO_NO_BOUNCY, stiffness = STIFFNESS_MEDIUM)
 
 /**
  * Honors the system's Reduce Motion setting. When the user turned

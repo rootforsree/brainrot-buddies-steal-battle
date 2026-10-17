@@ -9,6 +9,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Image
@@ -20,7 +21,6 @@ import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -91,7 +91,7 @@ internal fun LazyListScope.audioSection(
             AudioSliderRow(
                 title = stringResource(R.string.settings_sounds),
                 subtitle = stringResource(R.string.settings_sounds_sub),
-                icon = Icons.Filled.VolumeUp,
+                icon = Icons.AutoMirrored.Filled.VolumeUp,
                 value = state.sfxVolume,
                 onCommit = actions.onSfxVolume,
             )

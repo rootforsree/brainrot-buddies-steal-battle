@@ -86,6 +86,7 @@ class NearbyManager @Inject constructor(
     }
 
     private val connectionLifecycleCallback = object : ConnectionLifecycleCallback() {
+        @Suppress("DEPRECATION")
         override fun onConnectionInitiated(endpointId: String, info: ConnectionInfo) {
             val baseName = info.endpointName
             pendingTokens[endpointId] = TokenInfo(baseName, info.authenticationToken, incoming = true)

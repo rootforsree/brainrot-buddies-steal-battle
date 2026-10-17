@@ -587,6 +587,7 @@ class RaidVisitHelpers(
                 target == null -> StealRejectReason.EMPTY
                 alreadyRaided -> StealRejectReason.ALREADY_RAIDED
                 !RaidRules.canStartRaid(raidsUsed) -> StealRejectReason.WINDOW_EXHAUSTED
+                @Suppress("KotlinConstantConditionIf")
                 snapshotRaided && core.liveEndpoint == null -> StealRejectReason.SNAPSHOT_SPENT
                 snapshot != null && now < snapshot.shieldUntil -> StealRejectReason.SHIELDED
                 else -> null

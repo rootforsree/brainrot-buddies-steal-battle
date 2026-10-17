@@ -51,7 +51,7 @@ class GuidedClaimsViewModel @Inject constructor(
     /** Steps dismissed with "Later" this session (in-memory only). */
     private val dismissed = MutableStateFlow<Set<GuidedStep>>(emptySet())
 
-    val step: StateFlow<GuidedStep?> field = combine(
+    val step: StateFlow<GuidedStep?> = combine(
         combine(
             combine(
                 repository.observeOwnedBuddies(),
