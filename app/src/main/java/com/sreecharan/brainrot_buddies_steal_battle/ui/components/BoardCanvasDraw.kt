@@ -56,6 +56,7 @@ internal data class ClaimDrawParams(
     val board: BoardCanvasState,
     val tUptime: Long,
     val images: Map<Int, ImageBitmap?>,
+    val claimHappyRes: Map<String, Int>,
     val juice: JuiceController,
     val phaseTracker: MutableMap<String, Int>,
     val reduceMotion: Boolean,
@@ -435,9 +436,11 @@ private fun DrawScope.drawClaimPhase(
         sy: Float = 1f,
         rot: Float = 0f,
     ) {
+        // Happy pose during the claim celebration (§ Asset Spec), normal as fallback.
+        val happyRes = p.claimHappyRes[anim.instanceId] ?: 0
         drawBuddyWithPose(
             p.images,
-            anim.imageRes,
+            if (happyRes != 0) happyRes else anim.imageRes,
             BuddySpriteSpec(
                 image = null,
                 center = center,

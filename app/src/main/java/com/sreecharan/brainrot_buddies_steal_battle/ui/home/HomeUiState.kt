@@ -114,6 +114,7 @@ data class ClaimAnimUi(
     val instanceId: String,
     val startUptimeMs: Long,
     val rarity: Rarity,
+    val buddyId: String,
     val imageRes: Int,
     val seed: Long,
     val fromLane: Int,

@@ -160,6 +160,7 @@ internal class ConveyorHandler(
                                     instanceId = instanceId,
                                     startUptimeMs = startUptime,
                                     rarity = item.rarity,
+                                    buddyId = item.buddyId,
                                     imageRes = item.imageRes,
                                     seed = item.seed,
                                     fromLane = item.lane,

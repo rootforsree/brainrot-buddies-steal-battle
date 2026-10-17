@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -71,7 +72,9 @@ fun BaseBoardCanvas(
     val density = LocalDensity.current
     val minTargetPx = remember(density) { with(density) { MIN_TARGET_DP.toPx() } }
     val clockOffset by rememberClockOffset()
-    val images = rememberBoardImages(board)
+    val boardImages = rememberBoardImages(board)
+    val images = boardImages.images
+    val claimHappyRes = boardImages.claimHappyRes
     val layoutHolder = remember { LayoutHolder() }
     val phaseTracker = remember { mutableMapOf<String, Int>() }
     val lastFrame = remember { mutableLongStateOf(0L) }
@@ -98,6 +101,7 @@ fun BaseBoardCanvas(
                 lastFrame = lastFrame,
                 clockOffset = clockOffset,
                 images = images,
+                claimHappyRes = claimHappyRes,
             ),
         )
     }
@@ -141,6 +145,7 @@ private data class BoardFrameParams(
     val lastFrame: MutableLongState,
     val clockOffset: Long,
     val images: Map<Int, ImageBitmap?>,
+    val claimHappyRes: Map<String, Int>,
 )
 
 /** Everything the tap detector needs, in one value. */
@@ -166,15 +171,27 @@ private fun rememberClockOffset(): State<Long> {
     return clockOffset
 }
 
-/** Buddy art, keyed stably so sprites survive list churn. */
+/** Buddy art, keyed stably so sprites survive list churn. Also resolves the
+ * happy-pose resId per claim anim for the claim celebration (§ Asset Spec). */
 @Composable
-private fun rememberBoardImages(board: BoardCanvasState): MutableMap<Int, ImageBitmap?> {
+private fun rememberBoardImages(board: BoardCanvasState): BoardImages {
+    val context = LocalContext.current
+    val happyRes =
+        remember(board.claimAnims) {
+            board.claimAnims.values.associate { anim ->
+                anim.instanceId to context.buddyPoseResId(anim.buddyId, BuddyPose.HAPPY)
+            }
+        }
     val imageResIds =
         remember(board.conveyor, board.slots, board.claimAnims) {
             buildSet {
                 board.conveyor.forEach { add(it.imageRes) }
                 board.slots.forEach { slot -> slot.buddy?.let { add(it.imageRes) } }
-                board.claimAnims.values.forEach { add(it.imageRes) }
+                board.claimAnims.values.forEach { anim ->
+                    add(anim.imageRes)
+                    val happy = happyRes[anim.instanceId] ?: 0
+                    if (happy != 0) add(happy)
+                }
             }
         }
     val images = remember { mutableStateMapOf<Int, ImageBitmap?>() }
@@ -187,8 +204,14 @@ private fun rememberBoardImages(board: BoardCanvasState): MutableMap<Int, ImageB
     LaunchedEffect(imageResIds) {
         images.keys.retainAll(imageResIds)
     }
-    return images
+    return BoardImages(images = images, claimHappyRes = happyRes)
 }
+
+/** Loaded board images plus per-claim happy-pose resIds. */
+private data class BoardImages(
+    val images: MutableMap<Int, ImageBitmap?>,
+    val claimHappyRes: Map<String, Int>,
+)
 
 /** Tap detection: conveyor creatures first (1.5x forgiving hit zone), then slots. */
 @Composable
@@ -307,6 +330,7 @@ private fun DrawScope.drawShakenBoard(
                 board = p.board,
                 tUptime = tUptime,
                 images = p.images,
+                claimHappyRes = p.claimHappyRes,
                 juice = p.juice,
                 phaseTracker = p.phaseTracker,
                 reduceMotion = p.reduceMotion,
